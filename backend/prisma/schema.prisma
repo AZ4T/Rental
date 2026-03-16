@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum RentalRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique @db.VarChar(255)
+  password_hash String   @db.VarChar(255)
+  name          String   @db.VarChar(255)
+  avatar_url    String?  @db.VarChar(255)
+  role          Role     @default(USER)
+  rating_avg    Decimal? @db.Decimal(3, 2)
+  reviews_count Int      @default(0)
+  created_at    DateTime @default(now())
+
+  listings        Listing[]
+  favorites       Favorite[]
+  rental_requests RentalRequest[]
+
+  reviews_authored Review[] @relation("ReviewAuthor")
+  reviews_received Review[] @relation("ReviewTarget")
+}
+
+model Category {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String   @unique @db.VarChar(255)
+  created_at DateTime @default(now())
+
+  listings Listing[]
+}
+
+model Listing {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String   @db.VarChar(255)
+  description   String
+  price_per_day Decimal  @db.Decimal(10, 2)
+  deposit       Decimal  @db.Decimal(10, 2)
+  city          String   @db.VarChar(255)
+  owner_id      String   @db.Uuid
+  category_id   String   @db.Uuid
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  owner          User            @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+  category       Category        @relation(fields: [category_id], references: [id])
+  images         ListingImage[]
+  favorites      Favorite[]
+  rentalRequests RentalRequest[]
+
+  @@index([owner_id])
+  @@index([category_id])
+}
+
+model ListingImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  listing_id String   @db.Uuid
+  image_url  String   @db.VarChar(255)
+  created_at DateTime @default(now())
+
+  listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+
+  @@index([listing_id])
+}
+
+model Favorite {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  listing_id String   @db.Uuid
+  created_at DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, listing_id])
+}
+
+model RentalRequest {
+  id          String              @id @default(uuid()) @db.Uuid
+  listing_id  String              @db.Uuid
+  renter_id   String              @db.Uuid
+  start_date  DateTime            @db.Date
+  end_date    DateTime            @db.Date
+  total_price Decimal             @db.Decimal(10, 2)
+  status      RentalRequestStatus @default(PENDING)
+  created_at  DateTime            @default(now())
+
+  listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+  renter  User    @relation(fields: [renter_id], references: [id], onDelete: Cascade)
+
+  review Review?
+
+  @@index([listing_id])
+  @@index([renter_id])
+}
+
+model Review {
+  id                String   @id @default(uuid()) @db.Uuid
+  author_id         String   @db.Uuid
+  target_user_id    String   @db.Uuid
+  rental_request_id String   @unique @db.Uuid
+  rating            Int
+  comment           String?
+  created_at        DateTime @default(now())
+
+  author        User          @relation("ReviewAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  target_user   User          @relation("ReviewTarget", fields: [target_user_id], references: [id], onDelete: Cascade)
+  rentalRequest RentalRequest @relation(fields: [rental_request_id], references: [id], onDelete: Cascade)
+}
