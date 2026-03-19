@@ -9,6 +9,7 @@ import { ListingsModule } from './modules/listings/listings.module';
 import { RentalRequestsModule } from './modules/rental-requests/rental-requests.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
     imports: [
@@ -22,6 +23,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
         RentalRequestsModule,
         AdminModule,
         FavoritesModule,
+        ReviewsModule,
     ],
 })
 export class AppModule {}

@@ -1,0 +1,94 @@
+import {
+    Injectable,
+    NotFoundException,
+    ForbiddenException,
+    BadRequestException,
+} from '@nestjs/common';
+import { CreateReviewDto } from './dto/create-review.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
+
+@Injectable()
+export class ReviewsService {
+    constructor(private prisma: PrismaService) {}
+
+    async create(dto: CreateReviewDto, authorId: string) {
+        // Проверяем что аренда существует
+        const rentalRequest = await this.prisma.rentalRequest.findUnique({
+            where: { id: dto.rental_request_id },
+        });
+
+        if (!rentalRequest) {
+            throw new NotFoundException('Заявка на аренду не найдена');
+        }
+
+        // Только арендатор может оставить отзыв
+        if (rentalRequest.renter_id !== authorId) {
+            throw new ForbiddenException(
+                'Только арендатор может оставить отзыв',
+            );
+        }
+
+        // Только после завершённой аренды
+        if (rentalRequest.status !== 'COMPLETED') {
+            throw new BadRequestException(
+                'Можно оставить отзыв только после завершения аренды',
+            );
+        }
+
+        // Проверяем что отзыв ещё не оставлен
+        const exists = await this.prisma.review.findUnique({
+            where: { rental_request_id: dto.rental_request_id },
+        });
+        if (exists) throw new BadRequestException('Отзыв уже оставлен');
+
+        // Создаём отзыв
+        const review = await this.prisma.review.create({
+            data: {
+                author_id: authorId,
+                target_user_id: dto.target_user_id,
+                rental_request_id: dto.rental_request_id,
+                rating: dto.rating,
+                comment: dto.comment,
+            },
+        });
+
+        // Обновляем рейтинг пользователя
+        await this.updateUserRating(dto.target_user_id);
+
+        return review;
+    }
+
+    // Отзывы о пользователе
+    async findByUser(userId: string) {
+        return this.prisma.review.findMany({
+            where: { target_user_id: userId },
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar_url: true,
+                    },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        });
+    }
+
+    // Пересчитываем рейтинг пользователя
+    private async updateUserRating(userId: string) {
+        const result = await this.prisma.review.aggregate({
+            where: { target_user_id: userId },
+            _avg: { rating: true },
+            _count: { rating: true },
+        });
+
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: {
+                rating_avg: result._avg.rating ?? 0,
+                reviews_count: result._count.rating,
+            },
+        });
+    }
+}
