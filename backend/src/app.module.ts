@@ -7,6 +7,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { ListingsModule } from './modules/listings/listings.module';
 import { RentalRequestsModule } from './modules/rental-requests/rental-requests.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 
 @Module({
     imports: [
@@ -18,6 +20,8 @@ import { RentalRequestsModule } from './modules/rental-requests/rental-requests.
         UploadsModule,
         ListingsModule,
         RentalRequestsModule,
+        AdminModule,
+        FavoritesModule,
     ],
 })
 export class AppModule {}
