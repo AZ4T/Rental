@@ -20,7 +20,7 @@ export class ListingsService {
     async findAll(query: QueryListingDto) {
         const {
             search,
-            category_id,
+            category_ids,
             city,
             price_min,
             price_max,
@@ -32,7 +32,10 @@ export class ListingsService {
             ...(search && {
                 title: { contains: search, mode: 'insensitive' },
             }),
-            ...(category_id && { category_id }),
+            ...(category_ids &&
+                category_ids.length > 0 && {
+                    category_id: { in: category_ids },
+                }),
             ...(city && { city: { contains: city, mode: 'insensitive' } }),
             ...(price_min !== undefined || price_max !== undefined
                 ? {

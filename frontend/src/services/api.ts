@@ -1,33 +1,52 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+import axios from "axios";
+import Cookies from "js-cookie";
 
-if (!BASE_URL) {
-    throw new Error("NEXT_PUBLIC_API_URL is not set. Check .env.local");
-}
+const api = axios.create({
+    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    withCredentials: true,
+    headers: {
+        "Content-Type": "application/json",
+    },
+});
 
-type RequestOptions = Omit<RequestInit, "body"> & { body?: unknown };
-
-export async function api<T>(
-    path: string,
-    options: RequestOptions = {},
-): Promise<T> {
-    const res = await fetch(`${BASE_URL}${path}`, {
-        ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {}),
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined,
-    });
-
-    if (!res.ok) {
-        // попробуем прочитать json ошибку, если она есть
-        let message = `Request failed: ${res.status} ${res.statusText}`;
-        try {
-            const data = await res.json();
-            message = data?.message ? String(data.message) : message;
-        } catch {}
-        throw new Error(message);
+api.interceptors.request.use((config) => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+});
 
-    return res.json() as Promise<T>;
-}
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const original = error.config;
+
+        if (error.response?.status === 401 && !original._retry) {
+            original._retry = true;
+
+            try {
+                const res = await axios.post(
+                    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+                    {},
+                    { withCredentials: true },
+                );
+
+                const { access_token } = res.data as { access_token: string };
+                localStorage.setItem("access_token", access_token);
+                Cookies.set("access_token", access_token, { expires: 1 / 96 }); // ← добавляем
+
+                original.headers.Authorization = `Bearer ${access_token}`;
+                return api(original);
+            } catch {
+                localStorage.removeItem("access_token");
+                Cookies.remove("access_token"); // ← добавляем
+                window.location.href = "/auth/login";
+            }
+        }
+
+        return Promise.reject(error);
+    },
+);
+
+export default api;

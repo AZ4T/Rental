@@ -46,7 +46,7 @@ export class UploadsService {
             Statement: [
                 {
                     Effect: 'Allow',
-                    Principal: { AWS: ['*'] },
+                    Principal: '*',
                     Action: ['s3:GetObject'],
                     Resource: [`arn:aws:s3:::${this.bucket}/*`],
                 },

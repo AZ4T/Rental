@@ -1,4 +1,5 @@
-import { Type } from 'class-transformer';
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import { Transform, Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 
 export class QueryListingDto {
@@ -7,8 +8,13 @@ export class QueryListingDto {
     search?: string;
 
     @IsOptional()
-    @IsUUID()
-    category_id?: string;
+    @Transform(({ value }) => {
+        if (!value) return undefined;
+        if (Array.isArray(value)) return value;
+        return String(value).split(','); // ← разбиваем строку
+    })
+    @IsUUID('4', { each: true })
+    category_ids?: string[];
 
     @IsOptional()
     @IsString()

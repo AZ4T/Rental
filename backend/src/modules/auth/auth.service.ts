@@ -89,6 +89,9 @@ export class AuthService {
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
         });
 
-        return { access_token };
+        // Получаем пользователя и возвращаем вместе с токеном
+        const user = await this.usersService.getProfile(userId); // ← добавляем
+
+        return { access_token, user }; // ← добавляем user
     }
 }
