@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Transform, Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+    IsIn,
+    IsNumber,
+    IsOptional,
+    IsString,
+    IsUUID,
+    Min,
+} from 'class-validator';
 
 export class QueryListingDto {
     @IsOptional()
@@ -43,4 +50,12 @@ export class QueryListingDto {
     @IsNumber()
     @Min(1)
     limit?: number = 12;
+
+    @IsOptional()
+    @IsIn(['price', 'created_at', 'rating_avg'])
+    sortBy?: 'price' | 'created_at' | 'rating_avg';
+
+    @IsOptional()
+    @IsIn(['asc', 'desc'])
+    sortOrder?: 'asc' | 'desc';
 }

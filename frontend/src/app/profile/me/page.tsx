@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Star, Camera, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/auth.store";
@@ -95,7 +94,6 @@ export default function MyProfilePage() {
                                 {user.email}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                                <Badge variant="secondary">{user.role}</Badge>
                                 {user.rating_avg && (
                                     <div className="flex items-center gap-1 text-sm">
                                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />

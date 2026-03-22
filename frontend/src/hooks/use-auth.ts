@@ -4,6 +4,7 @@ import api from "@/services/api";
 import { User } from "@/types";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LoginDto {
     email: string;
@@ -70,12 +71,14 @@ export function useRegister() {
 export function useLogout() {
     const { logout } = useAuthStore();
     const router = useRouter();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: () => api.post("/auth/logout").then((r) => r.data),
 
         onSuccess: () => {
             logout();
+            queryClient.clear();
             router.push("/auth/login");
         },
     });

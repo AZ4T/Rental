@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { RentalRequest, RentalRequestStatus } from "@/types";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth.store";
 
 export function useMyRentals() {
     return useQuery({
@@ -18,6 +19,22 @@ export function useIncomingRentals() {
             api
                 .get<RentalRequest[]>("/rental-requests/incoming")
                 .then((r) => r.data),
+    });
+}
+
+export function useIncomingRentalsCount() {
+    const { isAuthenticated } = useAuthStore();
+    return useQuery({
+        queryKey: ["rentals", "incoming", "count"],
+        queryFn: () =>
+            api
+                .get<RentalRequest[]>("/rental-requests/incoming")
+                .then(
+                    (r) =>
+                        r.data.filter((req) => req.status === "PENDING").length,
+                ),
+        enabled: isAuthenticated, // ← только если залогинен
+        refetchOnWindowFocus: false, // ← не обновлять при фокусе
     });
 }
 

@@ -26,6 +26,8 @@ export class ListingsService {
             price_max,
             page = 1,
             limit = 12,
+            sortBy = 'created_at',
+            sortOrder = 'desc',
         } = query;
 
         const where: Prisma.ListingWhereInput = {
@@ -47,6 +49,10 @@ export class ListingsService {
                 : {}),
         };
 
+        const order = (
+            sortOrder === 'asc' ? 'asc' : 'desc'
+        ) as Prisma.SortOrder;
+
         const [data, total] = await this.prisma.$transaction([
             this.prisma.listing.findMany({
                 where,
@@ -62,7 +68,12 @@ export class ListingsService {
                         },
                     },
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy:
+                    sortBy === 'rating_avg'
+                        ? { owner: { rating_avg: order } }
+                        : sortBy === 'price'
+                          ? { price: order }
+                          : { created_at: order },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
@@ -100,6 +111,61 @@ export class ListingsService {
 
         if (!listing) throw new NotFoundException('Объявление не найдено');
         return listing;
+    }
+
+    async findMyListings(userId: string) {
+        const data = await this.prisma.listing.findMany({
+            where: { owner_id: userId },
+            include: {
+                images: true,
+                category: true,
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar_url: true,
+                        rating_avg: true,
+                    },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        });
+
+        return { data, meta: { total: data.length } };
+    }
+
+    async findSimilar(listingId: string, categoryId: string) {
+        return this.prisma.listing.findMany({
+            where: {
+                category_id: categoryId,
+                id: { not: listingId },
+            },
+            include: {
+                images: true,
+                category: true,
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar_url: true,
+                        rating_avg: true,
+                    },
+                },
+            },
+            take: 4,
+            orderBy: { created_at: 'desc' },
+        });
+    }
+
+    async getPriceRange() {
+        const result = await this.prisma.listing.aggregate({
+            _min: { price: true },
+            _max: { price: true },
+        });
+        return {
+            min: Number(result._min.price ?? 0),
+            max: Number(result._max.price ?? 100000),
+        };
     }
 
     async create(dto: CreateListingDto, userId: string) {

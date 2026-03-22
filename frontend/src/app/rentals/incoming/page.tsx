@@ -40,14 +40,13 @@ export default function IncomingRentalsPage() {
                                 {/* Фото */}
                                 <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                                     {rental.listing?.images?.[0] ? (
-                                        <Image
+                                        <img
                                             src={
-                                                rental.listing?.images[0]
-                                                    .image_url
+                                                rental.listing?.images?.[0]
+                                                    ?.image_url
                                             }
-                                            alt={rental.listing?.title}
-                                            fill
-                                            className="object-cover"
+                                            alt={rental.listing?.title ?? ""}
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">

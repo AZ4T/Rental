@@ -18,4 +18,14 @@ export class CategoriesService {
         if (!category) throw new NotFoundException('Категория не найдена');
         return category;
     }
+
+    async findAllWithCount() {
+        const categories = await this.prisma.category.findMany({
+            orderBy: { name: 'asc' },
+            include: {
+                _count: { select: { listings: true } },
+            },
+        });
+        return categories;
+    }
 }

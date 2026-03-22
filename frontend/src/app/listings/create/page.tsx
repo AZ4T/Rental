@@ -77,10 +77,27 @@ export default function CreateListingPage() {
         e: React.ChangeEvent<HTMLInputElement>,
     ) => {
         const files = Array.from(e.target.files ?? []);
+
+        // Проверка размера
+        const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
+        if (oversized.length > 0) {
+            toast.error("Файл слишком большой. Максимум 10 МБ");
+            return;
+        }
+
+        // Проверка формата
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        const invalid = files.filter((f) => !allowed.includes(f.type));
+        if (invalid.length > 0) {
+            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            return;
+        }
+
         if (imageUrls.length + files.length > 5) {
             toast.error("Максимум 5 фотографий");
             return;
         }
+
         for (const file of files) {
             const url = await uploadImage(file);
             setImageUrls((prev) => [...prev, url]);
@@ -104,18 +121,17 @@ export default function CreateListingPage() {
                     >
                         {/* Фото */}
                         <div className="space-y-2">
-                            <Label>Фотографии (до 5)</Label>
+                            <Label>Фотографии</Label>
                             <div className="flex flex-wrap gap-2">
                                 {imageUrls.map((url) => (
                                     <div
                                         key={url}
                                         className="relative h-24 w-24 rounded-lg overflow-hidden border"
                                     >
-                                        <Image
+                                        <img
                                             src={url}
                                             alt=""
-                                            fill
-                                            className="object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                         <button
                                             type="button"
@@ -140,13 +156,12 @@ export default function CreateListingPage() {
                                         )}
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg,image/png,image/webp"
                                             multiple
                                             className="hidden"
                                             onChange={handleImageUpload}
                                             disabled={isUploading}
                                             onClick={(e) => {
-                                                // Сбрасываем значение чтобы можно было загрузить тот же файл
                                                 (
                                                     e.target as HTMLInputElement
                                                 ).value = "";
@@ -155,6 +170,11 @@ export default function CreateListingPage() {
                                     </label>
                                 )}
                             </div>
+                            {/* Текст СНАРУЖИ label */}
+                            <p className="text-xs text-gray-400">
+                                Форматы: JPEG, PNG, WEBP · Максимум 10 МБ · До 5
+                                фото
+                            </p>
                         </div>
 
                         {/* Название */}

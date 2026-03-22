@@ -22,6 +22,7 @@ export interface Category {
     id: string;
     name: string;
     created_at: string;
+    _count?: { listings: number };
 }
 
 export interface ListingImage {
@@ -101,6 +102,8 @@ export interface ListingFilters {
     price_max?: number;
     page?: number;
     limit?: number;
+    sortBy?: "price" | "created_at" | "rating_avg";
+    sortOrder?: "asc" | "desc";
 }
 
 export interface RentalRequest {

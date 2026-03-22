@@ -46,3 +46,26 @@ export function useDeleteListing() {
         },
     });
 }
+
+export function useMyListings() {
+    return useQuery({
+        queryKey: ["listings", "my"],
+        queryFn: () =>
+            api
+                .get<PaginatedResponse<Listing>>("/listings/my")
+                .then((r) => r.data),
+    });
+}
+
+export function useSimilarListings(id: string, categoryId: string) {
+    return useQuery({
+        queryKey: ["listings", "similar", id],
+        queryFn: () =>
+            api
+                .get<
+                    Listing[]
+                >(`/listings/${id}/similar?category_id=${categoryId}`)
+                .then((r) => r.data),
+        enabled: !!id && !!categoryId,
+    });
+}

@@ -26,9 +26,28 @@ export class ListingsController {
         return this.listingsService.findAll(query);
     }
 
+    @Get('price-range')
+    getPriceRange() {
+        return this.listingsService.getPriceRange();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('my')
+    getMyListings(@Req() req: Request & { user: { userId: string } }) {
+        return this.listingsService.findMyListings(req.user.userId);
+    }
+
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.listingsService.findOne(id);
+    }
+
+    @Get(':id/similar')
+    getSimilar(
+        @Param('id') id: string,
+        @Query('category_id') categoryId: string,
+    ) {
+        return this.listingsService.findSimilar(id, categoryId);
     }
 
     @UseGuards(JwtAuthGuard)

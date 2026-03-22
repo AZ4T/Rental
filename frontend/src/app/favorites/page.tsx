@@ -42,26 +42,18 @@ export default function FavoritesPage() {
                     >
                         <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
                             {/* Фото */}
-                            <div className="relative h-44 bg-gray-100">
-                                {favorite.listing.images[0] ? (
-                                    <img
-                                        src={
-                                            favorite.listing.images[0].image_url
-                                        }
-                                        alt={favorite.listing.title}
-                                        className="object-cover w-full h-full"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                        Нет фото
-                                    </div>
-                                )}
+                            <div className="relative h-44 bg-gray-100 overflow-hidden">
+                                <img
+                                    src={favorite.listing.images[0]?.image_url}
+                                    alt={favorite.listing.title}
+                                    className="w-full h-full object-cover"
+                                />
                                 <Badge className="absolute top-2 left-2 bg-white text-gray-700">
                                     {favorite.listing.category.name}
                                 </Badge>
                                 <button
                                     onClick={(e) => {
-                                        e.preventDefault(); // ← важно чтобы не переходило по ссылке
+                                        e.preventDefault();
                                         remove(favorite.listing_id);
                                     }}
                                     disabled={isPending}

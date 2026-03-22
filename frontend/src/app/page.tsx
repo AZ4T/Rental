@@ -1,27 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
 import { ListingsFilters } from "@/components/listings-filters";
 import { Button } from "@/components/ui/button";
 import { ListingFilters } from "@/types";
-import { ProfileSkeleton } from "@/components/profile-skeleton";
+import { ListingsGridSkeleton } from "@/components/listing-card-skeleton";
 
-export default function HomePage() {
+function HomeContent() {
+    const searchParams = useSearchParams();
+    const initialSearch = searchParams.get("search") ?? "";
+
     const [filters, setFilters] = useState<ListingFilters>({
         page: 1,
         limit: 12,
+        search: initialSearch || undefined,
     });
+
+    useEffect(() => {
+        const search = searchParams.get("search") ?? "";
+        setFilters((f) => ({ ...f, search: search || undefined, page: 1 }));
+    }, [searchParams]);
+
     const { data, isLoading, isError } = useListings(filters);
 
     return (
         <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">Объявления</h1>
+            <h1 className="text-3xl font-bold text-foreground">Объявления</h1>
 
             <ListingsFilters filters={filters} onChange={setFilters} />
 
-            {isLoading && <ProfileSkeleton />}
+            {isLoading && <ListingsGridSkeleton />}
 
             {isError && (
                 <div className="text-center py-20 text-red-500">
@@ -46,7 +57,6 @@ export default function HomePage() {
                         </div>
                     )}
 
-                    {/* Пагинация */}
                     {data.meta.total_pages > 1 && (
                         <div className="flex justify-center gap-2 pt-4">
                             <Button
@@ -83,5 +93,13 @@ export default function HomePage() {
                 </>
             )}
         </div>
+    );
+}
+
+export default function HomePage() {
+    return (
+        <Suspense>
+            <HomeContent />
+        </Suspense>
     );
 }

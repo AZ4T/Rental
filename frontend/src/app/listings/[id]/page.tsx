@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Star, Calendar, Shield, Loader2, Heart } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { RentalRequestDialog } from "@/components/rental-request-dialog";
 import {
@@ -17,6 +16,9 @@ import {
     useRemoveFavorite,
 } from "@/hooks/use-favorites";
 import { ImageGallery } from "@/components/image-gallery";
+import { Share2, Check } from "lucide-react";
+import { useSimilarListings } from "@/hooks/use-listings";
+import { ListingCard } from "@/components/listing-card";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -31,9 +33,15 @@ export default function ListingPage({ params }: Props) {
     const { data: favorites } = useMyFavorites();
     const { mutate: addFavorite } = useAddFavorite();
     const { mutate: removeFavorite } = useRemoveFavorite();
+    const [copied, setCopied] = useState(false);
+    const { data: similar } = useSimilarListings(
+        id,
+        listing?.category_id ?? "",
+    );
 
     const isFavorited = favorites?.some((f) => f.listing_id === id);
     const isOwner = user?.id === listing?.owner_id; // ← добавляем здесь
+    const [heartAnimating, setHeartAnimating] = useState(false);
 
     if (isLoading) {
         return (
@@ -50,6 +58,22 @@ export default function ListingPage({ params }: Props) {
             </div>
         );
     }
+
+    const handleShare = () => {
+        void navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleFavorite = () => {
+        setHeartAnimating(true);
+        setTimeout(() => setHeartAnimating(false), 300);
+        if (isFavorited) {
+            removeFavorite(listing.id);
+        } else {
+            addFavorite(listing.id);
+        }
+    };
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
@@ -114,14 +138,14 @@ export default function ListingPage({ params }: Props) {
                                     <Button
                                         variant="outline"
                                         className="w-full"
-                                        onClick={() =>
-                                            isFavorited
-                                                ? removeFavorite(listing.id)
-                                                : addFavorite(listing.id)
-                                        }
+                                        onClick={handleFavorite}
                                     >
                                         <Heart
-                                            className={`h-4 w-4 mr-2 ${isFavorited ? "fill-red-500 text-red-500" : ""}`}
+                                            className={`h-4 w-4 mr-2 transition-colors ${
+                                                isFavorited
+                                                    ? "fill-red-500 text-red-500"
+                                                    : ""
+                                            } ${heartAnimating ? "animate-heart" : ""}`}
                                         />
                                         {isFavorited
                                             ? "Убрать из избранного"
@@ -138,31 +162,56 @@ export default function ListingPage({ params }: Props) {
                         </CardContent>
                     </Card>
 
-                    <div className="flex items-center gap-3">
-                        <Avatar>
-                            <AvatarImage src={listing.owner.avatar_url ?? ""} />
-                            <AvatarFallback>
-                                {listing.owner.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <Link
-                                href={`/profile/${listing.owner.id}`}
-                                className="font-semibold hover:underline"
-                            >
-                                {listing.owner.name}
-                            </Link>
-                            {listing.owner.rating_avg && (
-                                <div className="flex items-center gap-1 text-sm text-gray-500">
-                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                    <span>
-                                        {Number(
-                                            listing.owner.rating_avg,
-                                        ).toFixed(1)}
-                                    </span>
-                                </div>
-                            )}
+                    {/* Владелец + Поделиться */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Avatar>
+                                <AvatarImage
+                                    src={listing.owner.avatar_url ?? ""}
+                                />
+                                <AvatarFallback>
+                                    {listing.owner.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <Link
+                                    href={`/profile/${listing.owner.id}`}
+                                    className="font-semibold hover:underline"
+                                >
+                                    {listing.owner.name}
+                                </Link>
+                                {listing.owner.rating_avg && (
+                                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                        <span>
+                                            {Number(
+                                                listing.owner.rating_avg,
+                                            ).toFixed(1)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Кнопка поделиться */}
+                        <button
+                            onClick={handleShare}
+                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            {copied ? (
+                                <>
+                                    <Check className="h-4 w-4 text-green-500" />
+                                    <span className="text-green-500">
+                                        Скопировано
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    <Share2 className="h-4 w-4" />
+                                    <span>Поделиться</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -188,6 +237,19 @@ export default function ListingPage({ params }: Props) {
                     </div>
                 </CardContent>
             </Card>
+
+            {similar && similar.length > 0 && (
+                <div>
+                    <h2 className="text-xl font-semibold mb-4">
+                        Похожие объявления
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {similar.map((item) => (
+                            <ListingCard key={item.id} listing={item} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {showRentalDialog && (
                 <RentalRequestDialog

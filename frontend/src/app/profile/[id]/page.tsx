@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Review } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -50,9 +49,6 @@ export default function UserProfilePage({ params }: Props) {
                     </Avatar>
                     <div>
                         <h1 className="text-2xl font-bold">{user.name}</h1>
-                        <Badge variant="secondary" className="mt-1">
-                            {user.role}
-                        </Badge>
                         {user.rating_avg && (
                             <div className="flex items-center gap-1 mt-2 text-sm">
                                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />

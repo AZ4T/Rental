@@ -66,7 +66,9 @@ export class RentalRequestsService {
         return this.prisma.rentalRequest.findMany({
             where: { listing: { owner_id: userId } },
             include: {
-                listing: true,
+                listing: {
+                    include: { images: true },
+                },
                 renter: {
                     select: {
                         id: true,

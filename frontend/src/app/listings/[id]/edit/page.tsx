@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
-import Image from "next/image";
 import { X, Upload, Loader2 } from "lucide-react";
 
 const schema = z.object({
@@ -107,10 +106,25 @@ export default function EditListingPage({ params }: Props) {
         e: React.ChangeEvent<HTMLInputElement>,
     ) => {
         const files = Array.from(e.target.files ?? []);
+
+        const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
+        if (oversized.length > 0) {
+            toast.error("Файл слишком большой. Максимум 10 МБ");
+            return;
+        }
+
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        const invalid = files.filter((f) => !allowed.includes(f.type));
+        if (invalid.length > 0) {
+            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            return;
+        }
+
         if (imageUrls.length + files.length > 5) {
             toast.error("Максимум 5 фотографий");
             return;
         }
+
         for (const file of files) {
             const url = await uploadImage(file);
             setImageUrls((prev) => [...prev, url]);
@@ -151,11 +165,10 @@ export default function EditListingPage({ params }: Props) {
                                         key={url}
                                         className="relative h-24 w-24 rounded-lg overflow-hidden border"
                                     >
-                                        <Image
+                                        <img
                                             src={url}
                                             alt=""
-                                            fill
-                                            className="object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                         <button
                                             type="button"
@@ -180,7 +193,7 @@ export default function EditListingPage({ params }: Props) {
                                         )}
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/jpeg,image/png,image/webp"
                                             multiple
                                             className="hidden"
                                             onChange={handleImageUpload}
@@ -195,6 +208,10 @@ export default function EditListingPage({ params }: Props) {
                                     </label>
                                 )}
                             </div>
+                            <p className="text-xs text-gray-400">
+                                Форматы: JPEG, PNG, WEBP · Максимум 10 МБ · До 5
+                                фото
+                            </p>
                         </div>
 
                         <Controller
