@@ -68,6 +68,9 @@ export interface Review {
     comment: string | null;
     created_at: string;
     author: Pick<User, "id" | "name" | "avatar_url">;
+    rentalRequest?: {
+        listing: Pick<Listing, "id" | "title" | "images">;
+    };
 }
 
 export interface Favorite {
@@ -98,4 +101,18 @@ export interface ListingFilters {
     price_max?: number;
     page?: number;
     limit?: number;
+}
+
+export interface RentalRequest {
+    id: string;
+    listing_id: string;
+    renter_id: string;
+    start_date: string;
+    end_date: string;
+    total_price: number;
+    status: RentalRequestStatus;
+    created_at: string;
+    listing: Listing;
+    renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
+    review?: Review | null; // ← добавляем
 }

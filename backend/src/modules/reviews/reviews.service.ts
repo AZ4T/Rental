@@ -58,16 +58,18 @@ export class ReviewsService {
         return review;
     }
 
-    // Отзывы о пользователе
     async findByUser(userId: string) {
         return this.prisma.review.findMany({
             where: { target_user_id: userId },
             include: {
                 author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatar_url: true,
+                    select: { id: true, name: true, avatar_url: true },
+                },
+                rentalRequest: {
+                    include: {
+                        listing: {
+                            include: { images: true },
+                        },
                     },
                 },
             },

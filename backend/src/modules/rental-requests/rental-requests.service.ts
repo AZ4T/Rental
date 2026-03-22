@@ -56,6 +56,7 @@ export class RentalRequestsService {
                 listing: {
                     include: { images: true },
                 },
+                review: true,
             },
             orderBy: { created_at: 'desc' },
         });

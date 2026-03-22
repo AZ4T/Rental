@@ -1,16 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
+import { ReviewDialog } from "@/components/review-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Calendar } from "lucide-react";
-import Image from "next/image";
+import { Loader2, Calendar, MessageSquare, CheckCircle } from "lucide-react";
 import Link from "next/link";
+import { RentalRequest } from "@/types";
 
 export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
+    const [reviewRental, setReviewRental] = useState<RentalRequest | null>(
+        null,
+    );
 
     if (isLoading) {
         return (
@@ -40,16 +45,15 @@ export default function MyRentalsPage() {
                         <CardContent className="p-4">
                             <div className="flex gap-4">
                                 {/* Фото */}
-                                <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                <div className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                                     {rental.listing.images[0] ? (
-                                        <Image
+                                        <img
                                             src={
                                                 rental.listing.images[0]
                                                     .image_url
                                             }
                                             alt={rental.listing.title}
-                                            fill
-                                            className="object-cover"
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
@@ -88,18 +92,46 @@ export default function MyRentalsPage() {
                                             ).toLocaleString()}{" "}
                                             ₸
                                         </span>
-                                        {rental.status === "PENDING" && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() =>
-                                                    cancel(rental.id)
-                                                }
-                                                disabled={isCancelling}
-                                            >
-                                                Отменить
-                                            </Button>
-                                        )}
+                                        <div className="flex gap-2">
+                                            {rental.status === "PENDING" && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        cancel(rental.id)
+                                                    }
+                                                    disabled={isCancelling}
+                                                >
+                                                    Отменить
+                                                </Button>
+                                            )}
+                                            {rental.status === "COMPLETED" && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={!!rental.review}
+                                                    onClick={() => {
+                                                        if (!rental.review) {
+                                                            setReviewRental(
+                                                                rental,
+                                                            );
+                                                        }
+                                                    }}
+                                                >
+                                                    {rental.review ? (
+                                                        <>
+                                                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                                                            Отзыв оставлен
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <MessageSquare className="h-4 w-4 mr-2" />
+                                                            Оставить отзыв
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -107,6 +139,13 @@ export default function MyRentalsPage() {
                     </Card>
                 ))}
             </div>
+
+            {reviewRental && (
+                <ReviewDialog
+                    rental={reviewRental}
+                    onClose={() => setReviewRental(null)}
+                />
+            )}
         </div>
     );
 }

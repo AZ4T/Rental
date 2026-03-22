@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Star, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -84,8 +85,9 @@ export default function UserProfilePage({ params }: Props) {
                 <div className="space-y-3">
                     {reviews?.map((review) => (
                         <Card key={review.id}>
-                            <CardContent className="p-4">
-                                <div className="flex items-center gap-3 mb-2">
+                            <CardContent className="p-4 space-y-3">
+                                {/* Автор + рейтинг */}
+                                <div className="flex items-center gap-3">
                                     <Avatar className="h-8 w-8">
                                         <AvatarImage
                                             src={review.author.avatar_url ?? ""}
@@ -96,27 +98,67 @@ export default function UserProfilePage({ params }: Props) {
                                                 .toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div>
+                                    <div className="flex-1">
                                         <p className="font-medium text-sm">
                                             {review.author.name}
                                         </p>
-                                        <div className="flex">
-                                            {Array.from({ length: 5 }).map(
-                                                (_, i) => (
-                                                    <Star
-                                                        key={i}
-                                                        className={`h-3 w-3 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                                                    />
-                                                ),
-                                            )}
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex">
+                                                {Array.from({ length: 5 }).map(
+                                                    (_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            className={`h-3 w-3 ${
+                                                                i <
+                                                                review.rating
+                                                                    ? "fill-yellow-400 text-yellow-400"
+                                                                    : "text-gray-300"
+                                                            }`}
+                                                        />
+                                                    ),
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-gray-400">
+                                                {new Date(
+                                                    review.created_at,
+                                                ).toLocaleDateString("ru-RU")}
+                                            </span>
                                         </div>
                                     </div>
-                                    <span className="ml-auto text-xs text-gray-500">
-                                        {new Date(
-                                            review.created_at,
-                                        ).toLocaleDateString("ru-RU")}
-                                    </span>
                                 </div>
+
+                                {/* Объявление */}
+                                {review.rentalRequest?.listing && (
+                                    <Link
+                                        href={`/listings/${review.rentalRequest.listing.id}`}
+                                        className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="h-10 w-10 flex-shrink-0 rounded overflow-hidden bg-gray-200">
+                                            {review.rentalRequest.listing
+                                                .images[0] ? (
+                                                <img
+                                                    src={
+                                                        review.rentalRequest
+                                                            .listing.images[0]
+                                                            .image_url
+                                                    }
+                                                    alt={
+                                                        review.rentalRequest
+                                                            .listing.title
+                                                    }
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gray-200" />
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-600 truncate">
+                                            {review.rentalRequest.listing.title}
+                                        </p>
+                                    </Link>
+                                )}
+
+                                {/* Комментарий */}
                                 {review.comment && (
                                     <p className="text-sm text-gray-600">
                                         {review.comment}

@@ -10,6 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Star, Camera, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/store/auth.store";
+import api from "@/services/api";
+import { Review } from "@/types";
+import Link from "next/link";
 
 export default function MyProfilePage() {
     const { data: user, isLoading } = useMe();
@@ -17,6 +22,15 @@ export default function MyProfilePage() {
     const { mutateAsync: uploadImage, isPending: isUploading } =
         useUploadImage();
     const [name, setName] = useState("");
+    const { user: authUser } = useAuthStore();
+    const { data: reviews } = useQuery({
+        queryKey: ["reviews", authUser?.id],
+        queryFn: () =>
+            api
+                .get<Review[]>(`/reviews/user/${authUser?.id}`)
+                .then((r) => r.data),
+        enabled: !!authUser?.id,
+    });
 
     if (isLoading) {
         return (
@@ -116,6 +130,102 @@ export default function MyProfilePage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Отзывы */}
+            <div>
+                <h2 className="text-xl font-semibold mb-4">
+                    Отзывы ({reviews?.length ?? 0})
+                </h2>
+                {reviews?.length === 0 && (
+                    <p className="text-gray-500">Отзывов пока нет</p>
+                )}
+                <div className="space-y-3">
+                    {reviews?.map((review) => (
+                        <Card key={review.id}>
+                            <CardContent className="p-4 space-y-3">
+                                {/* Автор + рейтинг */}
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage
+                                            src={review.author.avatar_url ?? ""}
+                                        />
+                                        <AvatarFallback>
+                                            {review.author.name
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <p className="font-medium text-sm">
+                                            {review.author.name}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex">
+                                                {Array.from({ length: 5 }).map(
+                                                    (_, i) => (
+                                                        <Star
+                                                            key={i}
+                                                            className={`h-3 w-3 ${
+                                                                i <
+                                                                review.rating
+                                                                    ? "fill-yellow-400 text-yellow-400"
+                                                                    : "text-gray-300"
+                                                            }`}
+                                                        />
+                                                    ),
+                                                )}
+                                            </div>
+                                            <span className="text-xs text-gray-400">
+                                                {new Date(
+                                                    review.created_at,
+                                                ).toLocaleDateString("ru-RU")}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Объявление */}
+                                {review.rentalRequest?.listing && (
+                                    <Link
+                                        href={`/listings/${review.rentalRequest.listing.id}`}
+                                        className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="h-10 w-10 flex-shrink-0 rounded overflow-hidden bg-gray-200">
+                                            {review.rentalRequest.listing
+                                                .images[0] ? (
+                                                <img
+                                                    src={
+                                                        review.rentalRequest
+                                                            .listing.images[0]
+                                                            .image_url
+                                                    }
+                                                    alt={
+                                                        review.rentalRequest
+                                                            .listing.title
+                                                    }
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gray-200" />
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-gray-600 truncate">
+                                            {review.rentalRequest.listing.title}
+                                        </p>
+                                    </Link>
+                                )}
+
+                                {/* Комментарий */}
+                                {review.comment && (
+                                    <p className="text-sm text-gray-600">
+                                        {review.comment}
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
         </div>
     );
 }
