@@ -40,19 +40,25 @@ export function ListingCard({ listing }: ListingCardProps) {
     return (
         <Link href={`/listings/${listing.id}`}>
             <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
-                <div className="relative h-48 bg-gray-100">
+                <div className="relative h-48 bg-gray-100 dark:bg-gray-800">
                     {image ? (
                         <img
                             src={image}
                             alt={listing.title}
                             className="object-cover w-full h-full"
+                            onError={(e) => {
+                                e.currentTarget.style.display = "none";
+                                e.currentTarget.nextElementSibling?.removeAttribute("hidden");
+                            }}
                         />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            Нет фото
-                        </div>
-                    )}
-                    <Badge className="absolute top-2 left-2 bg-white text-gray-700">
+                    ) : null}
+                    <div
+                        hidden={!!image}
+                        className="w-full h-full flex items-center justify-center text-gray-400"
+                    >
+                        Нет фото
+                    </div>
+                    <Badge className="absolute top-2 left-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                         {listing.category.name}
                     </Badge>
 
@@ -60,7 +66,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                     {isAuthenticated && (
                         <button
                             onClick={handleFavorite}
-                            className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:scale-110 transition-transform"
+                            className="absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full p-1.5 shadow hover:scale-110 transition-transform"
                         >
                             <Heart
                                 className={`h-4 w-4 transition-colors ${

@@ -71,7 +71,7 @@ function HomeContent() {
                             >
                                 Назад
                             </Button>
-                            <span className="flex items-center px-4 text-sm text-gray-600">
+                            <span className="flex items-center px-4 text-sm text-gray-600 dark:text-gray-400">
                                 {filters.page} / {data.meta.total_pages}
                             </span>
                             <Button

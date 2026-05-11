@@ -73,7 +73,7 @@ export function RentalRequestDialog({ listing, onClose }: Props) {
                 </DialogHeader>
 
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                         {listing.title}
                     </p>
 
@@ -98,15 +98,15 @@ export function RentalRequestDialog({ listing, onClose }: Props) {
                     </div>
 
                     {days > 0 && (
-                        <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-gray-600">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     Количество дней
                                 </span>
                                 <span className="font-medium">{days}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     Цена за день
                                 </span>
                                 <span className="font-medium">
@@ -114,7 +114,9 @@ export function RentalRequestDialog({ listing, onClose }: Props) {
                                 </span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Залог</span>
+                                <span className="text-gray-600 dark:text-gray-400">
+                                    Залог
+                                </span>
                                 <span className="font-medium">
                                     {Number(listing.deposit).toLocaleString()} ₸
                                 </span>

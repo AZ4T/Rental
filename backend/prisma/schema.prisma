@@ -25,6 +25,17 @@ enum RentalRequestStatus {
   COMPLETED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+enum TransactionType {
+  DEPOSIT
+  PAYMENT
+  INCOME
+}
+
 model User {
   id            String   @id @default(uuid()) @db.Uuid
   email         String   @unique @db.VarChar(255)
@@ -34,6 +45,7 @@ model User {
   role          Role     @default(USER)
   rating_avg    Decimal? @db.Decimal(3, 2)
   reviews_count Int      @default(0)
+  balance       Decimal  @default(0) @db.Decimal(10, 2)
   created_at    DateTime @default(now())
 
   listings        Listing[]
@@ -42,6 +54,36 @@ model User {
 
   reviews_authored Review[] @relation("ReviewAuthor")
   reviews_received Review[] @relation("ReviewTarget")
+
+  chats1   Chat[]    @relation("ChatParticipant1")
+  chats2   Chat[]    @relation("ChatParticipant2")
+  messages Message[]
+
+  transactions Transaction[]
+}
+
+model Chat {
+  id              String    @id @default(uuid()) @db.Uuid
+  participant1_id String    @db.Uuid
+  participant2_id String    @db.Uuid
+  participant1    User      @relation("ChatParticipant1", fields: [participant1_id], references: [id], onDelete: Cascade)
+  participant2    User      @relation("ChatParticipant2", fields: [participant2_id], references: [id], onDelete: Cascade)
+  messages        Message[]
+  created_at      DateTime  @default(now())
+
+  @@unique([participant1_id, participant2_id])
+}
+
+model Message {
+  id         String   @id @default(uuid()) @db.Uuid
+  chat_id    String   @db.Uuid
+  sender_id  String   @db.Uuid
+  content    String
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  chat   Chat @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [sender_id], references: [id], onDelete: Cascade)
 }
 
 model Category {
@@ -103,17 +145,34 @@ model RentalRequest {
   renter_id   String              @db.Uuid
   start_date  DateTime            @db.Date
   end_date    DateTime            @db.Date
-  total_price Decimal             @db.Decimal(10, 2)
-  status      RentalRequestStatus @default(PENDING)
-  created_at  DateTime            @default(now())
+  total_price    Decimal             @db.Decimal(10, 2)
+  status         RentalRequestStatus @default(PENDING)
+  payment_status PaymentStatus       @default(UNPAID)
+  created_at     DateTime            @default(now())
 
   listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
   renter  User    @relation(fields: [renter_id], references: [id], onDelete: Cascade)
 
-  review Review?
+  review       Review?
+  transactions Transaction[]
 
   @@index([listing_id])
   @@index([renter_id])
+}
+
+model Transaction {
+  id                String          @id @default(uuid()) @db.Uuid
+  user_id           String          @db.Uuid
+  amount            Decimal         @db.Decimal(10, 2)
+  type              TransactionType
+  description       String
+  rental_request_id String?         @db.Uuid
+  created_at        DateTime        @default(now())
+
+  user          User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  rentalRequest RentalRequest? @relation(fields: [rental_request_id], references: [id])
+
+  @@index([user_id])
 }
 
 model Review {

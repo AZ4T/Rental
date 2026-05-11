@@ -41,6 +41,13 @@ export const useAuthStore = create<AuthState>()(
                 access_token: state.access_token,
                 isAuthenticated: state.isAuthenticated,
             }),
+            onRehydrateStorage: () => (state) => {
+                if (state?.access_token) {
+                    Cookies.set("access_token", state.access_token, {
+                        expires: 1,
+                    });
+                }
+            },
         },
     ),
 );

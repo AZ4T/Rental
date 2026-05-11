@@ -7,6 +7,19 @@ export type RentalRequestStatus =
     | "CANCELLED"
     | "COMPLETED";
 
+export type PaymentStatus = "UNPAID" | "PAID";
+export type TransactionType = "DEPOSIT" | "PAYMENT" | "INCOME";
+
+export interface Transaction {
+    id: string;
+    user_id: string;
+    amount: number;
+    type: TransactionType;
+    description: string;
+    rental_request_id: string | null;
+    created_at: string;
+}
+
 export interface User {
     id: string;
     name: string;
@@ -45,19 +58,6 @@ export interface Listing {
     images: ListingImage[];
     category: Category;
     owner: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
-}
-
-export interface RentalRequest {
-    id: string;
-    listing_id: string;
-    renter_id: string;
-    start_date: string;
-    end_date: string;
-    total_price: number;
-    status: RentalRequestStatus;
-    created_at: string;
-    listing: Listing;
-    renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
 }
 
 export interface Review {
@@ -114,8 +114,9 @@ export interface RentalRequest {
     end_date: string;
     total_price: number;
     status: RentalRequestStatus;
+    payment_status: PaymentStatus;
     created_at: string;
     listing: Listing;
     renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
-    review?: Review | null; // ← добавляем
+    review?: Review | null;
 }

@@ -71,7 +71,7 @@ export default function MyListingsPage() {
                                 {/* Фото */}
                                 <Link
                                     href={`/listings/${listing.id}`}
-                                    className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100"
+                                    className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800"
                                 >
                                     {listing.images[0] ? (
                                         <img

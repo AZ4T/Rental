@@ -85,7 +85,7 @@ export default function ListingPage({ params }: Props) {
                 <div className="space-y-6">
                     <div>
                         <div className="flex items-start justify-between gap-4">
-                            <h1 className="text-2xl font-bold text-gray-900">
+                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                                 {listing.title}
                             </h1>
                             <Badge variant="secondary">
@@ -101,7 +101,7 @@ export default function ListingPage({ params }: Props) {
                     <Card>
                         <CardContent className="p-4 space-y-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">
+                                <span className="text-gray-600 dark:text-gray-400">
                                     Цена в день
                                 </span>
                                 <span className="text-2xl font-bold text-blue-600">
@@ -109,7 +109,9 @@ export default function ListingPage({ params }: Props) {
                                 </span>
                             </div>
                             <div className="flex justify-between items-center">
-                                <span className="text-gray-600">Залог</span>
+                                <span className="text-gray-600 dark:text-gray-400">
+                                    Залог
+                                </span>
                                 <span className="font-semibold">
                                     {Number(listing.deposit).toLocaleString()} ₸
                                 </span>
@@ -218,7 +220,7 @@ export default function ListingPage({ params }: Props) {
 
             <div>
                 <h2 className="text-xl font-semibold mb-3">Описание</h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
                     {listing.description}
                 </p>
             </div>

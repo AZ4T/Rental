@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
     CreateBucketCommand,
     DeleteObjectCommand,
@@ -16,9 +17,12 @@ export class UploadsService {
     private s3: S3Client;
     private bucket: string;
 
+    private publicUrl: string;
+
     constructor(private config: ConfigService) {
+        const endpoint = config.getOrThrow('MINIO_ENDPOINT');
         this.s3 = new S3Client({
-            endpoint: config.getOrThrow('MINIO_ENDPOINT'),
+            endpoint,
             region: 'us-east-1',
             credentials: {
                 accessKeyId: config.getOrThrow('MINIO_ACCESS_KEY'),
@@ -28,6 +32,7 @@ export class UploadsService {
         });
 
         this.bucket = config.getOrThrow('MINIO_BUCKET');
+        this.publicUrl = config.get('MINIO_PUBLIC_URL') || endpoint;
 
         void this.ensureBucket();
     }
@@ -74,7 +79,15 @@ export class UploadsService {
             }),
         );
 
-        return `${this.config.getOrThrow('MINIO_ENDPOINT')}/${this.bucket}/${key}`;
+        return `${this.publicUrl}/${this.bucket}/${key}`;
+    }
+
+    normalizeUrl(url: string): string {
+        const bucketPath = `/${this.bucket}/`;
+        const idx = url.indexOf(bucketPath);
+        if (idx === -1) return url;
+        const key = url.slice(idx + bucketPath.length);
+        return `${this.publicUrl}/${this.bucket}/${key}`;
     }
 
     async deleteFile(url: string): Promise<void> {

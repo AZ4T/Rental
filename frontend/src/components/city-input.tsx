@@ -77,7 +77,7 @@ export function CityInput({ value, onChange, placeholder = "Астана" }: Pro
                 className="h-10"
             />
             {open && filtered.length > 0 && value && (
-                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {filtered.map((city, i) => (
                         <button
                             key={city}

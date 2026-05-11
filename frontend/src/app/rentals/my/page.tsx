@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
+import { usePayRental } from "@/hooks/use-wallet";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Calendar, MessageSquare, CheckCircle } from "lucide-react";
+import { Loader2, Calendar, MessageSquare, CheckCircle, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 import { RentalRequest } from "@/types";
 
 export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
+    const { mutate: pay, isPending: isPaying } = usePayRental();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(
         null,
     );
@@ -45,7 +48,7 @@ export default function MyRentalsPage() {
                         <CardContent className="p-4">
                             <div className="flex gap-4">
                                 {/* Фото */}
-                                <div className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                <div className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                                     {rental.listing.images[0] ? (
                                         <img
                                             src={
@@ -93,6 +96,22 @@ export default function MyRentalsPage() {
                                             ₸
                                         </span>
                                         <div className="flex gap-2">
+                                            {rental.status === "APPROVED" && rental.payment_status === "UNPAID" && (
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        pay(rental.id, {
+                                                            onSuccess: () => toast.success("Оплата прошла успешно!"),
+                                                            onError: (e: Error) => toast.error(e.message ?? "Ошибка оплаты"),
+                                                        })
+                                                    }
+                                                    disabled={isPaying}
+                                                    className="bg-green-600 hover:bg-green-700"
+                                                >
+                                                    <CreditCard className="h-4 w-4 mr-2" />
+                                                    Оплатить
+                                                </Button>
+                                            )}
                                             {rental.status === "PENDING" && (
                                                 <Button
                                                     variant="outline"

@@ -41,7 +41,9 @@ api.interceptors.response.use(
             } catch {
                 localStorage.removeItem("access_token");
                 Cookies.remove("access_token"); // ← добавляем
-                window.location.href = "/auth/login";
+                if (!window.location.pathname.startsWith("/auth/")) {
+                    window.location.href = "/auth/login";
+                }
             }
         }
 

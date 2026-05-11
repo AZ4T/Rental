@@ -242,7 +242,7 @@ export default function AdminPage() {
                             >
                                 Назад
                             </Button>
-                            <span className="flex items-center px-3 text-sm text-gray-600">
+                            <span className="flex items-center px-3 text-sm text-gray-600 dark:text-gray-400">
                                 {listingsPage} / {listingsData.meta.total_pages}
                             </span>
                             <Button

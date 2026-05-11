@@ -186,7 +186,7 @@ export default function MyProfilePage() {
                                 {review.rentalRequest?.listing && (
                                     <Link
                                         href={`/listings/${review.rentalRequest.listing.id}`}
-                                        className="flex items-center gap-2 bg-gray-50 rounded-lg p-2 hover:bg-gray-100 transition-colors"
+                                        className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-lg p-2 hover:bg-gray-100 transition-colors"
                                     >
                                         <div className="h-10 w-10 flex-shrink-0 rounded overflow-hidden bg-gray-200">
                                             {review.rentalRequest.listing
@@ -207,7 +207,7 @@ export default function MyProfilePage() {
                                                 <div className="w-full h-full bg-gray-200" />
                                             )}
                                         </div>
-                                        <p className="text-sm text-gray-600 truncate">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                                             {review.rentalRequest.listing.title}
                                         </p>
                                     </Link>
@@ -215,7 +215,7 @@ export default function MyProfilePage() {
 
                                 {/* Комментарий */}
                                 {review.comment && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
                                         {review.comment}
                                     </p>
                                 )}

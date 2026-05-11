@@ -81,7 +81,7 @@ export class ListingsService {
         ]);
 
         return {
-            data,
+            data: data.map((l) => this.normalizeImages(l)),
             meta: {
                 total,
                 page,
@@ -110,7 +110,7 @@ export class ListingsService {
         });
 
         if (!listing) throw new NotFoundException('Объявление не найдено');
-        return listing;
+        return this.normalizeImages(listing);
     }
 
     async findMyListings(userId: string) {
@@ -131,11 +131,14 @@ export class ListingsService {
             orderBy: { created_at: 'desc' },
         });
 
-        return { data, meta: { total: data.length } };
+        return {
+            data: data.map((l) => this.normalizeImages(l)),
+            meta: { total: data.length },
+        };
     }
 
     async findSimilar(listingId: string, categoryId: string) {
-        return this.prisma.listing.findMany({
+        const listings = await this.prisma.listing.findMany({
             where: {
                 category_id: categoryId,
                 id: { not: listingId },
@@ -155,6 +158,19 @@ export class ListingsService {
             take: 4,
             orderBy: { created_at: 'desc' },
         });
+        return listings.map((l) => this.normalizeImages(l));
+    }
+
+    private normalizeImages<T extends { images: { image_url: string }[] }>(
+        listing: T,
+    ): T {
+        return {
+            ...listing,
+            images: listing.images.map((img) => ({
+                ...img,
+                image_url: this.uploadsService.normalizeUrl(img.image_url),
+            })),
+        };
     }
 
     async getPriceRange() {
@@ -191,8 +207,11 @@ export class ListingsService {
         const { image_urls, ...rest } = dto;
 
         if (image_urls) {
+            const toDelete = listing.images.filter(
+                (img) => !image_urls.includes(img.image_url),
+            );
             await Promise.all(
-                listing.images.map((img) =>
+                toDelete.map((img) =>
                     this.uploadsService.deleteFile(img.image_url),
                 ),
             );

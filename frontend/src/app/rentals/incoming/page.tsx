@@ -38,7 +38,7 @@ export default function IncomingRentalsPage() {
                         <CardContent className="p-4 space-y-4">
                             <div className="flex gap-4">
                                 {/* Фото */}
-                                <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                                <div className="relative h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                                     {rental.listing?.images?.[0] ? (
                                         <img
                                             src={

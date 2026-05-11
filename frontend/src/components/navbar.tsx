@@ -15,6 +15,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
+import { useUnreadCount } from "@/hooks/use-chats";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Search } from "lucide-react";
@@ -39,6 +40,7 @@ export function Navbar() {
     const { user, isAuthenticated } = useAuthStore();
     const { mutate: logout } = useLogout();
     const { data: incomingCount } = useIncomingRentalsCount();
+    const { data: unreadCount } = useUnreadCount(isAuthenticated);
     const [mobileOpen, setMobileOpen] = useState(false);
     const router = useRouter();
     const [search, setSearch] = useState("");
@@ -101,6 +103,17 @@ export function Navbar() {
                                     )}
                                 </Link>
                                 <Link
+                                    href="/chats"
+                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white relative"
+                                >
+                                    Сообщения
+                                    {!!unreadCount && (
+                                        <span className="absolute -top-2 -right-4 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                            {unreadCount > 9 ? "9+" : unreadCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link
                                     href="/favorites"
                                     className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                                 >
@@ -155,6 +168,11 @@ export function Navbar() {
                                         <DropdownMenuItem asChild>
                                             <Link href="/profile/my-listings">
                                                 Мои объявления
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/wallet">
+                                                Кошелёк
                                             </Link>
                                         </DropdownMenuItem>
                                         {user.role === "ADMIN" && (
@@ -230,6 +248,18 @@ export function Navbar() {
                                         {!!incomingCount && (
                                             <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                                                 {incomingCount}
+                                            </span>
+                                        )}
+                                    </Link>
+                                    <Link
+                                        href="/chats"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
+                                    >
+                                        Сообщения
+                                        {!!unreadCount && (
+                                            <span className="bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                                {unreadCount > 9 ? "9+" : unreadCount}
                                             </span>
                                         )}
                                     </Link>

@@ -42,13 +42,13 @@ export default function FavoritesPage() {
                     >
                         <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
                             {/* Фото */}
-                            <div className="relative h-44 bg-gray-100 overflow-hidden">
+                            <div className="relative h-44 bg-gray-100 dark:bg-gray-800 overflow-hidden">
                                 <img
                                     src={favorite.listing.images[0]?.image_url}
                                     alt={favorite.listing.title}
                                     className="w-full h-full object-cover"
                                 />
-                                <Badge className="absolute top-2 left-2 bg-white text-gray-700">
+                                <Badge className="absolute top-2 left-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                                     {favorite.listing.category.name}
                                 </Badge>
                                 <button
@@ -57,7 +57,7 @@ export default function FavoritesPage() {
                                         remove(favorite.listing_id);
                                     }}
                                     disabled={isPending}
-                                    className="absolute top-2 right-2 bg-white rounded-full p-1.5 hover:bg-red-50 transition-colors"
+                                    className="absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full p-1.5 hover:bg-red-50 transition-colors"
                                 >
                                     <Trash2 className="h-4 w-4 text-red-500" />
                                 </button>
@@ -85,7 +85,7 @@ export default function FavoritesPage() {
                                         </span>
                                     </div>
                                     {favorite.listing.owner.rating_avg && (
-                                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                                        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
                                             <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                                             <span>
                                                 {Number(

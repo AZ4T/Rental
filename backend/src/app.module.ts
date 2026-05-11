@@ -10,6 +10,8 @@ import { RentalRequestsModule } from './modules/rental-requests/rental-requests.
 import { AdminModule } from './modules/admin/admin.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { ChatsModule } from './modules/chats/chats.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 
 @Module({
     imports: [
@@ -24,6 +26,8 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
         AdminModule,
         FavoritesModule,
         ReviewsModule,
+        ChatsModule,
+        WalletModule,
     ],
 })
 export class AppModule {}

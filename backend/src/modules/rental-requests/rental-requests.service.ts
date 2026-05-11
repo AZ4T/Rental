@@ -7,10 +7,14 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRentalRequestDto } from './dto/create-rental-request.dto';
 import { UpdateStatusDto } from './dto/update-rental-request.dto';
+import { ChatsService } from '../chats/chats.service';
 
 @Injectable()
 export class RentalRequestsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private chatsService: ChatsService,
+    ) {}
 
     async create(dto: CreateRentalRequestDto, renterId: string) {
         const listing = await this.prisma.listing.findUnique({
@@ -94,10 +98,17 @@ export class RentalRequestsService {
             throw new ForbiddenException('Нет доступа');
         }
 
-        return this.prisma.rentalRequest.update({
+        const updated = await this.prisma.rentalRequest.update({
             where: { id },
             data: { status: dto.status },
+            include: { listing: true },
         });
+
+        if (dto.status === 'APPROVED') {
+            await this.chatsService.findOrCreate(userId, request.listing.owner_id === userId ? request.renter_id : request.listing.owner_id);
+        }
+
+        return updated;
     }
 
     async cancel(id: string, userId: string) {

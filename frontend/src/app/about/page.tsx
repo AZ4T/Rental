@@ -89,7 +89,7 @@ export default function AboutPage() {
                                 asChild
                                 size="lg"
                                 variant="outline"
-                                className="text-white border-white hover:bg-white/10"
+                                className="text-white bg-white dark:bg-gray-900 hover:bg-white/10"
                             >
                                 <Link href="/auth/register">
                                     Зарегистрироваться
@@ -307,7 +307,7 @@ export default function AboutPage() {
                                 <Button
                                     asChild
                                     size="lg"
-                                    className="bg-white text-blue-600 hover:bg-white/90"
+                                    className="bg-white dark:bg-gray-900 text-blue-600 hover:bg-white/90"
                                 >
                                     <Link href="/auth/register">
                                         Зарегистрироваться

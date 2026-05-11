@@ -41,7 +41,7 @@ export function ReviewDialog({ rental, onClose }: Props) {
                     <DialogTitle>Оставить отзыв</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                    <p className="text-sm text-gray-600 truncate">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
                         {rental.listing.title}
                     </p>
 

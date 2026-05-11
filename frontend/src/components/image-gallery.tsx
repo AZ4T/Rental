@@ -32,7 +32,7 @@ export function ImageGallery({ images, title }: Props) {
 
     if (images.length === 0) {
         return (
-            <div className="h-96 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
+            <div className="h-96 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-400">
                 Нет фото
             </div>
         );
@@ -42,7 +42,7 @@ export function ImageGallery({ images, title }: Props) {
         return (
             <>
                 <div
-                    className="h-96 bg-gray-100 rounded-xl overflow-hidden cursor-zoom-in"
+                    className="h-96 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden cursor-zoom-in"
                     onClick={() => setLightboxIndex(0)}
                 >
                     <img
@@ -109,7 +109,7 @@ export function ImageGallery({ images, title }: Props) {
                                 key={i}
                                 className={`h-1.5 rounded-full transition-all ${
                                     activeIndex === i
-                                        ? "w-4 bg-white"
+                                        ? "w-4 bg-white dark:bg-gray-900"
                                         : "w-1.5 bg-white/50"
                                 }`}
                             />

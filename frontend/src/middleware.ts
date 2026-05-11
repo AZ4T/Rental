@@ -4,11 +4,14 @@ import type { NextRequest } from "next/server";
 // Роуты которые требуют авторизации
 const protectedRoutes = [
     "/listings/create",
-    "/listings",
+    "/listings/edit",
     "/favorites",
     "/rentals",
     "/profile/me",
+    "/profile/my-listings",
     "/admin",
+    "/chats",
+    "/wallet",
 ];
 
 // Роуты только для гостей
