@@ -8,7 +8,7 @@ export type RentalRequestStatus =
     | "COMPLETED";
 
 export type PaymentStatus = "UNPAID" | "PAID";
-export type TransactionType = "DEPOSIT" | "PAYMENT" | "INCOME";
+export type TransactionType = "DEPOSIT" | "PAYMENT" | "INCOME" | "REFUND";
 
 export interface Transaction {
     id: string;

@@ -5,6 +5,7 @@ import { User } from "@/types";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { disconnectSocket } from "@/services/socket";
 
 interface LoginDto {
     email: string;
@@ -77,6 +78,7 @@ export function useLogout() {
         mutationFn: () => api.post("/auth/logout").then((r) => r.data),
 
         onSuccess: () => {
+            disconnectSocket();
             logout();
             queryClient.clear();
             router.push("/auth/login");

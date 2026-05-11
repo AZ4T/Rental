@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/navbar";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { NotificationsProvider } from "@/providers/notifications-provider";
 
 export const metadata: Metadata = {
     title: "Rental App",
@@ -24,12 +25,14 @@ export default function RootLayout({
             <body className={inter.className}>
                 <ThemeProvider>
                     <QueryProvider>
-                        <Navbar />
-                        <main className="max-w-7xl mx-auto px-4 py-8">
-                            {children}
-                        </main>
-                        <ScrollToTop />
-                        <Toaster />
+                        <NotificationsProvider>
+                            <Navbar />
+                            <main className="max-w-7xl mx-auto px-4 py-8">
+                                {children}
+                            </main>
+                            <ScrollToTop />
+                            <Toaster />
+                        </NotificationsProvider>
                     </QueryProvider>
                 </ThemeProvider>
             </body>

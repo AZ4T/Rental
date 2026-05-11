@@ -5,10 +5,14 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class WalletService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private notificationsGateway: NotificationsGateway,
+    ) {}
 
     async getWallet(userId: string) {
         const user = await this.prisma.user.findUnique({
@@ -65,43 +69,60 @@ export class WalletService {
             throw new BadRequestException('Заявка уже оплачена');
         }
 
+        // Нельзя оплачивать аренду с истёкшими датами
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (new Date(request.end_date) < today) {
+            throw new BadRequestException(
+                'Нельзя оплатить аренду с истёкшими датами',
+            );
+        }
+
         const renter = await this.prisma.user.findUnique({
             where: { id: renterId },
             select: { balance: true },
         });
 
-        const amount = Number(request.total_price);
-        if (Number(renter!.balance) < amount) {
-            throw new BadRequestException('Недостаточно средств на кошельке');
-        }
-
-        const ownerId = request.listing.owner_id;
+        const rentalAmount = Number(request.total_price);
+        const deposit = Number(request.listing.deposit);
+        const totalCharge = rentalAmount + deposit;
         const title = request.listing.title;
+        const ownerId = request.listing.owner_id;
+
+        if (Number(renter!.balance) < totalCharge) {
+            throw new BadRequestException(
+                `Недостаточно средств. Требуется ${totalCharge.toLocaleString()} ₸ (аренда ${rentalAmount.toLocaleString()} ₸ + депозит ${deposit.toLocaleString()} ₸)`,
+            );
+        }
 
         await this.prisma.$transaction([
             this.prisma.user.update({
                 where: { id: renterId },
-                data: { balance: { decrement: amount } },
+                data: { balance: { decrement: totalCharge } },
             }),
             this.prisma.user.update({
                 where: { id: ownerId },
-                data: { balance: { increment: amount } },
+                data: { balance: { increment: totalCharge } },
             }),
             this.prisma.transaction.create({
                 data: {
                     user_id: renterId,
-                    amount,
+                    amount: totalCharge,
                     type: 'PAYMENT',
-                    description: `Оплата аренды: ${title}`,
+                    description: deposit > 0
+                        ? `Оплата аренды: ${title} (${rentalAmount.toLocaleString()} ₸ + депозит ${deposit.toLocaleString()} ₸)`
+                        : `Оплата аренды: ${title}`,
                     rental_request_id: rentalRequestId,
                 },
             }),
             this.prisma.transaction.create({
                 data: {
                     user_id: ownerId,
-                    amount,
+                    amount: totalCharge,
                     type: 'INCOME',
-                    description: `Получена оплата аренды: ${title}`,
+                    description: deposit > 0
+                        ? `Получена оплата аренды: ${title} (включая депозит ${deposit.toLocaleString()} ₸)`
+                        : `Получена оплата аренды: ${title}`,
                     rental_request_id: rentalRequestId,
                 },
             }),
@@ -111,6 +132,50 @@ export class WalletService {
             }),
         ]);
 
+        this.notificationsGateway.sendToUser(ownerId, 'payment_received', {
+            message: `Получена оплата ${totalCharge.toLocaleString()} ₸ за аренду "${title}"`,
+            rentalRequestId,
+        });
+
         return { success: true };
+    }
+
+    async refundDeposit(
+        renterId: string,
+        ownerId: string,
+        deposit: number,
+        rentalRequestId: string,
+        title: string,
+    ) {
+        if (deposit <= 0) return;
+
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: ownerId },
+                data: { balance: { decrement: deposit } },
+            }),
+            this.prisma.user.update({
+                where: { id: renterId },
+                data: { balance: { increment: deposit } },
+            }),
+            this.prisma.transaction.create({
+                data: {
+                    user_id: ownerId,
+                    amount: deposit,
+                    type: 'REFUND',
+                    description: `Возврат депозита арендатору: ${title}`,
+                    rental_request_id: rentalRequestId,
+                },
+            }),
+            this.prisma.transaction.create({
+                data: {
+                    user_id: renterId,
+                    amount: deposit,
+                    type: 'REFUND',
+                    description: `Возврат депозита: ${title}`,
+                    rental_request_id: rentalRequestId,
+                },
+            }),
+        ]);
     }
 }

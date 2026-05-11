@@ -1,17 +1,22 @@
 "use client";
 
 import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
+import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Calendar } from "lucide-react";
-import Image from "next/image";
+import { Loader2, Calendar, MessageCircle, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function IncomingRentalsPage() {
     const { data: rentals, isLoading } = useIncomingRentals();
     const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
+    const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
+    const router = useRouter();
 
     if (isLoading) {
         return (
@@ -142,21 +147,51 @@ export default function IncomingRentalsPage() {
                                 </div>
                             )}
                             {rental.status === "APPROVED" && (
-                                <div className="pt-2 border-t">
-                                    <Button
-                                        className="w-full"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() =>
-                                            updateStatus({
-                                                id: rental.id,
-                                                status: "COMPLETED",
-                                            })
-                                        }
-                                        disabled={isPending}
-                                    >
-                                        Завершить аренду
-                                    </Button>
+                                <div className="pt-2 border-t space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        {rental.payment_status === "PAID" ? (
+                                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
+                                                <CheckCircle className="h-3 w-3" /> Оплачено
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline" className="text-orange-500 border-orange-300 gap-1">
+                                                <Clock className="h-3 w-3" /> Ожидает оплаты
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {rental.renter && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="flex-1"
+                                                disabled={isChatPending}
+                                                onClick={() =>
+                                                    openChat(rental.renter!.id, {
+                                                        onSuccess: (chat) => router.push(`/chats/${chat.id}`),
+                                                        onError: () => toast.error("Не удалось открыть чат"),
+                                                    })
+                                                }
+                                            >
+                                                <MessageCircle className="h-4 w-4 mr-2" />
+                                                Написать арендатору
+                                            </Button>
+                                        )}
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="flex-1"
+                                            onClick={() =>
+                                                updateStatus({
+                                                    id: rental.id,
+                                                    status: "COMPLETED",
+                                                })
+                                            }
+                                            disabled={isPending || rental.payment_status !== "PAID"}
+                                        >
+                                            Завершить аренду
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>

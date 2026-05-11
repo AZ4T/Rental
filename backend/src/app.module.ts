@@ -12,6 +12,7 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { WalletModule } from './modules/wallet/wallet.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
     imports: [
@@ -28,6 +29,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
         ReviewsModule,
         ChatsModule,
         WalletModule,
+        NotificationsModule,
     ],
 })
 export class AppModule {}

@@ -47,7 +47,11 @@ api.interceptors.response.use(
             }
         }
 
-        return Promise.reject(error);
+        const message =
+            error.response?.data?.message ??
+            error.response?.data?.error ??
+            error.message;
+        return Promise.reject(new Error(Array.isArray(message) ? message[0] : message));
     },
 );
 

@@ -34,6 +34,7 @@ enum TransactionType {
   DEPOSIT
   PAYMENT
   INCOME
+  REFUND
 }
 
 model User {

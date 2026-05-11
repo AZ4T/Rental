@@ -28,10 +28,15 @@ export class ReviewsService {
             );
         }
 
-        // Только после завершённой аренды
+        // Только после завершённой и оплаченной аренды
         if (rentalRequest.status !== 'COMPLETED') {
             throw new BadRequestException(
                 'Можно оставить отзыв только после завершения аренды',
+            );
+        }
+        if (rentalRequest.payment_status !== 'PAID') {
+            throw new BadRequestException(
+                'Можно оставить отзыв только после оплаченной аренды',
             );
         }
 
