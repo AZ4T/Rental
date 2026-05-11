@@ -7,14 +7,51 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Loader2, Plus, Pencil, Trash2, MapPin } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, MapPin, Eye, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useListingAnalytics } from "@/hooks/use-listings";
+
+function AnalyticsPanel({ listingId }: { listingId: string }) {
+    const { data, isLoading } = useListingAnalytics(listingId);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+            </div>
+        );
+    }
+
+    if (!data) return null;
+
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 mt-3 border-t">
+            <div className="text-center">
+                <p className="text-xs text-muted-foreground">Просмотры</p>
+                <p className="font-bold text-lg">{data.views_count}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-xs text-muted-foreground">Заявки</p>
+                <p className="font-bold text-lg">{data.total_requests}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-xs text-muted-foreground">Завершено</p>
+                <p className="font-bold text-lg text-green-600">{data.completed}</p>
+            </div>
+            <div className="text-center">
+                <p className="text-xs text-muted-foreground">Доход</p>
+                <p className="font-bold text-lg text-blue-600">{Number(data.revenue).toLocaleString()} ₸</p>
+            </div>
+        </div>
+    );
+}
 
 export default function MyListingsPage() {
     const queryClient = useQueryClient();
     const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const { data, isLoading } = useQuery({
         queryKey: ["listings", "my"],
@@ -99,9 +136,15 @@ export default function MyListingsPage() {
                                             {listing.category.name}
                                         </Badge>
                                     </div>
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                                        <MapPin className="h-3 w-3" />
-                                        <span>{listing.city}</span>
+                                    <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                                        <div className="flex items-center gap-1">
+                                            <MapPin className="h-3 w-3" />
+                                            <span>{listing.city}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <Eye className="h-3 w-3" />
+                                            <span>{listing.views_count ?? 0}</span>
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-between mt-2">
                                         <span className="font-semibold text-blue-600">
@@ -111,6 +154,24 @@ export default function MyListingsPage() {
                                             ₸/день
                                         </span>
                                         <div className="flex gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() =>
+                                                    setExpandedId(
+                                                        expandedId === listing.id
+                                                            ? null
+                                                            : listing.id,
+                                                    )
+                                                }
+                                            >
+                                                <BarChart2 className="h-4 w-4 mr-1" />
+                                                {expandedId === listing.id ? (
+                                                    <ChevronUp className="h-3 w-3" />
+                                                ) : (
+                                                    <ChevronDown className="h-3 w-3" />
+                                                )}
+                                            </Button>
                                             <Button
                                                 asChild
                                                 variant="outline"
@@ -135,6 +196,10 @@ export default function MyListingsPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {expandedId === listing.id && (
+                                <AnalyticsPanel listingId={listing.id} />
+                            )}
                         </CardContent>
                     </Card>
                 ))}

@@ -104,6 +104,7 @@ model Listing {
   city        String   @db.VarChar(255)
   owner_id    String   @db.Uuid
   category_id String   @db.Uuid
+  views_count Int      @default(0)
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
@@ -154,7 +155,7 @@ model RentalRequest {
   listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
   renter  User    @relation(fields: [renter_id], references: [id], onDelete: Cascade)
 
-  review       Review?
+  reviews      Review[]
   transactions Transaction[]
 
   @@index([listing_id])
@@ -180,7 +181,7 @@ model Review {
   id                String   @id @default(uuid()) @db.Uuid
   author_id         String   @db.Uuid
   target_user_id    String   @db.Uuid
-  rental_request_id String   @unique @db.Uuid
+  rental_request_id String   @db.Uuid
   rating            Int
   comment           String?
   created_at        DateTime @default(now())
@@ -188,4 +189,6 @@ model Review {
   author        User          @relation("ReviewAuthor", fields: [author_id], references: [id], onDelete: Cascade)
   target_user   User          @relation("ReviewTarget", fields: [target_user_id], references: [id], onDelete: Cascade)
   rentalRequest RentalRequest @relation(fields: [rental_request_id], references: [id], onDelete: Cascade)
+
+  @@unique([rental_request_id, author_id])
 }

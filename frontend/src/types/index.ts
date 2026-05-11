@@ -53,6 +53,7 @@ export interface Listing {
     city: string;
     owner_id: string;
     category_id: string;
+    views_count: number;
     created_at: string;
     updated_at: string;
     images: ListingImage[];
@@ -118,5 +119,5 @@ export interface RentalRequest {
     created_at: string;
     listing: Listing;
     renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
-    review?: Review | null;
+    reviews?: Review[];
 }

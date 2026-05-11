@@ -11,11 +11,13 @@ import { Loader2, Calendar, MessageSquare, CheckCircle, CreditCard } from "lucid
 import { toast } from "sonner";
 import Link from "next/link";
 import { RentalRequest } from "@/types";
+import { useAuthStore } from "@/store/auth.store";
 
 export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
     const { mutate: pay, isPending: isPaying } = usePayRental();
+    const { user } = useAuthStore();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(
         null,
     );
@@ -124,32 +126,33 @@ export default function MyRentalsPage() {
                                                     Отменить
                                                 </Button>
                                             )}
-                                            {rental.status === "COMPLETED" && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    disabled={!!rental.review}
-                                                    onClick={() => {
-                                                        if (!rental.review) {
-                                                            setReviewRental(
-                                                                rental,
-                                                            );
-                                                        }
-                                                    }}
-                                                >
-                                                    {rental.review ? (
-                                                        <>
-                                                            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                                                            Отзыв оставлен
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <MessageSquare className="h-4 w-4 mr-2" />
-                                                            Оставить отзыв
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            )}
+                                            {rental.status === "COMPLETED" && (() => {
+                                                const myReview = rental.reviews?.find(r => r.author_id === user?.id);
+                                                return (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={!!myReview}
+                                                        onClick={() => {
+                                                            if (!myReview) {
+                                                                setReviewRental(rental);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {myReview ? (
+                                                            <>
+                                                                <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                                                                Отзыв оставлен
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <MessageSquare className="h-4 w-4 mr-2" />
+                                                                Оставить отзыв
+                                                            </>
+                                                        )}
+                                                    </Button>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

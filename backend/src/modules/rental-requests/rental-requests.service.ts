@@ -95,7 +95,7 @@ export class RentalRequestsService {
                 listing: {
                     include: { images: true },
                 },
-                review: true,
+                reviews: true,
             },
             orderBy: { created_at: 'desc' },
         });
@@ -108,6 +108,7 @@ export class RentalRequestsService {
                 listing: {
                     include: { images: true },
                 },
+                reviews: true,
                 renter: {
                     select: {
                         id: true,

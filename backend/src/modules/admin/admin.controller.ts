@@ -43,4 +43,9 @@ export class AdminController {
     deleteCategory(@Param('id') id: string) {
         return this.adminService.deleteCategory(id);
     }
+
+    @Get('stats')
+    getStats() {
+        return this.adminService.getStats();
+    }
 }

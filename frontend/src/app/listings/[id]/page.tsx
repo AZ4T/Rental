@@ -1,13 +1,13 @@
 "use client";
 
 import { use, useState } from "react";
-import { useListing } from "@/hooks/use-listings";
+import { useListing, useListingAvailability } from "@/hooks/use-listings";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
-import { MapPin, Star, Calendar, Shield, Loader2, Heart } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { MapPin, Star, Calendar, Shield, Loader2, Heart, Eye, QrCode, X } from "lucide-react";
 import Link from "next/link";
 import { RentalRequestDialog } from "@/components/rental-request-dialog";
 import {
@@ -19,17 +19,56 @@ import { ImageGallery } from "@/components/image-gallery";
 import { Share2, Check } from "lucide-react";
 import { useSimilarListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/style.css";
+import QRCode from "qrcode";
+import { useEffect, useRef } from "react";
 
 interface Props {
     params: Promise<{ id: string }>;
 }
 
+function QRModal({ url, onClose }: { url: string; onClose: () => void }) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (canvasRef.current) {
+            void QRCode.toCanvas(canvasRef.current, url, { width: 200 });
+        }
+    }, [url]);
+
+    return (
+        <div
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
+            onClick={onClose}
+        >
+            <div
+                className="bg-white dark:bg-gray-900 rounded-2xl p-6 flex flex-col items-center gap-4"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between w-full">
+                    <h2 className="font-semibold">QR-код объявления</h2>
+                    <button onClick={onClose}>
+                        <X className="h-5 w-5 text-gray-400" />
+                    </button>
+                </div>
+                <canvas ref={canvasRef} />
+                <p className="text-xs text-muted-foreground text-center max-w-[200px] break-all">
+                    {url}
+                </p>
+            </div>
+        </div>
+    );
+}
+
 export default function ListingPage({ params }: Props) {
     const { id } = use(params);
     const { data: listing, isLoading, isError } = useListing(id);
+    const { data: availability } = useListingAvailability(id);
     const { user, isAuthenticated } = useAuthStore();
     const [activeImage, setActiveImage] = useState(0);
     const [showRentalDialog, setShowRentalDialog] = useState(false);
+    const [showQR, setShowQR] = useState(false);
     const { data: favorites } = useMyFavorites();
     const { mutate: addFavorite } = useAddFavorite();
     const { mutate: removeFavorite } = useRemoveFavorite();
@@ -40,8 +79,14 @@ export default function ListingPage({ params }: Props) {
     );
 
     const isFavorited = favorites?.some((f) => f.listing_id === id);
-    const isOwner = user?.id === listing?.owner_id; // ← добавляем здесь
+    const isOwner = user?.id === listing?.owner_id;
     const [heartAnimating, setHeartAnimating] = useState(false);
+
+    const bookedRanges =
+        availability?.map((r) => ({
+            from: new Date(r.start_date),
+            to: new Date(r.end_date),
+        })) ?? [];
 
     if (isLoading) {
         return (
@@ -92,9 +137,15 @@ export default function ListingPage({ params }: Props) {
                                 {listing.category.name}
                             </Badge>
                         </div>
-                        <div className="flex items-center gap-1 text-gray-500 mt-2">
-                            <MapPin className="h-4 w-4" />
-                            <span>{listing.city}</span>
+                        <div className="flex items-center gap-3 mt-2">
+                            <div className="flex items-center gap-1 text-gray-500">
+                                <MapPin className="h-4 w-4" />
+                                <span>{listing.city}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-gray-400 text-sm">
+                                <Eye className="h-3.5 w-3.5" />
+                                <span>{listing.views_count ?? 0} просмотров</span>
+                            </div>
                         </div>
                     </div>
 
@@ -164,7 +215,7 @@ export default function ListingPage({ params }: Props) {
                         </CardContent>
                     </Card>
 
-                    {/* Владелец + Поделиться */}
+                    {/* Владелец + Поделиться + QR */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <Avatar>
@@ -195,25 +246,33 @@ export default function ListingPage({ params }: Props) {
                             </div>
                         </div>
 
-                        {/* Кнопка поделиться */}
-                        <button
-                            onClick={handleShare}
-                            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            {copied ? (
-                                <>
-                                    <Check className="h-4 w-4 text-green-500" />
-                                    <span className="text-green-500">
-                                        Скопировано
-                                    </span>
-                                </>
-                            ) : (
-                                <>
-                                    <Share2 className="h-4 w-4" />
-                                    <span>Поделиться</span>
-                                </>
-                            )}
-                        </button>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setShowQR(true)}
+                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <QrCode className="h-4 w-4" />
+                                <span>QR</span>
+                            </button>
+                            <button
+                                onClick={handleShare}
+                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                {copied ? (
+                                    <>
+                                        <Check className="h-4 w-4 text-green-500" />
+                                        <span className="text-green-500">
+                                            Скопировано
+                                        </span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Share2 className="h-4 w-4" />
+                                        <span>Поделиться</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -224,6 +283,39 @@ export default function ListingPage({ params }: Props) {
                     {listing.description}
                 </p>
             </div>
+
+            {/* Календарь занятости */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Занятые даты
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {bookedRanges.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                            Нет забронированных дат
+                        </p>
+                    ) : (
+                        <DayPicker
+                            mode="multiple"
+                            selected={bookedRanges.flatMap((r) => {
+                                const days: Date[] = [];
+                                const cur = new Date(r.from);
+                                while (cur <= r.to) {
+                                    days.push(new Date(cur));
+                                    cur.setDate(cur.getDate() + 1);
+                                }
+                                return days;
+                            })}
+                            disabled
+                            showOutsideDays={false}
+                            className="rdp-compact"
+                        />
+                    )}
+                </CardContent>
+            </Card>
 
             <Card className="bg-blue-50 border-blue-100">
                 <CardContent className="p-4 flex items-start gap-3">
@@ -257,6 +349,17 @@ export default function ListingPage({ params }: Props) {
                 <RentalRequestDialog
                     listing={listing}
                     onClose={() => setShowRentalDialog(false)}
+                />
+            )}
+
+            {showQR && (
+                <QRModal
+                    url={
+                        typeof window !== "undefined"
+                            ? window.location.href
+                            : `https://rental.app/listings/${id}`
+                    }
+                    onClose={() => setShowQR(false)}
                 />
             )}
         </div>

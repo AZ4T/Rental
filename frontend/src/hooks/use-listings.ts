@@ -69,3 +69,40 @@ export function useSimilarListings(id: string, categoryId: string) {
         enabled: !!id && !!categoryId,
     });
 }
+
+export interface ListingAvailability {
+    start_date: string;
+    end_date: string;
+}
+
+export function useListingAvailability(id: string) {
+    return useQuery({
+        queryKey: ["listing", id, "availability"],
+        queryFn: () =>
+            api
+                .get<ListingAvailability[]>(`/listings/${id}/availability`)
+                .then((r) => r.data),
+        enabled: !!id,
+    });
+}
+
+export interface ListingAnalytics {
+    views_count: number;
+    total_requests: number;
+    pending: number;
+    approved: number;
+    completed: number;
+    rejected: number;
+    revenue: number;
+}
+
+export function useListingAnalytics(id: string) {
+    return useQuery({
+        queryKey: ["listing", id, "analytics"],
+        queryFn: () =>
+            api
+                .get<ListingAnalytics>(`/listings/${id}/analytics`)
+                .then((r) => r.data),
+        enabled: !!id,
+    });
+}

@@ -1,21 +1,25 @@
 "use client";
 
+import { useState } from "react";
 import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
+import { ReviewDialog } from "@/components/review-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Calendar, MessageCircle, CheckCircle, Clock } from "lucide-react";
+import { Loader2, Calendar, MessageCircle, CheckCircle, Clock, Star } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { RentalRequest } from "@/types";
 
 export default function IncomingRentalsPage() {
     const { data: rentals, isLoading } = useIncomingRentals();
     const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
     const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
+    const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
     const router = useRouter();
 
     if (isLoading) {
@@ -194,10 +198,41 @@ export default function IncomingRentalsPage() {
                                     </div>
                                 </div>
                             )}
+                            {rental.status === "COMPLETED" && rental.renter && (() => {
+                                const myReview = rental.reviews?.find(r => r.target_user_id === rental.renter!.id);
+                                return (
+                                    <div className="pt-2 border-t">
+                                        {myReview ? (
+                                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                                                Вы оставили отзыв об арендаторе
+                                            </p>
+                                        ) : (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setReviewRental(rental)}
+                                            >
+                                                <Star className="h-4 w-4 mr-2" />
+                                                Оценить арендатора
+                                            </Button>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </CardContent>
                     </Card>
                 ))}
             </div>
+
+            {reviewRental && reviewRental.renter && (
+                <ReviewDialog
+                    rental={reviewRental}
+                    targetUserId={reviewRental.renter.id}
+                    dialogTitle="Оценить арендатора"
+                    onClose={() => setReviewRental(null)}
+                />
+            )}
         </div>
     );
 }

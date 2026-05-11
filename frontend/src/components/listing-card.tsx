@@ -1,4 +1,4 @@
-import { Heart, MapPin, Star } from "lucide-react";
+import { Heart, MapPin, Star, Eye } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
     useMyFavorites,
@@ -97,16 +97,20 @@ export function ListingCard({ listing }: ListingCardProps) {
                                 / день
                             </span>
                         </div>
-                        {listing.owner.rating_avg && (
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                <span>
-                                    {Number(listing.owner.rating_avg).toFixed(
-                                        1,
-                                    )}
-                                </span>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            {listing.owner.rating_avg && (
+                                <div className="flex items-center gap-1">
+                                    <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                    <span>
+                                        {Number(listing.owner.rating_avg).toFixed(1)}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                <span>{listing.views_count ?? 0}</span>
                             </div>
-                        )}
+                        </div>
                     </div>
                 </CardContent>
             </Card>

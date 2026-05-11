@@ -12,23 +12,22 @@ export class ReviewsService {
     constructor(private prisma: PrismaService) {}
 
     async create(dto: CreateReviewDto, authorId: string) {
-        // Проверяем что аренда существует
         const rentalRequest = await this.prisma.rentalRequest.findUnique({
             where: { id: dto.rental_request_id },
+            include: { listing: true },
         });
 
         if (!rentalRequest) {
             throw new NotFoundException('Заявка на аренду не найдена');
         }
 
-        // Только арендатор может оставить отзыв
-        if (rentalRequest.renter_id !== authorId) {
-            throw new ForbiddenException(
-                'Только арендатор может оставить отзыв',
-            );
+        const isRenter = rentalRequest.renter_id === authorId;
+        const isOwner = rentalRequest.listing.owner_id === authorId;
+
+        if (!isRenter && !isOwner) {
+            throw new ForbiddenException('Нет доступа к этой аренде');
         }
 
-        // Только после завершённой и оплаченной аренды
         if (rentalRequest.status !== 'COMPLETED') {
             throw new BadRequestException(
                 'Можно оставить отзыв только после завершения аренды',
@@ -40,11 +39,16 @@ export class ReviewsService {
             );
         }
 
-        // Проверяем что отзыв ещё не оставлен
+        // Проверяем что этот автор ещё не оставлял отзыв по этой заявке
         const exists = await this.prisma.review.findUnique({
-            where: { rental_request_id: dto.rental_request_id },
+            where: {
+                rental_request_id_author_id: {
+                    rental_request_id: dto.rental_request_id,
+                    author_id: authorId,
+                },
+            },
         });
-        if (exists) throw new BadRequestException('Отзыв уже оставлен');
+        if (exists) throw new BadRequestException('Вы уже оставили отзыв');
 
         // Создаём отзыв
         const review = await this.prisma.review.create({

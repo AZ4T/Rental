@@ -110,7 +110,59 @@ export class ListingsService {
         });
 
         if (!listing) throw new NotFoundException('Объявление не найдено');
+
+        // Increment views asynchronously (don't block response)
+        void this.prisma.listing.update({
+            where: { id },
+            data: { views_count: { increment: 1 } },
+        });
+
         return this.normalizeImages(listing);
+    }
+
+    async getAnalytics(id: string, userId: string) {
+        const listing = await this.prisma.listing.findUnique({ where: { id } });
+        if (!listing) throw new NotFoundException('Объявление не найдено');
+        if (listing.owner_id !== userId) throw new NotFoundException('Нет доступа');
+
+        const rentalIds = await this.prisma.rentalRequest
+            .findMany({ where: { listing_id: id }, select: { id: true } })
+            .then((r) => r.map((x) => x.id));
+
+        const [total, pending, approved, completed, rejected, revenue] =
+            await this.prisma.$transaction([
+                this.prisma.rentalRequest.count({ where: { listing_id: id } }),
+                this.prisma.rentalRequest.count({ where: { listing_id: id, status: 'PENDING' } }),
+                this.prisma.rentalRequest.count({ where: { listing_id: id, status: 'APPROVED' } }),
+                this.prisma.rentalRequest.count({ where: { listing_id: id, status: 'COMPLETED' } }),
+                this.prisma.rentalRequest.count({ where: { listing_id: id, status: 'REJECTED' } }),
+                this.prisma.transaction.aggregate({
+                    where: { rental_request_id: { in: rentalIds }, type: 'INCOME' },
+                    _sum: { amount: true },
+                }),
+            ]);
+
+        return {
+            views_count: listing.views_count,
+            total_requests: total,
+            pending,
+            approved,
+            completed,
+            rejected,
+            revenue: Number(revenue._sum.amount ?? 0),
+        };
+    }
+
+    async getAvailability(id: string) {
+        const requests = await this.prisma.rentalRequest.findMany({
+            where: {
+                listing_id: id,
+                status: 'APPROVED',
+                payment_status: 'PAID',
+            },
+            select: { start_date: true, end_date: true },
+        });
+        return requests;
     }
 
     async findMyListings(userId: string) {

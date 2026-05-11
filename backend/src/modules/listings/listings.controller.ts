@@ -50,6 +50,20 @@ export class ListingsController {
         return this.listingsService.findSimilar(id, categoryId);
     }
 
+    @Get(':id/availability')
+    getAvailability(@Param('id') id: string) {
+        return this.listingsService.getAvailability(id);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':id/analytics')
+    getAnalytics(
+        @Param('id') id: string,
+        @Req() req: Request & { user: { userId: string } },
+    ) {
+        return this.listingsService.getAnalytics(id, req.user.userId);
+    }
+
     @UseGuards(JwtAuthGuard)
     @Post()
     create(

@@ -14,10 +14,12 @@ import { Star } from "lucide-react";
 
 interface Props {
     rental: RentalRequest;
+    targetUserId?: string;
+    dialogTitle?: string;
     onClose: () => void;
 }
 
-export function ReviewDialog({ rental, onClose }: Props) {
+export function ReviewDialog({ rental, targetUserId, dialogTitle, onClose }: Props) {
     const [rating, setRating] = useState(0);
     const [hovered, setHovered] = useState(0);
     const [comment, setComment] = useState("");
@@ -27,7 +29,7 @@ export function ReviewDialog({ rental, onClose }: Props) {
         if (rating === 0) return;
         createReview({
             rental_request_id: rental.id,
-            target_user_id: rental.listing.owner_id,
+            target_user_id: targetUserId ?? rental.listing.owner_id,
             rating,
             comment: comment.trim() || undefined,
         });
@@ -38,7 +40,7 @@ export function ReviewDialog({ rental, onClose }: Props) {
         <Dialog open onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Оставить отзыв</DialogTitle>
+                    <DialogTitle>{dialogTitle ?? "Оставить отзыв"}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400 truncate">

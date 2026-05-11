@@ -6,13 +6,54 @@ import { Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Wallet, ArrowDownLeft, ArrowUpRight, Plus, Loader2 } from "lucide-react";
+import { Wallet, ArrowDownLeft, ArrowUpRight, Plus, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { jsPDF } from "jspdf";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
+
+function downloadPDF(transactions: Transaction[], balance: number) {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    doc.setFontSize(18);
+    doc.text("Wallet Statement", pageWidth / 2, 20, { align: "center" });
+
+    doc.setFontSize(12);
+    doc.text(`Balance: ${Number(balance).toLocaleString()} KZT`, 14, 35);
+    doc.text(`Generated: ${new Date().toLocaleDateString("ru-RU")}`, 14, 43);
+
+    doc.setFontSize(10);
+    let y = 55;
+    doc.setFont("helvetica", "bold");
+    doc.text("Date", 14, y);
+    doc.text("Description", 50, y);
+    doc.text("Amount", 160, y, { align: "right" });
+    doc.line(14, y + 2, pageWidth - 14, y + 2);
+    y += 8;
+
+    doc.setFont("helvetica", "normal");
+    for (const tx of transactions) {
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        const isIncoming = tx.type === "DEPOSIT" || tx.type === "INCOME";
+        const sign = isIncoming ? "+" : "-";
+        const date = new Date(tx.created_at).toLocaleDateString("ru-RU");
+        const desc = tx.description.length > 50 ? tx.description.slice(0, 47) + "..." : tx.description;
+        doc.text(date, 14, y);
+        doc.text(desc, 50, y);
+        doc.setTextColor(isIncoming ? "#16a34a" : "#dc2626");
+        doc.text(`${sign}${Number(tx.amount).toLocaleString()} KZT`, 160, y, { align: "right" });
+        doc.setTextColor("#000000");
+        y += 7;
+    }
+
+    doc.save(`wallet-statement-${new Date().toISOString().slice(0, 10)}.pdf`);
+}
 
 function TransactionRow({ tx }: { tx: Transaction }) {
     const isIncoming = tx.type === "DEPOSIT" || tx.type === "INCOME";
@@ -122,8 +163,18 @@ export default function WalletPage() {
 
             {/* Transactions */}
             <Card>
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
                     <CardTitle className="text-base">История операций</CardTitle>
+                    {data?.transactions && data.transactions.length > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => downloadPDF(data.transactions, data.balance)}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            PDF
+                        </Button>
+                    )}
                 </CardHeader>
                 <CardContent>
                     {!data?.transactions.length ? (
