@@ -10,49 +10,60 @@ import { Wallet, ArrowDownLeft, ArrowUpRight, Plus, Loader2, Download } from "lu
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { jsPDF } from "jspdf";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
 
 function downloadPDF(transactions: Transaction[], balance: number) {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-
-    doc.setFontSize(18);
-    doc.text("Wallet Statement", pageWidth / 2, 20, { align: "center" });
-
-    doc.setFontSize(12);
-    doc.text(`Balance: ${Number(balance).toLocaleString()} KZT`, 14, 35);
-    doc.text(`Generated: ${new Date().toLocaleDateString("ru-RU")}`, 14, 43);
-
-    doc.setFontSize(10);
-    let y = 55;
-    doc.setFont("helvetica", "bold");
-    doc.text("Date", 14, y);
-    doc.text("Description", 50, y);
-    doc.text("Amount", 160, y, { align: "right" });
-    doc.line(14, y + 2, pageWidth - 14, y + 2);
-    y += 8;
-
-    doc.setFont("helvetica", "normal");
-    for (const tx of transactions) {
-        if (y > 270) {
-            doc.addPage();
-            y = 20;
-        }
+    const rows = transactions.map((tx) => {
         const isIncoming = tx.type === "DEPOSIT" || tx.type === "INCOME";
         const sign = isIncoming ? "+" : "-";
         const date = new Date(tx.created_at).toLocaleDateString("ru-RU");
-        const desc = tx.description.length > 50 ? tx.description.slice(0, 47) + "..." : tx.description;
-        doc.text(date, 14, y);
-        doc.text(desc, 50, y);
-        doc.setTextColor(isIncoming ? "#16a34a" : "#dc2626");
-        doc.text(`${sign}${Number(tx.amount).toLocaleString()} KZT`, 160, y, { align: "right" });
-        doc.setTextColor("#000000");
-        y += 7;
-    }
+        const color = isIncoming ? "#16a34a" : "#dc2626";
+        return `
+            <tr>
+                <td>${date}</td>
+                <td>${tx.description}</td>
+                <td style="color:${color};text-align:right;font-weight:600">${sign}${Number(tx.amount).toLocaleString()} ₸</td>
+            </tr>`;
+    }).join("");
 
-    doc.save(`wallet-statement-${new Date().toISOString().slice(0, 10)}.pdf`);
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Выписка по кошельку</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 40px; color: #111; }
+  h1 { text-align: center; font-size: 22px; margin-bottom: 24px; }
+  .meta { font-size: 13px; margin-bottom: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; border-bottom: 2px solid #111; padding: 6px 8px; font-weight: 700; }
+  th:last-child { text-align: right; }
+  td { padding: 6px 8px; border-bottom: 1px solid #e5e7eb; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+  <h1>Выписка по кошельку</h1>
+  <div class="meta">
+    <div>Баланс: <strong>${Number(balance).toLocaleString()} ₸</strong></div>
+    <div>Дата формирования: ${new Date().toLocaleDateString("ru-RU")}</div>
+  </div>
+  <table>
+    <thead><tr><th>Дата</th><th>Описание</th><th style="text-align:right">Сумма</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+</body>
+</html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.onload = () => {
+        win.focus();
+        win.print();
+    };
 }
 
 function TransactionRow({ tx }: { tx: Transaction }) {
