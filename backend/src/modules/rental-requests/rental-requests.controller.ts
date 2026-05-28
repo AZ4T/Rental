@@ -37,7 +37,23 @@ export class RentalRequestsController {
         return this.rentalRequestsService.findIncomingRequests(req.user.userId);
     }
 
-    // owner cancels status
+    // owner gets QR token for a rental request
+    @Get(':id/qr')
+    getQrToken(@Param('id') id: string, @Req() req: AuthRequest) {
+        return this.rentalRequestsService.getQrToken(id, req.user.userId);
+    }
+
+    // add return images (renter or owner)
+    @Post(':id/return-images')
+    addReturnImages(
+        @Param('id') id: string,
+        @Body() body: { images: string[] },
+        @Req() req: AuthRequest,
+    ) {
+        return this.rentalRequestsService.addReturnImages(id, req.user.userId, body.images);
+    }
+
+    // owner updates status
     @Patch(':id/status')
     updateStatus(
         @Param('id') id: string,

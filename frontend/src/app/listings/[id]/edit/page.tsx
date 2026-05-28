@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 import { X, Upload, Loader2 } from "lucide-react";
+import { CityInput } from "@/components/city-input";
 
 const schema = z.object({
     title: z.string().min(3, "Минимум 3 символа"),
@@ -291,7 +292,10 @@ export default function EditListingPage({ params }: Props) {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel>Город</FieldLabel>
-                                    <Input {...field} placeholder="Астана" />
+                                    <CityInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
                                     <FieldError errors={[fieldState.error]} />
                                 </Field>
                             )}

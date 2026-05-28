@@ -140,22 +140,22 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold">Админ панель</h1>
 
             <Tabs defaultValue="stats">
-                <TabsList className="grid grid-cols-4 w-full max-w-lg">
-                    <TabsTrigger value="stats" className="flex items-center gap-2">
-                        <BarChart2 className="h-4 w-4" />
-                        Статистика
+                <TabsList className="grid grid-cols-4 w-full">
+                    <TabsTrigger value="stats" className="flex items-center gap-1.5">
+                        <BarChart2 className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Статистика</span>
                     </TabsTrigger>
-                    <TabsTrigger value="users" className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        Пользователи
+                    <TabsTrigger value="users" className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Пользователи</span>
                     </TabsTrigger>
-                    <TabsTrigger value="listings" className="flex items-center gap-2">
-                        <LayoutList className="h-4 w-4" />
-                        Объявления
+                    <TabsTrigger value="listings" className="flex items-center gap-1.5">
+                        <LayoutList className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Объявления</span>
                     </TabsTrigger>
-                    <TabsTrigger value="categories" className="flex items-center gap-2">
-                        <Tag className="h-4 w-4" />
-                        Категории
+                    <TabsTrigger value="categories" className="flex items-center gap-1.5">
+                        <Tag className="h-4 w-4 flex-shrink-0" />
+                        <span className="hidden sm:inline">Категории</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -304,25 +304,47 @@ export default function AdminPage() {
                 <TabsContent value="listings" className="space-y-3 mt-4">
                     {listingsLoading && <Loader2 className="animate-spin mx-auto" />}
                     {listingsData?.data.map((listing) => (
-                        <Card key={listing.id}>
-                            <CardContent className="p-4 flex items-center gap-4">
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium truncate">{listing.title}</p>
-                                    <p className="text-sm text-gray-500">
-                                        {listing.city} · {listing.category.name} ·{" "}
-                                        {Number(listing.price).toLocaleString()} ₸/день
-                                    </p>
-                                    <p className="text-xs text-gray-400 truncate">
-                                        {listing.owner.name}
-                                    </p>
+                        <Card key={listing.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                            <CardContent className="p-0 flex items-stretch gap-0">
+                                {/* Thumbnail */}
+                                <div className="w-24 h-20 flex-shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                                    {listing.images[0] ? (
+                                        <img
+                                            src={listing.images[0].image_url}
+                                            alt={listing.title}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs text-center px-1">
+                                            Нет фото
+                                        </div>
+                                    )}
                                 </div>
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => setDeleteListingDialog(listing.id)}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex items-center gap-4 flex-1 min-w-0 px-4 py-3">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="font-medium truncate">{listing.title}</p>
+                                        <p className="text-sm text-gray-500 mt-0.5">
+                                            {listing.city} · {listing.category.name} ·{" "}
+                                            <span className="text-blue-600 font-medium">{Number(listing.price).toLocaleString()} ₸/день</span>
+                                        </p>
+                                        <div className="flex items-center gap-1.5 mt-1">
+                                            <Avatar className="h-4 w-4">
+                                                <AvatarImage src={listing.owner.avatar_url ?? ""} />
+                                                <AvatarFallback className="text-[8px]">
+                                                    {listing.owner.name.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <span className="text-xs text-gray-400">{listing.owner.name}</span>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => setDeleteListingDialog(listing.id)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     ))}

@@ -1,4 +1,4 @@
-import { Heart, MapPin, Star, Eye } from "lucide-react";
+import { Heart, MapPin, Star, Eye, GitCompareArrows } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
     useMyFavorites,
@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Listing } from "@/types";
+import { useCompareStore } from "@/store/compare.store";
 
 interface ListingCardProps {
     listing: Listing;
@@ -21,6 +22,13 @@ export function ListingCard({ listing }: ListingCardProps) {
     const { mutate: addFavorite } = useAddFavorite();
     const { mutate: removeFavorite } = useRemoveFavorite();
     const [heartAnimating, setHeartAnimating] = useState(false);
+    const { add, remove, has } = useCompareStore();
+    const inCompare = has(listing.id);
+
+    const handleCompare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        inCompare ? remove(listing.id) : add(listing);
+    };
 
     const isFavorited = favorites?.some((f) => f.listing_id === listing.id);
 
@@ -62,21 +70,34 @@ export function ListingCard({ listing }: ListingCardProps) {
                         {listing.category.name}
                     </Badge>
 
-                    {/* Кнопка лайка */}
-                    {isAuthenticated && (
+                    {/* Кнопки действий */}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1">
+                        {isAuthenticated && (
+                            <button
+                                onClick={handleFavorite}
+                                className="bg-white dark:bg-gray-900 rounded-full p-2.5 shadow hover:scale-110 transition-transform"
+                            >
+                                <Heart
+                                    className={`h-4 w-4 transition-colors ${
+                                        isFavorited
+                                            ? "fill-red-500 text-red-500"
+                                            : "text-gray-400"
+                                    } ${heartAnimating ? "animate-heart" : ""}`}
+                                />
+                            </button>
+                        )}
                         <button
-                            onClick={handleFavorite}
-                            className="absolute top-2 right-2 bg-white dark:bg-gray-900 rounded-full p-1.5 shadow hover:scale-110 transition-transform"
+                            onClick={handleCompare}
+                            title={inCompare ? "Убрать из сравнения" : "Добавить к сравнению"}
+                            className={`rounded-full p-2.5 shadow hover:scale-110 transition-all ${
+                                inCompare
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-white dark:bg-gray-900 text-gray-400"
+                            }`}
                         >
-                            <Heart
-                                className={`h-4 w-4 transition-colors ${
-                                    isFavorited
-                                        ? "fill-red-500 text-red-500"
-                                        : "text-gray-400"
-                                } ${heartAnimating ? "animate-heart" : ""}`}
-                            />
+                            <GitCompareArrows className="h-4 w-4" />
                         </button>
-                    )}
+                    </div>
                 </div>
 
                 <CardContent className="p-4">

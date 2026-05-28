@@ -17,6 +17,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 import Image from "next/image";
 import { X, Upload, Loader2 } from "lucide-react";
+import { CityInput } from "@/components/city-input";
 
 const schema = z.object({
     title: z.string().min(3, "Минимум 3 символа"),
@@ -33,6 +34,7 @@ export default function CreateListingPage() {
     const router = useRouter();
     const queryClient = useQueryClient();
     const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const [isDragging, setIsDragging] = useState(false);
     const { mutateAsync: uploadImage, isPending: isUploading } =
         useUploadImage();
 
@@ -108,6 +110,58 @@ export default function CreateListingPage() {
         setImageUrls((prev) => prev.filter((u) => u !== url));
     };
 
+    const processFiles = async (fileList: FileList | null) => {
+        if (!fileList) return;
+        const files = Array.from(fileList);
+
+        const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
+        if (oversized.length > 0) {
+            toast.error("Файл слишком большой. Максимум 10 МБ");
+            return;
+        }
+
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        const invalid = files.filter((f) => !allowed.includes(f.type));
+        if (invalid.length > 0) {
+            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            return;
+        }
+
+        if (imageUrls.length + files.length > 5) {
+            toast.error("Максимум 5 фотографий");
+            return;
+        }
+
+        for (const file of files) {
+            const url = await uploadImage(file);
+            setImageUrls((prev) => [...prev, url]);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        void processFiles(e.dataTransfer.files);
+    };
+
     return (
         <div className="max-w-2xl mx-auto">
             <Card>
@@ -122,54 +176,83 @@ export default function CreateListingPage() {
                         {/* Фото */}
                         <div className="space-y-2">
                             <Label>Фотографии</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {imageUrls.map((url) => (
-                                    <div
-                                        key={url}
-                                        className="relative h-24 w-24 rounded-lg overflow-hidden border"
-                                    >
-                                        <img
-                                            src={url}
-                                            alt=""
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(url)}
-                                            className="absolute top-1 right-1 bg-black/50 rounded-full p-0.5 text-white hover:bg-black/70"
+                            {imageUrls.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {imageUrls.map((url) => (
+                                        <div
+                                            key={url}
+                                            className="relative h-24 w-24 rounded-lg overflow-hidden border"
                                         >
-                                            <X className="h-3 w-3" />
-                                        </button>
-                                    </div>
-                                ))}
-                                {imageUrls.length < 5 && (
-                                    <label className="h-24 w-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-400 transition-colors">
-                                        {isUploading ? (
-                                            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                                        ) : (
-                                            <>
-                                                <Upload className="h-5 w-5 text-gray-400" />
-                                                <span className="text-xs text-gray-400 mt-1">
-                                                    Добавить
-                                                </span>
-                                            </>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/jpeg,image/png,image/webp"
-                                            multiple
-                                            className="hidden"
-                                            onChange={handleImageUpload}
-                                            disabled={isUploading}
-                                            onClick={(e) => {
-                                                (
-                                                    e.target as HTMLInputElement
-                                                ).value = "";
-                                            }}
-                                        />
-                                    </label>
-                                )}
-                            </div>
+                                            <img
+                                                src={url}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(url)}
+                                                className="absolute top-1 right-1 bg-black/50 rounded-full p-0.5 text-white hover:bg-black/70"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {imageUrls.length < 5 && (
+                                <div
+                                    onDragOver={handleDragOver}
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={handleDrop}
+                                    onClick={() => {
+                                        if (!isUploading) {
+                                            document
+                                                .getElementById(
+                                                    "photo-upload-input",
+                                                )
+                                                ?.click();
+                                        }
+                                    }}
+                                    className={`w-full min-h-[80px] border-2 border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors gap-1 py-4 ${
+                                        isDragging
+                                            ? "border-blue-500 bg-blue-50"
+                                            : "border-gray-300 hover:border-blue-400"
+                                    }`}
+                                >
+                                    {isUploading ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                                    ) : (
+                                        <>
+                                            <Upload
+                                                className={`h-6 w-6 ${isDragging ? "text-blue-500" : "text-gray-400"}`}
+                                            />
+                                            <span
+                                                className={`text-sm font-medium ${isDragging ? "text-blue-600" : "text-gray-500"}`}
+                                            >
+                                                Перетащи фото сюда
+                                            </span>
+                                            <span className="text-xs text-gray-400">
+                                                или нажми для выбора
+                                            </span>
+                                        </>
+                                    )}
+                                    <input
+                                        id="photo-upload-input"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        multiple
+                                        className="hidden"
+                                        onChange={handleImageUpload}
+                                        disabled={isUploading}
+                                        onClick={(e) => {
+                                            (
+                                                e.target as HTMLInputElement
+                                            ).value = "";
+                                        }}
+                                    />
+                                </div>
+                            )}
                             {/* Текст СНАРУЖИ label */}
                             <p className="text-xs text-gray-400">
                                 Форматы: JPEG, PNG, WEBP · Максимум 10 МБ · До 5
@@ -258,7 +341,10 @@ export default function CreateListingPage() {
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
                                     <FieldLabel>Город</FieldLabel>
-                                    <Input {...field} placeholder="Астана" />
+                                    <CityInput
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                    />
                                     <FieldError errors={[fieldState.error]} />
                                 </Field>
                             )}

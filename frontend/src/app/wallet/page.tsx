@@ -4,12 +4,12 @@ import { useState } from "react";
 import { useWallet, useTopUp } from "@/hooks/use-wallet";
 import { Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, ArrowDownLeft, ArrowUpRight, Plus, Loader2, Download } from "lucide-react";
+import { Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { StripePaymentModal } from "@/components/stripe-payment-modal";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
 
@@ -60,18 +60,14 @@ function downloadPDF(transactions: Transaction[], balance: number) {
     if (!win) return;
     win.document.write(html);
     win.document.close();
-    win.onload = () => {
-        win.focus();
-        win.print();
-    };
+    win.onload = () => { win.focus(); win.print(); };
 }
 
 function TransactionRow({ tx }: { tx: Transaction }) {
     const isIncoming = tx.type === "DEPOSIT" || tx.type === "INCOME";
-
     return (
         <div className="flex items-center gap-3 py-3 border-b last:border-0">
-            <div className={`p-2 rounded-full ${isIncoming ? "bg-green-100 dark:bg-green-900/30" : "bg-red-100 dark:bg-red-900/30"}`}>
+            <div className={`p-2 rounded-full shrink-0 ${isIncoming ? "bg-green-100 dark:bg-green-900/30" : "bg-red-100 dark:bg-red-900/30"}`}>
                 {isIncoming
                     ? <ArrowDownLeft className="h-4 w-4 text-green-600 dark:text-green-400" />
                     : <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -91,20 +87,31 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 }
 
 export default function WalletPage() {
-    const { data, isLoading } = useWallet();
-    const { mutate: topUp, isPending } = useTopUp();
-    const [custom, setCustom] = useState("");
+    const { data, isLoading, refetch } = useWallet();
+    const { mutate: topUp } = useTopUp();
+    const [stripeOpen, setStripeOpen] = useState(false);
+    const [pendingAmount, setPendingAmount] = useState(0);
+    const [customAmt, setCustomAmt] = useState("");
 
-    const handleTopUp = (amount: number) => {
+    const openStripe = (amount: number) => {
         if (amount <= 0 || amount > 1_000_000) {
-            toast.error("Введите сумму от 1 до 1 000 000 ₸");
+            toast.error("Сумма от 1 до 1 000 000 ₸");
             return;
         }
-        topUp(amount, {
-            onSuccess: () => toast.success(`Кошелёк пополнен на ${amount.toLocaleString()} ₸`),
-            onError: (e: Error) => toast.error(e.message ?? "Ошибка пополнения"),
+        setPendingAmount(amount);
+        setStripeOpen(true);
+    };
+
+    const handleStripeSuccess = () => {
+        setStripeOpen(false);
+        topUp(pendingAmount, {
+            onSuccess: () => {
+                toast.success(`Кошелёк пополнен на ${pendingAmount.toLocaleString()} ₸`);
+                refetch();
+            },
+            onError: (e: Error) => toast.error(e.message ?? "Ошибка"),
         });
-        setCustom("");
+        setCustomAmt("");
     };
 
     if (isLoading) {
@@ -120,54 +127,71 @@ export default function WalletPage() {
             <h1 className="text-2xl font-bold">Кошелёк</h1>
 
             {/* Balance card */}
-            <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0">
+            <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white border-0 shadow-lg">
                 <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-2">
-                        <Wallet className="h-5 w-5 opacity-80" />
-                        <span className="text-sm opacity-80">Баланс</span>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                            <Wallet className="h-5 w-5 opacity-80" />
+                            <span className="text-sm opacity-80">Баланс</span>
+                        </div>
+                        <div className="text-right opacity-60 text-xs">Rental Pay</div>
                     </div>
-                    <p className="text-4xl font-bold">
+                    <p className="text-3xl sm:text-4xl font-bold tracking-tight">
                         {Number(data?.balance ?? 0).toLocaleString()} ₸
                     </p>
+                    <p className="text-xs opacity-60 mt-2">Доступно для оплаты аренды</p>
                 </CardContent>
             </Card>
 
-            {/* Top-up */}
+            {/* Top-up via Stripe */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                        <Plus className="h-4 w-4" /> Пополнить
+                        <CreditCard className="h-4 w-4" /> Пополнить картой
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                    <div className="grid grid-cols-4 gap-2">
+                <CardContent className="space-y-4">
+                    {/* Quick amounts */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         {QUICK_AMOUNTS.map((amt) => (
-                            <Button
+                            <button
                                 key={amt}
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleTopUp(amt)}
-                                disabled={isPending}
+                                onClick={() => openStripe(amt)}
+                                className="border rounded-xl py-3 text-sm font-semibold hover:border-[#635BFF] hover:text-[#635BFF] hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all"
                             >
                                 {amt.toLocaleString()} ₸
-                            </Button>
+                            </button>
                         ))}
                     </div>
+
+                    {/* Custom amount */}
                     <div className="flex gap-2">
-                        <Input
-                            type="number"
-                            placeholder="Другая сумма"
-                            value={custom}
-                            onChange={(e) => setCustom(e.target.value)}
-                            min={1}
-                            max={1000000}
-                        />
+                        <div className="relative flex-1">
+                            <input
+                                type="number"
+                                placeholder="Другая сумма (₸)"
+                                value={customAmt}
+                                onChange={(e) => setCustomAmt(e.target.value)}
+                                min={1}
+                                max={1000000}
+                                className="w-full border rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF]"
+                            />
+                        </div>
                         <Button
-                            onClick={() => handleTopUp(Number(custom))}
-                            disabled={isPending || !custom}
+                            onClick={() => openStripe(Number(customAmt))}
+                            disabled={!customAmt || Number(customAmt) <= 0}
+                            className="bg-[#635BFF] hover:bg-[#5147e8] px-5 rounded-xl shrink-0"
                         >
-                            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Пополнить"}
+                            Оплатить
                         </Button>
+                    </div>
+
+                    {/* Stripe badge */}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                        <svg viewBox="0 0 60 25" className="h-4 fill-current opacity-50">
+                            <path d="M59.64 14.28h-8.06v-1.83h8.06v1.83zm-6.23-7.9c-2.14 0-3.45 1.01-3.45 2.67 0 3.3 5.1 2.08 5.1 4.15 0 .74-.65 1.16-1.7 1.16-1.52 0-2.27-.79-2.27-1.76H48.7c0 1.92 1.37 3.15 4.07 3.15 2.41 0 3.88-1.14 3.88-2.86 0-3.33-5.1-2.1-5.1-4.12 0-.63.55-1.01 1.52-1.01 1.3 0 2.02.62 2.06 1.6h2.32c-.06-1.85-1.38-2.98-3.94-2.98zm-8.9.17h-2.27v7.73h2.27V6.55zm-1.13-3.58c-.78 0-1.4.63-1.4 1.4 0 .78.62 1.4 1.4 1.4.77 0 1.4-.62 1.4-1.4 0-.77-.63-1.4-1.4-1.4zM35.7 6.38c-2.32 0-3.87 1.73-3.87 4.04 0 2.3 1.55 4.04 3.87 4.04 1.2 0 2.15-.5 2.75-1.3v1.12h2.2V6.55h-2.2v1.12c-.6-.81-1.55-1.3-2.75-1.3zm.5 6.06c-1.19 0-2.1-.88-2.1-2.02 0-1.13.91-2.02 2.1-2.02 1.19 0 2.1.89 2.1 2.02 0 1.14-.91 2.02-2.1 2.02zm-8.16-6.06c-1.3 0-2.33.5-2.97 1.35V6.55h-2.2v10.9h2.2v-3.3c.64.85 1.67 1.35 2.97 1.35 2.27 0 3.8-1.74 3.8-4.06 0-2.31-1.53-4.06-3.8-4.06zm-.5 6.06c-1.19 0-2.1-.89-2.1-2.02 0-1.14.91-2.02 2.1-2.02 1.19 0 2.1.88 2.1 2.02 0 1.13-.91 2.02-2.1 2.02z"/>
+                        </svg>
+                        <span>Безопасная оплата · Тестовый режим</span>
                     </div>
                 </CardContent>
             </Card>
@@ -199,6 +223,13 @@ export default function WalletPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <StripePaymentModal
+                open={stripeOpen}
+                amount={pendingAmount}
+                onClose={() => setStripeOpen(false)}
+                onSuccess={handleStripeSuccess}
+            />
         </div>
     );
 }

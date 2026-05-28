@@ -13,6 +13,19 @@ function getOtherParticipant(chat: Chat, userId: string) {
     return chat.participant1_id === userId ? chat.participant2 : chat.participant1;
 }
 
+function formatMessagePreview(msg: { content: string; type?: string }) {
+    if (msg.type !== "call") return msg.content;
+    try {
+        const d = JSON.parse(msg.content) as { outcome: string; duration?: number };
+        const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+        if (d.outcome === "completed") return `📞 Звонок ${fmt(d.duration ?? 0)}`;
+        if (d.outcome === "rejected") return "📵 Звонок отклонён";
+        return "📵 Пропущенный звонок";
+    } catch {
+        return msg.content;
+    }
+}
+
 export default function ChatsPage() {
     const { user } = useAuthStore();
     const { data: chats, isLoading } = useMyChats(!!user);
@@ -69,7 +82,7 @@ export default function ChatsPage() {
                                     )}
                                 </div>
                                 <p className={`text-sm truncate mt-0.5 ${unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                                    {lastMessage ? lastMessage.content : "Нет сообщений"}
+                                    {lastMessage ? formatMessagePreview(lastMessage) : "Нет сообщений"}
                                 </p>
                             </div>
                             {unread > 0 && (

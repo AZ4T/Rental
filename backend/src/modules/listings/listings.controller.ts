@@ -37,11 +37,6 @@ export class ListingsController {
         return this.listingsService.findMyListings(req.user.userId);
     }
 
-    @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.listingsService.findOne(id);
-    }
-
     @Get(':id/similar')
     getSimilar(
         @Param('id') id: string,
@@ -62,6 +57,11 @@ export class ListingsController {
         @Req() req: Request & { user: { userId: string } },
     ) {
         return this.listingsService.getAnalytics(id, req.user.userId);
+    }
+
+    @Get(':id')
+    findOne(@Param('id') id: string) {
+        return this.listingsService.findOne(id);
     }
 
     @UseGuards(JwtAuthGuard)

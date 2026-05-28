@@ -68,7 +68,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
         <div className="space-y-4">
             {/* Строка поиска + сортировка + город */}
             <div className="flex gap-2 flex-wrap">
-                <div className="relative flex-1 min-w-[200px]">
+                <div className="relative flex-1 min-w-[140px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                         placeholder="Поиск объявлений..."
@@ -78,7 +78,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                     />
                 </div>
 
-                <div className="min-w-[160px]">
+                <div className="min-w-[120px]">
                     <CityInput
                         value={city}
                         onChange={(val) => {

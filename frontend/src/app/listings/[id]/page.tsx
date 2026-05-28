@@ -1,13 +1,14 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useEffect, useRef } from "react";
 import { useListing, useListingAvailability } from "@/hooks/use-listings";
+import { saveRecentlyViewed } from "@/lib/recently-viewed";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Star, Calendar, Shield, Loader2, Heart, Eye, QrCode, X } from "lucide-react";
+import { MapPin, Star, Calendar, Shield, Loader2, Heart, Eye, QrCode, X, GitCompareArrows, Flag } from "lucide-react";
 import Link from "next/link";
 import { RentalRequestDialog } from "@/components/rental-request-dialog";
 import {
@@ -22,7 +23,9 @@ import { ListingCard } from "@/components/listing-card";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/style.css";
 import QRCode from "qrcode";
-import { useEffect, useRef } from "react";
+import { useCompareStore } from "@/store/compare.store";
+import { toast } from "sonner";
+import { ReportModal } from "@/components/report-modal";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -78,9 +81,34 @@ export default function ListingPage({ params }: Props) {
         listing?.category_id ?? "",
     );
 
+    const { add: addCompare, remove: removeCompare, has: inCompareStore } = useCompareStore();
     const isFavorited = favorites?.some((f) => f.listing_id === id);
     const isOwner = user?.id === listing?.owner_id;
     const [heartAnimating, setHeartAnimating] = useState(false);
+    const inCompare = listing ? inCompareStore(listing.id) : false;
+    const [showReport, setShowReport] = useState(false);
+
+    // Калькулятор стоимости
+    const [calcFrom, setCalcFrom] = useState("");
+    const [calcTo, setCalcTo] = useState("");
+
+    const calcDays =
+        calcFrom && calcTo
+            ? Math.max(
+                  1,
+                  Math.round(
+                      (new Date(calcTo).getTime() - new Date(calcFrom).getTime()) /
+                          86400000,
+                  ) + 1,
+              )
+            : 0;
+    const calcTotal = calcDays > 0 && listing
+        ? calcDays * Number(listing.price) + Number(listing.deposit)
+        : 0;
+
+    useEffect(() => {
+        if (listing) saveRecentlyViewed(listing);
+    }, [listing]);
 
     const bookedRanges =
         availability?.map((r) => ({
@@ -167,6 +195,52 @@ export default function ListingPage({ params }: Props) {
                                     {Number(listing.deposit).toLocaleString()} ₸
                                 </span>
                             </div>
+
+                            {/* Калькулятор стоимости */}
+                            {!isOwner && (
+                                <div className="border-t pt-3 space-y-2">
+                                    <p className="text-xs font-medium text-muted-foreground">Рассчитать стоимость</p>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="text-xs text-muted-foreground">С</label>
+                                            <input
+                                                type="date"
+                                                value={calcFrom}
+                                                min={new Date().toISOString().split("T")[0]}
+                                                onChange={(e) => setCalcFrom(e.target.value)}
+                                                className="w-full text-base border rounded-md px-2 py-1 bg-background"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-muted-foreground">По</label>
+                                            <input
+                                                type="date"
+                                                value={calcTo}
+                                                min={calcFrom || new Date().toISOString().split("T")[0]}
+                                                onChange={(e) => setCalcTo(e.target.value)}
+                                                className="w-full text-base border rounded-md px-2 py-1 bg-background"
+                                            />
+                                        </div>
+                                    </div>
+                                    {calcDays > 0 && (
+                                        <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
+                                            <div className="flex justify-between text-muted-foreground">
+                                                <span>{calcDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
+                                                <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
+                                            </div>
+                                            <div className="flex justify-between text-muted-foreground">
+                                                <span>Залог</span>
+                                                <span>{Number(listing.deposit).toLocaleString()} ₸</span>
+                                            </div>
+                                            <div className="flex justify-between font-bold border-t pt-1">
+                                                <span>Итого</span>
+                                                <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {isOwner ? (
                                 <Button
                                     asChild
@@ -247,6 +321,29 @@ export default function ListingPage({ params }: Props) {
                         </div>
 
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => {
+                                    if (listing) {
+                                        inCompare ? removeCompare(listing.id) : addCompare(listing);
+                                        toast.success(inCompare ? "Убрано из сравнения" : "Добавлено к сравнению");
+                                    }
+                                }}
+                                title={inCompare ? "Убрать из сравнения" : "Сравнить"}
+                                className={`flex items-center gap-1.5 text-sm transition-colors ${inCompare ? "text-blue-600" : "text-muted-foreground hover:text-foreground"}`}
+                            >
+                                <GitCompareArrows className="h-4 w-4" />
+                                <span>Сравнить</span>
+                            </button>
+                            {!isOwner && (
+                                <button
+                                    onClick={() => setShowReport(true)}
+                                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-red-500 transition-colors"
+                                    title="Пожаловаться"
+                                >
+                                    <Flag className="h-4 w-4" />
+                                    <span>Пожаловаться</span>
+                                </button>
+                            )}
                             <button
                                 onClick={() => setShowQR(true)}
                                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -360,6 +457,15 @@ export default function ListingPage({ params }: Props) {
                             : `https://rental.app/listings/${id}`
                     }
                     onClose={() => setShowQR(false)}
+                />
+            )}
+
+            {showReport && listing && (
+                <ReportModal
+                    open={showReport}
+                    onClose={() => setShowReport(false)}
+                    type="LISTING"
+                    targetId={listing.id}
                 />
             )}
         </div>

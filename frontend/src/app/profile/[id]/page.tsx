@@ -40,7 +40,7 @@ export default function UserProfilePage({ params }: Props) {
         <div className="max-w-2xl mx-auto space-y-6">
             {/* Профиль */}
             <Card>
-                <CardContent className="p-6 flex items-center gap-6">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
                     <Avatar className="h-20 w-20">
                         <AvatarImage src={user.avatar_url ?? ""} />
                         <AvatarFallback className="text-2xl">

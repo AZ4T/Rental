@@ -10,6 +10,7 @@ import { UpdateStatusDto } from './dto/update-rental-request.dto';
 import { ChatsService } from '../chats/chats.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { WalletService } from '../wallet/wallet.service';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class RentalRequestsService {
@@ -146,7 +147,10 @@ export class RentalRequestsService {
 
         const updated = await this.prisma.rentalRequest.update({
             where: { id },
-            data: { status: dto.status },
+            data: {
+                status: dto.status,
+                qr_token: dto.status === 'APPROVED' ? uuidv4() : undefined,
+            },
             include: { listing: true },
         });
 
@@ -218,6 +222,41 @@ export class RentalRequestsService {
         return this.prisma.rentalRequest.update({
             where: { id },
             data: { status: 'CANCELLED' },
+        });
+    }
+
+    async getQrToken(id: string, ownerId: string) {
+        const req = await this.prisma.rentalRequest.findUnique({
+            where: { id },
+            include: { listing: true },
+        });
+        if (!req) throw new NotFoundException('Заявка не найдена');
+        if (req.listing.owner_id !== ownerId) throw new ForbiddenException('Нет доступа');
+        if (req.status !== 'APPROVED') throw new BadRequestException('Заявка должна быть одобрена');
+        return { token: req.qr_token };
+    }
+
+    async scanQr(token: string) {
+        const req = await this.prisma.rentalRequest.findFirst({
+            where: { qr_token: token, status: 'APPROVED', payment_status: 'UNPAID' },
+            include: {
+                listing: { include: { images: true } },
+                renter: { select: { id: true, name: true, avatar_url: true } },
+            },
+        });
+        if (!req) throw new NotFoundException('QR-код недействителен или аренда уже оплачена');
+        return req;
+    }
+
+    async addReturnImages(id: string, userId: string, imageUrls: string[]) {
+        const req = await this.prisma.rentalRequest.findUnique({ where: { id }, include: { listing: true } });
+        if (!req) throw new NotFoundException('Заявка не найдена');
+        if (req.renter_id !== userId && req.listing.owner_id !== userId) {
+            throw new ForbiddenException('Нет доступа');
+        }
+        return this.prisma.rentalRequest.update({
+            where: { id },
+            data: { return_images: imageUrls },
         });
     }
 }

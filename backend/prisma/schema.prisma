@@ -61,6 +61,7 @@ model User {
   messages Message[]
 
   transactions Transaction[]
+  reports      Report[]
 }
 
 model Chat {
@@ -80,6 +81,7 @@ model Message {
   chat_id    String   @db.Uuid
   sender_id  String   @db.Uuid
   content    String
+  type       String   @default("text")
   is_read    Boolean  @default(false)
   created_at DateTime @default(now())
 
@@ -150,6 +152,8 @@ model RentalRequest {
   total_price    Decimal             @db.Decimal(10, 2)
   status         RentalRequestStatus @default(PENDING)
   payment_status PaymentStatus       @default(UNPAID)
+  qr_token       String?             @unique
+  return_images  String[]
   created_at     DateTime            @default(now())
 
   listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
@@ -191,4 +195,17 @@ model Review {
   rentalRequest RentalRequest @relation(fields: [rental_request_id], references: [id], onDelete: Cascade)
 
   @@unique([rental_request_id, author_id])
+}
+
+model Report {
+  id          String   @id @default(uuid()) @db.Uuid
+  reporter_id String   @db.Uuid
+  type        String
+  target_id   String
+  reason      String
+  description String?
+  status      String   @default("PENDING")
+  created_at  DateTime @default(now())
+
+  reporter User @relation(fields: [reporter_id], references: [id], onDelete: Cascade)
 }

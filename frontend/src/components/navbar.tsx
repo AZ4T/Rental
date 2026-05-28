@@ -48,7 +48,7 @@ export function Navbar() {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (search.trim()) {
-            router.push(`/?search=${encodeURIComponent(search.trim())}`);
+            router.push(`/listings?search=${encodeURIComponent(search.trim())}`);
             setSearch("");
         }
     };
@@ -78,7 +78,7 @@ export function Navbar() {
                     {/* Десктоп навигация */}
                     <nav className="hidden md:flex items-center gap-6">
                         <Link
-                            href="/"
+                            href="/listings"
                             className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                         >
                             Объявления
@@ -145,7 +145,7 @@ export function Navbar() {
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Avatar className="cursor-pointer h-9 w-9">
+                                        <Avatar className="cursor-pointer h-10 w-10">
                                             <AvatarImage
                                                 src={user.avatar_url ?? ""}
                                             />
@@ -207,7 +207,7 @@ export function Navbar() {
 
                         {/* Гамбургер */}
                         <button
-                            className="md:hidden"
+                            className="md:hidden p-2 -mr-2"
                             onClick={() => setMobileOpen(!mobileOpen)}
                         >
                             {mobileOpen ? (
@@ -224,7 +224,7 @@ export function Navbar() {
                     <div className="md:hidden border-t dark:border-gray-800 bg-white dark:bg-gray-950 animate-slideDown">
                         <nav className="flex flex-col px-4 py-3 gap-1">
                             <Link
-                                href="/"
+                                href="/listings"
                                 onClick={() => setMobileOpen(false)}
                                 className="py-2 text-sm text-gray-600 dark:text-gray-300"
                             >
@@ -276,6 +276,13 @@ export function Navbar() {
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
                                         + Разместить
+                                    </Link>
+                                    <Link
+                                        href="/about"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="py-2 text-sm text-gray-600 dark:text-gray-300"
+                                    >
+                                        О платформе
                                     </Link>
                                 </>
                             )}

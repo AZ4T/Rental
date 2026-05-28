@@ -63,7 +63,7 @@ export default function MyProfilePage() {
             <Card>
                 <CardContent className="p-6">
                     {/* Аватар */}
-                    <div className="flex items-center gap-6 mb-6">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6">
                         <div className="relative">
                             <Avatar className="h-20 w-20">
                                 <AvatarImage src={user.avatar_url ?? ""} />

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -19,9 +20,26 @@ async function bootstrap() {
     );
 
     app.enableCors({
-        origin: ['http://localhost:3000'],
+        origin: (origin, callback) => {
+            // Разрешаем localhost и любые локальные IP (192.168.x.x, 10.x.x.x)
+            const allowed = !origin ||
+                /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+                /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
+                /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
+                /^http:\/\/172\.\d+\.\d+\.\d+(:\d+)?$/.test(origin);
+            callback(null, allowed);
+        },
         credentials: true,
     });
+
+    const swaggerConfig = new DocumentBuilder()
+        .setTitle('Rental API')
+        .setDescription('REST API платформы аренды вещей')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
 
     await app.listen(process.env.PORT ?? 3001);
 }

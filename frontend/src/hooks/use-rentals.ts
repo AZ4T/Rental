@@ -61,6 +61,17 @@ export function useUpdateRentalStatus() {
     });
 }
 
+export function useGetQrToken(rentalId: string) {
+    return useQuery({
+        queryKey: ["rentals", rentalId, "qr"],
+        queryFn: () =>
+            api
+                .get<{ token: string }>(`/rental-requests/${rentalId}/qr`)
+                .then((r) => r.data.token),
+        enabled: !!rentalId,
+    });
+}
+
 export function useCancelRental() {
     const queryClient = useQueryClient();
     return useMutation({

@@ -15,6 +15,7 @@ export interface Message {
     chat_id: string;
     sender_id: string;
     content: string;
+    type: string;
     is_read: boolean;
     created_at: string;
     sender: ChatParticipant;
@@ -77,10 +78,12 @@ export function useChatMessages(chatId: string) {
         if (!chatId || !user) return;
         const socket = getSocket();
 
-        if (!joinedRef.current) {
+        const joinChat = () => {
             socket.emit("join_chat", chatId);
             joinedRef.current = true;
-        }
+        };
+
+        joinChat();
 
         const handleNew = (msg: Message) => {
             setMessages((prev) =>
@@ -91,9 +94,11 @@ export function useChatMessages(chatId: string) {
         };
 
         socket.on("new_message", handleNew);
+        socket.on("connect", joinChat);
 
         return () => {
             socket.off("new_message", handleNew);
+            socket.off("connect", joinChat);
             socket.emit("leave_chat", chatId);
             joinedRef.current = false;
         };

@@ -5,11 +5,12 @@ import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
+import { QrModal } from "@/components/qr-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Calendar, MessageCircle, CheckCircle, Clock, Star } from "lucide-react";
+import { Loader2, Calendar, MessageCircle, CheckCircle, Clock, Star, QrCode } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ export default function IncomingRentalsPage() {
     const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
     const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
+    const [qrRentalId, setQrRentalId] = useState<string | null>(null);
     const router = useRouter();
 
     if (isLoading) {
@@ -181,6 +183,16 @@ export default function IncomingRentalsPage() {
                                                 Написать арендатору
                                             </Button>
                                         )}
+                                        {rental.payment_status === "UNPAID" && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setQrRentalId(rental.id)}
+                                            >
+                                                <QrCode className="h-4 w-4 mr-1" />
+                                                QR
+                                            </Button>
+                                        )}
                                         <Button
                                             size="sm"
                                             variant="outline"
@@ -231,6 +243,14 @@ export default function IncomingRentalsPage() {
                     targetUserId={reviewRental.renter.id}
                     dialogTitle="Оценить арендатора"
                     onClose={() => setReviewRental(null)}
+                />
+            )}
+
+            {qrRentalId && (
+                <QrModal
+                    rentalId={qrRentalId}
+                    open={!!qrRentalId}
+                    onClose={() => setQrRentalId(null)}
                 />
             )}
         </div>

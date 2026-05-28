@@ -120,4 +120,6 @@ export interface RentalRequest {
     listing: Listing;
     renter?: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
     reviews?: Review[];
+    qr_token?: string;
+    return_images: string[];
 }

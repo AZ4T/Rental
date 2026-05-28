@@ -6,10 +6,11 @@ import { useAuthStore } from "@/store/auth.store";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Phone, Video } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import api from "@/services/api";
+import { useCall } from "@/providers/call-provider";
 
 function getOtherParticipant(chat: Chat, userId: string) {
     return chat.participant1_id === userId ? chat.participant2 : chat.participant1;
@@ -25,6 +26,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
     const chat = chats?.find((c) => c.id === chatId);
     const other = chat && user ? getOtherParticipant(chat, user.id) : null;
+    const { initiateCall, initiateVideoCall, callState } = useCall();
 
     useEffect(() => {
         if (chatId) {
@@ -65,7 +67,25 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             <AvatarImage src={other.avatar_url ?? ""} />
                             <AvatarFallback>{other.name.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        <span className="font-semibold">{other.name}</span>
+                        <span className="font-semibold flex-1">{other.name}</span>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={callState.status !== "idle"}
+                            onClick={() => initiateCall(other.id, other.name, other.avatar_url ?? undefined)}
+                            title="Позвонить"
+                        >
+                            <Phone className="h-4 w-4 text-green-600" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={callState.status !== "idle"}
+                            onClick={() => initiateVideoCall(other.id, other.name, other.avatar_url ?? undefined)}
+                            title="Видеозвонок"
+                        >
+                            <Video className="h-4 w-4 text-blue-600" />
+                        </Button>
                     </>
                 )}
             </div>
@@ -82,6 +102,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     </div>
                 )}
                 {messages.map((msg) => {
+                    if (msg.type === "call") {
+                        let data: { outcome: string; duration?: number } = { outcome: "completed" };
+                        try { data = JSON.parse(msg.content); } catch {}
+                        const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+                        const label =
+                            data.outcome === "completed" ? `Звонок ${fmt(data.duration ?? 0)}`
+                            : data.outcome === "rejected" ? "Звонок отклонён"
+                            : "Пропущенный звонок";
+                        const icon = data.outcome === "completed" ? "📞" : "📵";
+                        return (
+                            <div key={msg.id} className="flex justify-center">
+                                <span className="text-xs text-muted-foreground bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1">
+                                    {icon} {label}
+                                </span>
+                            </div>
+                        );
+                    }
                     const isOwn = msg.sender_id === user?.id;
                     return (
                         <div key={msg.id} className={cn("flex gap-2", isOwn ? "justify-end" : "justify-start")}>
