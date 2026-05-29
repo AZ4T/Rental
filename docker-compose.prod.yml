@@ -91,7 +91,7 @@ services:
             - "8443:8443"
         volumes:
             - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-            - /etc/letsencrypt/live/rental.bolatbekov.com:/etc/nginx/certs:ro
+            - /etc/letsencrypt:/etc/letsencrypt:ro
 
 volumes:
     pgdata:
