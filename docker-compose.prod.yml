@@ -43,7 +43,7 @@ services:
             JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
             COOKIE_SECURE: "true"
             MINIO_ENDPOINT: http://minio:9000
-            MINIO_PUBLIC_URL: https://rental.bolatbekov.kz:8443/storage
+            MINIO_PUBLIC_URL: https://rental.bolatbekov.com:8443/storage
             MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
             MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
             MINIO_BUCKET: ${MINIO_BUCKET}
@@ -54,8 +54,8 @@ services:
             SMTP_USER: ${SMTP_USER}
             SMTP_PASS: ${SMTP_PASS}
             SMTP_FROM: ${SMTP_FROM}
-            APP_URL: https://rental.bolatbekov.kz
-            FRONTEND_URL: https://rental.bolatbekov.kz
+            APP_URL: https://rental.bolatbekov.com
+            FRONTEND_URL: https://rental.bolatbekov.com
 
     frontend:
         build: ./frontend
@@ -71,7 +71,7 @@ services:
         build:
             context: ../diplom-rental-mobile
             args:
-                EXPO_PUBLIC_API_HOST: rental.bolatbekov.kz
+                EXPO_PUBLIC_API_HOST: rental.bolatbekov.com
         container_name: rental_mobile
         restart: always
         depends_on:
@@ -91,7 +91,7 @@ services:
             - "8443:8443"
         volumes:
             - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-            - /etc/letsencrypt/live/rental.bolatbekov.kz:/etc/nginx/certs:ro
+            - /etc/letsencrypt/live/rental.bolatbekov.com:/etc/nginx/certs:ro
 
 volumes:
     pgdata:

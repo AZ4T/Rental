@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-DOMAIN="rental.bolatbekov.kz"
+DOMAIN="rental.bolatbekov.com"
 EMAIL="bolatbekov718@gmail.com"
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
