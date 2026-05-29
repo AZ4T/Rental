@@ -1,30 +1,24 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailerService {
     private readonly logger = new Logger(MailerService.name);
-    private transporter: nodemailer.Transporter;
+    private resend: Resend;
+    private from: string;
 
     constructor(private config: ConfigService) {
-        this.transporter = nodemailer.createTransport({
-            host: config.getOrThrow('SMTP_HOST'),
-            port: Number(config.get('SMTP_PORT') ?? 587),
-            secure: config.get('SMTP_SECURE') === 'true',
-            auth: {
-                user: config.getOrThrow('SMTP_USER'),
-                pass: config.getOrThrow('SMTP_PASS'),
-            },
-        });
+        this.resend = new Resend(config.getOrThrow('RESEND_API_KEY'));
+        this.from = config.get('SMTP_FROM') ?? 'noreply@rental.bolatbekov.com';
     }
 
     async sendPasswordReset(to: string, token: string) {
         const appUrl = this.config.get('APP_URL') ?? 'http://localhost:3000';
         const link = `${appUrl}/auth/reset-password?token=${token}`;
 
-        await this.transporter.sendMail({
-            from: this.config.get('SMTP_FROM') ?? this.config.get('SMTP_USER'),
+        await this.resend.emails.send({
+            from: this.from,
             to,
             subject: 'Сброс пароля',
             text: `Для сброса пароля перейдите по ссылке (действует 1 час):\n\n${link}\n\nЕсли вы не запрашивали сброс пароля — проигнорируйте это письмо.`,
