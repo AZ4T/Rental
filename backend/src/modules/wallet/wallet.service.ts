@@ -31,8 +31,25 @@ export class WalletService {
     }
 
     async topUp(userId: string, amount: number) {
-        if (amount <= 0 || amount > 1_000_000) {
-            throw new BadRequestException('Сумма должна быть от 1 до 1 000 000 ₸');
+        if (amount <= 0 || amount > 50_000) {
+            throw new BadRequestException('Сумма должна быть от 1 до 50 000 ₸');
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayTopUps = await this.prisma.transaction.aggregate({
+            where: {
+                user_id: userId,
+                type: 'DEPOSIT',
+                created_at: { gte: todayStart },
+            },
+            _sum: { amount: true },
+        });
+        const usedToday = Number(todayTopUps._sum.amount ?? 0);
+        if (usedToday + amount > 100_000) {
+            throw new BadRequestException(
+                `Превышен дневной лимит пополнения 100 000 ₸ (использовано ${usedToday.toLocaleString()} ₸)`,
+            );
         }
 
         const [user] = await this.prisma.$transaction([

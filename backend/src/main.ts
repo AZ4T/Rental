@@ -4,10 +4,17 @@ import cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from 'helmet';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
+    app.use(
+        helmet({
+            crossOriginResourcePolicy: { policy: 'cross-origin' },
+            contentSecurityPolicy: false,
+        }),
+    );
     app.use(cookieParser());
 
     app.use(json({ limit: '10mb' }));

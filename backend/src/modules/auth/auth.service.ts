@@ -74,7 +74,7 @@ export class AuthService {
 
         const access_token = this.jwtService.sign(payload, {
             secret: this.config.getOrThrow('JWT_SECRET'),
-            expiresIn: '15m',
+            expiresIn: this.config.get('JWT_EXPIRES_IN') || '15m',
         });
 
         const refresh_token = this.jwtService.sign(payload, {
@@ -82,11 +82,13 @@ export class AuthService {
             expiresIn: '7d',
         });
 
+        const cookieSecure = this.config.get('COOKIE_SECURE') === 'true';
+
         res.cookie('refresh_token', refresh_token, {
             httpOnly: true,
-            secure: false,
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+            secure: cookieSecure,
+            sameSite: cookieSecure ? 'none' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
         // Получаем пользователя и возвращаем вместе с токеном

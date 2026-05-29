@@ -68,3 +68,6 @@ tmp/
 temp/
 
 src/generated/
+# SSL Certificates
+nginx/certs/*.pem
+nginx/certs/*.key

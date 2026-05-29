@@ -4,15 +4,15 @@ services:
         container_name: rental_postgres
         restart: unless-stopped
         environment:
-            POSTGRES_USER: rental
-            POSTGRES_PASSWORD: rental
-            POSTGRES_DB: rental_db
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB}
         ports:
             - "5432:5432"
         volumes:
             - pgdata:/var/lib/postgresql/data
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U rental -d rental_db"]
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
             interval: 5s
             timeout: 5s
             retries: 10
@@ -22,12 +22,12 @@ services:
         container_name: rental_minio
         restart: unless-stopped
         environment:
-            MINIO_ROOT_USER: minio
-            MINIO_ROOT_PASSWORD: minio12345
+            MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+            MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
         command: server /data --console-address ":9001"
         ports:
-            - "9000:9000" # S3 API
-            - "9001:9001" # MinIO Console
+            - "9000:9000"
+            - "9001:9001"
         volumes:
             - miniodata:/data
 
@@ -41,14 +41,17 @@ services:
             minio:
                 condition: service_started
         environment:
-            DATABASE_URL: postgresql://rental:rental@postgres:5432/rental_db
-            JWT_SECRET: your-secret-key
-            JWT_REFRESH_SECRET: your-refresh-secret-key
+            NODE_ENV: ${NODE_ENV}
+            DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+            JWT_SECRET: ${JWT_SECRET}
+            JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+            JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+            COOKIE_SECURE: ${COOKIE_SECURE}
             MINIO_ENDPOINT: http://minio:9000
-            MINIO_PUBLIC_URL: http://172.20.10.2:9000
-            MINIO_ACCESS_KEY: minio
-            MINIO_SECRET_KEY: minio12345
-            MINIO_BUCKET: rentals
+            MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
+            MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+            MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+            MINIO_BUCKET: ${MINIO_BUCKET}
             PORT: 3001
         ports:
             - "3001:3001"
@@ -60,8 +63,8 @@ services:
         depends_on:
             - backend
         environment:
-            NEXT_PUBLIC_API_URL: http://172.20.10.2/api
-            NEXT_PUBLIC_SOCKET_URL: http://172.20.10.2
+            NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+            NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL}
         ports:
             - "3000:3000"
 
