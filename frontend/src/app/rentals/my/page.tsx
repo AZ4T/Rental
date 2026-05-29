@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
-import { usePayRental } from "@/hooks/use-wallet";
 import { useUploadImage } from "@/hooks/use-upload";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
@@ -14,12 +13,12 @@ import {
     Calendar,
     MessageSquare,
     CheckCircle,
-    CreditCard,
     ChevronDown,
     ChevronUp,
     Clock,
     Upload,
     ImageIcon,
+    Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -274,7 +273,6 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
 export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
-    const { mutate: pay, isPending: isPaying } = usePayRental();
     const { user } = useAuthStore();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
     const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
@@ -368,24 +366,10 @@ export default function MyRentalsPage() {
                                             <div className="flex gap-2">
                                                 {rental.status === "APPROVED" &&
                                                     rental.payment_status === "UNPAID" && (
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() =>
-                                                                pay(rental.id, {
-                                                                    onSuccess: () =>
-                                                                        toast.success("Оплата прошла успешно!"),
-                                                                    onError: (e: Error) =>
-                                                                        toast.error(
-                                                                            e.message ?? "Ошибка оплаты",
-                                                                        ),
-                                                                })
-                                                            }
-                                                            disabled={isPaying}
-                                                            className="bg-green-600 hover:bg-green-700"
-                                                        >
-                                                            <CreditCard className="h-4 w-4 mr-2" />
-                                                            Оплатить
-                                                        </Button>
+                                                        <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-950/20 rounded-lg px-3 py-2 border border-orange-200 dark:border-orange-800">
+                                                            <Smartphone className="h-4 w-4 shrink-0" />
+                                                            Оплатите с мобильного приложения
+                                                        </div>
                                                     )}
 
                                                 {rental.status === "PENDING" && (
@@ -465,6 +449,7 @@ export default function MyRentalsPage() {
             {reviewRental && (
                 <ReviewDialog
                     rental={reviewRental}
+                    showListingRating
                     onClose={() => setReviewRental(null)}
                 />
             )}

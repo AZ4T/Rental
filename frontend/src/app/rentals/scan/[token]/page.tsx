@@ -38,13 +38,12 @@ export default function ScanRentalPage({ params }: Props) {
 
     const { data: rental, isLoading, isError } = useQuery<ScanRentalData>({
         queryKey: ["rental-scan", token],
-        queryFn: async () => {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/rental-requests/scan/${token}`,
-            );
-            if (!res.ok) throw new Error("Не удалось загрузить данные");
-            return res.json() as Promise<ScanRentalData>;
-        },
+        queryFn: () =>
+            fetch(`/api/rental-requests/scan/${token}`)
+                .then((res) => {
+                    if (!res.ok) throw new Error("Не удалось загрузить данные");
+                    return res.json() as Promise<ScanRentalData>;
+                }),
         enabled: !!token,
     });
 

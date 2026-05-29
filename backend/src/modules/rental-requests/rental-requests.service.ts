@@ -4,6 +4,7 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRentalRequestDto } from './dto/create-rental-request.dto';
 import { UpdateStatusDto } from './dto/update-rental-request.dto';
@@ -12,6 +13,11 @@ import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { WalletService } from '../wallet/wallet.service';
 import { v4 as uuidv4 } from 'uuid';
 
+const VALID_TRANSITIONS: Partial<Record<string, string[]>> = {
+    PENDING: ['APPROVED', 'REJECTED'],
+    APPROVED: ['COMPLETED'],
+};
+
 @Injectable()
 export class RentalRequestsService {
     constructor(
@@ -19,9 +25,23 @@ export class RentalRequestsService {
         private chatsService: ChatsService,
         private notificationsGateway: NotificationsGateway,
         private walletService: WalletService,
+        private config: ConfigService,
     ) {}
 
     async create(dto: CreateRentalRequestDto, renterId: string) {
+        // Глобальный лимит активных заявок для арендатора
+        const activeCount = await this.prisma.rentalRequest.count({
+            where: {
+                renter_id: renterId,
+                status: { in: ['PENDING', 'APPROVED'] },
+            },
+        });
+        if (activeCount >= 3) {
+            throw new BadRequestException(
+                'Нельзя иметь более 3 активных заявок одновременно',
+            );
+        }
+
         const listing = await this.prisma.listing.findUnique({
             where: { id: dto.listing_id },
         });
@@ -34,23 +54,33 @@ export class RentalRequestsService {
         const start = new Date(dto.start_date);
         const end = new Date(dto.end_date);
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (start < today) {
+            throw new BadRequestException('Дата начала не может быть в прошлом');
+        }
+
         if (end <= start) {
             throw new BadRequestException(
                 'Дата окончания должна быть позже даты начала',
             );
         }
 
-        // Проверка дублирующей заявки
+        // Проверка пересечения с собственными активными заявками
         const duplicate = await this.prisma.rentalRequest.findFirst({
             where: {
                 listing_id: dto.listing_id,
                 renter_id: renterId,
                 status: { in: ['PENDING', 'APPROVED'] },
+                AND: [
+                    { start_date: { lte: end } },
+                    { end_date: { gte: start } },
+                ],
             },
         });
         if (duplicate) {
             throw new BadRequestException(
-                'У вас уже есть активная заявка на это объявление',
+                'У вас уже есть активная заявка на эти даты',
             );
         }
 
@@ -72,10 +102,17 @@ export class RentalRequestsService {
             );
         }
 
-        const days = Math.ceil(
-            (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
-        );
-        const total_price = Number(listing.price) * days;
+        const diffMs = end.getTime() - start.getTime();
+        const endHasTime = end.getHours() !== 0 || end.getMinutes() !== 0;
+        let total_price: number;
+        if (endHasTime) {
+            // Hourly billing: use Decimal arithmetic to avoid float rounding errors
+            const hours = Math.ceil(diffMs / (1000 * 60 * 60));
+            total_price = Number(listing.price.mul(hours).div(24).toFixed(2));
+        } else {
+            const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            total_price = Number(listing.price.mul(days).toFixed(2));
+        }
 
         return this.prisma.rentalRequest.create({
             data: {
@@ -84,6 +121,7 @@ export class RentalRequestsService {
                 start_date: start,
                 end_date: end,
                 total_price,
+                deposit: listing.deposit,
             },
             include: { listing: true },
         });
@@ -135,6 +173,13 @@ export class RentalRequestsService {
             throw new ForbiddenException('Нет доступа');
         }
 
+        // State machine: only allow valid transitions
+        if (!VALID_TRANSITIONS[request.status]?.includes(dto.status)) {
+            throw new BadRequestException(
+                `Недопустимый переход статуса: ${request.status} → ${dto.status}`,
+            );
+        }
+
         // Нельзя завершить неоплаченную аренду
         if (
             dto.status === 'COMPLETED' &&
@@ -142,6 +187,16 @@ export class RentalRequestsService {
         ) {
             throw new BadRequestException(
                 'Нельзя завершить аренду без оплаты',
+            );
+        }
+
+        // Нельзя завершить без фото возврата
+        if (
+            dto.status === 'COMPLETED' &&
+            (!request.return_images || request.return_images.length === 0)
+        ) {
+            throw new BadRequestException(
+                'Нельзя завершить аренду без фото возврата',
             );
         }
 
@@ -174,7 +229,7 @@ export class RentalRequestsService {
             await this.walletService.refundDeposit(
                 request.renter_id,
                 userId,
-                Number(request.listing.deposit),
+                Number(request.deposit),
                 id,
                 request.listing.title,
             );
@@ -241,7 +296,6 @@ export class RentalRequestsService {
             where: { qr_token: token, status: 'APPROVED', payment_status: 'UNPAID' },
             include: {
                 listing: { include: { images: true } },
-                renter: { select: { id: true, name: true, avatar_url: true } },
             },
         });
         if (!req) throw new NotFoundException('QR-код недействителен или аренда уже оплачена');
@@ -249,6 +303,13 @@ export class RentalRequestsService {
     }
 
     async addReturnImages(id: string, userId: string, imageUrls: string[]) {
+        const prefix = `${this.config.getOrThrow('MINIO_PUBLIC_URL')}/${this.config.getOrThrow('MINIO_BUCKET')}/`;
+        for (const url of imageUrls) {
+            if (!url.startsWith(prefix)) {
+                throw new BadRequestException('Недопустимый URL изображения');
+            }
+        }
+
         const req = await this.prisma.rentalRequest.findUnique({ where: { id }, include: { listing: true } });
         if (!req) throw new NotFoundException('Заявка не найдена');
         if (req.renter_id !== userId && req.listing.owner_id !== userId) {

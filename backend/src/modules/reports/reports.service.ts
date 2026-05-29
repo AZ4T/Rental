@@ -28,4 +28,16 @@ export class ReportsService {
             orderBy: { created_at: 'desc' },
         });
     }
+
+    async updateStatus(id: string, status: string) {
+        return this.prisma.report.update({
+            where: { id },
+            data: { status },
+            include: {
+                reporter: {
+                    select: { id: true, name: true, email: true, avatar_url: true },
+                },
+            },
+        });
+    }
 }

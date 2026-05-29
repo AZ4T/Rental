@@ -54,6 +54,8 @@ export interface Listing {
     owner_id: string;
     category_id: string;
     views_count: number;
+    rating_avg: string | null;
+    reviews_count: number;
     created_at: string;
     updated_at: string;
     images: ListingImage[];
@@ -103,7 +105,7 @@ export interface ListingFilters {
     price_max?: number;
     page?: number;
     limit?: number;
-    sortBy?: "price" | "created_at" | "rating_avg";
+    sortBy?: "price" | "created_at" | "rating_avg" | "views_count";
     sortOrder?: "asc" | "desc";
 }
 

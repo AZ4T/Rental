@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMe, useUpdateProfile } from "@/hooks/use-profile";
 import { useUploadImage } from "@/hooks/use-upload";
+import { useChangePassword } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +21,11 @@ export default function MyProfilePage() {
     const { mutate: updateProfile, isPending } = useUpdateProfile();
     const { mutateAsync: uploadImage, isPending: isUploading } =
         useUploadImage();
+    const { mutate: changePassword, isPending: isChangingPassword } = useChangePassword();
     const [name, setName] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const { user: authUser } = useAuthStore();
     const { data: reviews } = useQuery({
         queryKey: ["reviews", authUser?.id],
@@ -126,6 +131,61 @@ export default function MyProfilePage() {
                             {isPending ? "Сохраняем..." : "Сохранить"}
                         </Button>
                     </div>
+                </CardContent>
+            </Card>
+
+            {/* Смена пароля */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-lg">Сменить пароль</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="space-y-1">
+                        <Label>Текущий пароль</Label>
+                        <Input
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="••••••••"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <Label>Новый пароль</Label>
+                        <Input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Минимум 8 символов"
+                            minLength={8}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <Label>Повторите новый пароль</Label>
+                        <Input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="••••••••"
+                        />
+                    </div>
+                    {newPassword && confirmPassword && newPassword !== confirmPassword && (
+                        <p className="text-sm text-red-500">Пароли не совпадают</p>
+                    )}
+                    <Button
+                        onClick={() => {
+                            if (!currentPassword || newPassword !== confirmPassword || newPassword.length < 8) return;
+                            changePassword({ current_password: currentPassword, new_password: newPassword });
+                        }}
+                        disabled={
+                            isChangingPassword ||
+                            !currentPassword ||
+                            newPassword.length < 8 ||
+                            newPassword !== confirmPassword
+                        }
+                        variant="outline"
+                    >
+                        {isChangingPassword ? "Сохраняем..." : "Сменить пароль"}
+                    </Button>
                 </CardContent>
             </Card>
 

@@ -4,6 +4,7 @@ import { Transaction } from "@/types";
 
 interface WalletData {
     balance: number;
+    deposit_balance: number;
     transactions: Transaction[];
 }
 

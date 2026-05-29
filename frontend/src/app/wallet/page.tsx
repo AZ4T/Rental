@@ -5,11 +5,11 @@ import { useWallet, useTopUp } from "@/hooks/use-wallet";
 import { Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, ArrowDownLeft, ArrowUpRight, CreditCard, Loader2, Download } from "lucide-react";
+import { Wallet, ArrowDownLeft, ArrowUpRight, Smartphone, Loader2, Download, Lock, QrCode, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { StripePaymentModal } from "@/components/stripe-payment-modal";
+import QRCode from "react-qr-code";
 
 const QUICK_AMOUNTS = [1000, 5000, 10000, 50000];
 
@@ -88,30 +88,29 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 
 export default function WalletPage() {
     const { data, isLoading, refetch } = useWallet();
-    const { mutate: topUp } = useTopUp();
-    const [stripeOpen, setStripeOpen] = useState(false);
-    const [pendingAmount, setPendingAmount] = useState(0);
+    const { mutate: topUp, isPending: isTopUpPending } = useTopUp();
+    const [qrAmount, setQrAmount] = useState<number | null>(null);
     const [customAmt, setCustomAmt] = useState("");
 
-    const openStripe = (amount: number) => {
+    const openQr = (amount: number) => {
         if (amount <= 0 || amount > 1_000_000) {
             toast.error("Сумма от 1 до 1 000 000 ₸");
             return;
         }
-        setPendingAmount(amount);
-        setStripeOpen(true);
+        setQrAmount(amount);
     };
 
-    const handleStripeSuccess = () => {
-        setStripeOpen(false);
-        topUp(pendingAmount, {
+    const handleConfirmPayment = () => {
+        if (!qrAmount) return;
+        topUp(qrAmount, {
             onSuccess: () => {
-                toast.success(`Кошелёк пополнен на ${pendingAmount.toLocaleString()} ₸`);
+                toast.success(`Кошелёк пополнен на ${qrAmount.toLocaleString()} ₸`);
+                setQrAmount(null);
+                setCustomAmt("");
                 refetch();
             },
             onError: (e: Error) => toast.error(e.message ?? "Ошибка"),
         });
-        setCustomAmt("");
     };
 
     if (isLoading) {
@@ -126,72 +125,122 @@ export default function WalletPage() {
         <div className="max-w-2xl mx-auto space-y-6">
             <h1 className="text-2xl font-bold">Кошелёк</h1>
 
-            {/* Balance card */}
-            <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white border-0 shadow-lg">
-                <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Wallet className="h-5 w-5 opacity-80" />
-                            <span className="text-sm opacity-80">Баланс</span>
+            {/* Balance cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Wallet className="h-5 w-5 opacity-80" />
+                                <span className="text-sm opacity-80">Баланс</span>
+                            </div>
+                            <div className="text-right opacity-60 text-xs">Rental Pay</div>
                         </div>
-                        <div className="text-right opacity-60 text-xs">Rental Pay</div>
-                    </div>
-                    <p className="text-3xl sm:text-4xl font-bold tracking-tight">
-                        {Number(data?.balance ?? 0).toLocaleString()} ₸
-                    </p>
-                    <p className="text-xs opacity-60 mt-2">Доступно для оплаты аренды</p>
-                </CardContent>
-            </Card>
+                        <p className="text-3xl sm:text-4xl font-bold tracking-tight">
+                            {Number(data?.balance ?? 0).toLocaleString()} ₸
+                        </p>
+                        <p className="text-xs opacity-60 mt-2">Доступно для оплаты аренды</p>
+                    </CardContent>
+                </Card>
 
-            {/* Top-up via Stripe */}
+                <Card className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-0 shadow-lg">
+                    <CardContent className="p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <Lock className="h-5 w-5 opacity-80" />
+                                <span className="text-sm opacity-80">Залоговый счёт</span>
+                            </div>
+                            <div className="text-right opacity-60 text-xs">Заморожен</div>
+                        </div>
+                        <p className="text-3xl sm:text-4xl font-bold tracking-tight">
+                            {Number(data?.deposit_balance ?? 0).toLocaleString()} ₸
+                        </p>
+                        <p className="text-xs opacity-60 mt-2">Залоги арендаторов — возвращаются после завершения аренды</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Top-up via QR */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                        <CreditCard className="h-4 w-4" /> Пополнить картой
+                        <Smartphone className="h-4 w-4" /> Пополнить через Kaspi QR
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {/* Quick amounts */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        {QUICK_AMOUNTS.map((amt) => (
-                            <button
-                                key={amt}
-                                onClick={() => openStripe(amt)}
-                                className="border rounded-xl py-3 text-sm font-semibold hover:border-[#635BFF] hover:text-[#635BFF] hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all"
-                            >
-                                {amt.toLocaleString()} ₸
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Custom amount */}
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <input
-                                type="number"
-                                placeholder="Другая сумма (₸)"
-                                value={customAmt}
-                                onChange={(e) => setCustomAmt(e.target.value)}
-                                min={1}
-                                max={1000000}
-                                className="w-full border rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 focus:border-[#635BFF]"
-                            />
+                    {!qrAmount ? (
+                        <>
+                            <p className="text-sm text-muted-foreground">Выберите сумму пополнения — откроется QR-код для оплаты через Kaspi Pay.</p>
+                            {/* Quick amounts */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                {QUICK_AMOUNTS.map((amt) => (
+                                    <button
+                                        key={amt}
+                                        onClick={() => openQr(amt)}
+                                        className="border rounded-xl py-3 text-sm font-semibold hover:border-red-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
+                                    >
+                                        {amt.toLocaleString()} ₸
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    placeholder="Другая сумма (₸)"
+                                    value={customAmt}
+                                    onChange={(e) => setCustomAmt(e.target.value)}
+                                    min={1}
+                                    max={1000000}
+                                    className="flex-1 border rounded-xl px-4 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                                />
+                                <Button
+                                    onClick={() => openQr(Number(customAmt))}
+                                    disabled={!customAmt || Number(customAmt) <= 0}
+                                    className="bg-red-600 hover:bg-red-700 px-5 rounded-xl shrink-0"
+                                >
+                                    <QrCode className="h-4 w-4 mr-1.5" />
+                                    Получить QR
+                                </Button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="text-center">
+                                <p className="font-semibold text-lg">{qrAmount.toLocaleString()} ₸</p>
+                                <p className="text-sm text-muted-foreground">Отсканируйте через Kaspi Pay</p>
+                            </div>
+                            <div className="p-4 bg-white rounded-2xl border shadow-sm">
+                                <QRCode
+                                    value={`https://kaspi.kz/pay?service=rental&amount=${qrAmount}&comment=Wallet+topup`}
+                                    size={200}
+                                    level="M"
+                                />
+                            </div>
+                            <div className="text-xs text-muted-foreground text-center max-w-xs">
+                                Откройте Kaspi приложение → Kaspi Pay → Отсканировать QR. После оплаты нажмите кнопку ниже.
+                            </div>
+                            <div className="flex gap-3 w-full max-w-xs">
+                                <Button variant="outline" className="flex-1" onClick={() => setQrAmount(null)}>
+                                    Отмена
+                                </Button>
+                                <Button
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    onClick={handleConfirmPayment}
+                                    disabled={isTopUpPending}
+                                >
+                                    {isTopUpPending ? (
+                                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                                    ) : (
+                                        <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                                    )}
+                                    Я оплатил
+                                </Button>
+                            </div>
                         </div>
-                        <Button
-                            onClick={() => openStripe(Number(customAmt))}
-                            disabled={!customAmt || Number(customAmt) <= 0}
-                            className="bg-[#635BFF] hover:bg-[#5147e8] px-5 rounded-xl shrink-0"
-                        >
-                            Оплатить
-                        </Button>
-                    </div>
-
-                    {/* Stripe badge */}
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                        <svg viewBox="0 0 60 25" className="h-4 fill-current opacity-50">
-                            <path d="M59.64 14.28h-8.06v-1.83h8.06v1.83zm-6.23-7.9c-2.14 0-3.45 1.01-3.45 2.67 0 3.3 5.1 2.08 5.1 4.15 0 .74-.65 1.16-1.7 1.16-1.52 0-2.27-.79-2.27-1.76H48.7c0 1.92 1.37 3.15 4.07 3.15 2.41 0 3.88-1.14 3.88-2.86 0-3.33-5.1-2.1-5.1-4.12 0-.63.55-1.01 1.52-1.01 1.3 0 2.02.62 2.06 1.6h2.32c-.06-1.85-1.38-2.98-3.94-2.98zm-8.9.17h-2.27v7.73h2.27V6.55zm-1.13-3.58c-.78 0-1.4.63-1.4 1.4 0 .78.62 1.4 1.4 1.4.77 0 1.4-.62 1.4-1.4 0-.77-.63-1.4-1.4-1.4zM35.7 6.38c-2.32 0-3.87 1.73-3.87 4.04 0 2.3 1.55 4.04 3.87 4.04 1.2 0 2.15-.5 2.75-1.3v1.12h2.2V6.55h-2.2v1.12c-.6-.81-1.55-1.3-2.75-1.3zm.5 6.06c-1.19 0-2.1-.88-2.1-2.02 0-1.13.91-2.02 2.1-2.02 1.19 0 2.1.89 2.1 2.02 0 1.14-.91 2.02-2.1 2.02zm-8.16-6.06c-1.3 0-2.33.5-2.97 1.35V6.55h-2.2v10.9h2.2v-3.3c.64.85 1.67 1.35 2.97 1.35 2.27 0 3.8-1.74 3.8-4.06 0-2.31-1.53-4.06-3.8-4.06zm-.5 6.06c-1.19 0-2.1-.89-2.1-2.02 0-1.14.91-2.02 2.1-2.02 1.19 0 2.1.88 2.1 2.02 0 1.13-.91 2.02-2.1 2.02z"/>
-                        </svg>
-                        <span>Безопасная оплата · Тестовый режим</span>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-3">
+                        <Smartphone className="h-3.5 w-3.5 opacity-60" />
+                        <span>Оплата только через мобильное приложение Kaspi · Безопасно</span>
                     </div>
                 </CardContent>
             </Card>
@@ -224,12 +273,6 @@ export default function WalletPage() {
                 </CardContent>
             </Card>
 
-            <StripePaymentModal
-                open={stripeOpen}
-                amount={pendingAmount}
-                onClose={() => setStripeOpen(false)}
-                onSuccess={handleStripeSuccess}
-            />
         </div>
     );
 }

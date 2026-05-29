@@ -57,6 +57,15 @@ export function useMyListings() {
     });
 }
 
+export function useUserListings(userId: string) {
+    return useQuery({
+        queryKey: ["listings", "user", userId],
+        queryFn: () =>
+            api.get<Listing[]>(`/listings/user/${userId}`).then((r) => r.data),
+        enabled: !!userId,
+    });
+}
+
 export function useSimilarListings(id: string, categoryId: string) {
     return useQuery({
         queryKey: ["listings", "similar", id],

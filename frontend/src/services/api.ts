@@ -1,8 +1,9 @@
 import axios from "axios";
-import Cookies from "js-cookie";
+import { useAuthStore } from "@/store/auth.store";
+import { User } from "@/types";
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL,
+    baseURL: "/api",
     withCredentials: true,
     headers: {
         "Content-Type": "application/json",
@@ -10,12 +11,39 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("access_token");
+    const token = useAuthStore.getState().access_token;
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 });
+
+// Shared promise guard — only one /auth/refresh request in flight at a time
+let refreshPromise: Promise<string> | null = null;
+let isRedirectingToLogin = false;
+
+export function doRefresh(): Promise<string> {
+    if (refreshPromise) return refreshPromise;
+
+    refreshPromise = axios
+        .post<{ access_token: string; user: User }>(
+            "/api/auth/refresh",
+            {},
+            {
+                withCredentials: true,
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+            },
+        )
+        .then((res) => {
+            useAuthStore.getState().setAuth(res.data.user, res.data.access_token);
+            return res.data.access_token;
+        })
+        .finally(() => {
+            refreshPromise = null;
+        });
+
+    return refreshPromise;
+}
 
 api.interceptors.response.use(
     (response) => response,
@@ -26,22 +54,17 @@ api.interceptors.response.use(
             original._retry = true;
 
             try {
-                const res = await axios.post(
-                    `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
-                    {},
-                    { withCredentials: true },
-                );
-
-                const { access_token } = res.data as { access_token: string };
-                localStorage.setItem("access_token", access_token);
-                Cookies.set("access_token", access_token, { expires: 1 / 96 }); // ← добавляем
-
+                const access_token = await doRefresh();
                 original.headers.Authorization = `Bearer ${access_token}`;
                 return api(original);
             } catch {
-                localStorage.removeItem("access_token");
-                Cookies.remove("access_token"); // ← добавляем
-                if (!window.location.pathname.startsWith("/auth/")) {
+                useAuthStore.getState().logout();
+                if (
+                    typeof window !== "undefined" &&
+                    !isRedirectingToLogin &&
+                    !window.location.pathname.startsWith("/auth/")
+                ) {
+                    isRedirectingToLogin = true;
                     window.location.href = "/auth/login";
                 }
             }

@@ -98,7 +98,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                             const [sortBy, sortOrder] = e.target.value.split(
                                 "|",
                             ) as [
-                                "price" | "created_at" | "rating_avg",
+                                "price" | "created_at" | "rating_avg" | "views_count",
                                 "asc" | "desc",
                             ];
                             onChange({
@@ -113,7 +113,8 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                         <option value="created_at|asc">Сначала старые</option>
                         <option value="price|asc">Цена: по возрастанию</option>
                         <option value="price|desc">Цена: по убыванию</option>
-                        <option value="rating_avg|desc">По рейтингу</option>
+                        <option value="rating_avg|desc">По рейтингу товара</option>
+                        <option value="views_count|desc">По просмотрам</option>
                     </select>
                 </div>
 

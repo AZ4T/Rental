@@ -10,10 +10,12 @@ let notifSocket: Socket | null = null;
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
     const { user, isAuthenticated } = useAuthStore();
+    const accessToken = useAuthStore((s) => s.access_token);
     const queryClient = useQueryClient();
 
+    // accessToken in deps so a token refresh recreates the socket with the fresh token
     useEffect(() => {
-        if (!isAuthenticated || !user) {
+        if (!isAuthenticated || !user || !accessToken) {
             if (notifSocket) {
                 notifSocket.disconnect();
                 notifSocket = null;
@@ -25,9 +27,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             void Notification.requestPermission();
         }
 
-        const token = localStorage.getItem("access_token");
-        notifSocket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}/notifications`, {
-            auth: { token },
+        notifSocket = io(`${window.location.origin}/notifications`, {
+            auth: { token: accessToken },
         });
 
         notifSocket.on("rental_status_changed", (data: { message: string }) => {
@@ -57,7 +58,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             notifSocket?.disconnect();
             notifSocket = null;
         };
-    }, [isAuthenticated, user, queryClient]);
+    }, [isAuthenticated, user, accessToken, queryClient]);
 
     return <>{children}</>;
 }

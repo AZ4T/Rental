@@ -11,6 +11,7 @@ import { CallProvider } from "@/providers/call-provider";
 import { CallOverlay } from "@/components/call-overlay";
 import { CompareBar } from "@/components/compare-bar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
+import { AuthInitializer } from "@/components/auth-initializer";
 
 export const metadata: Metadata = {
     title: "Rental App",
@@ -36,6 +37,7 @@ export default function RootLayout({
             <body className={inter.className}>
                 <ThemeProvider>
                     <QueryProvider>
+                        <AuthInitializer />
                         <NotificationsProvider>
                             <CallProvider>
                                 <Navbar />

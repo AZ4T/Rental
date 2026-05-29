@@ -10,31 +10,85 @@ import {
 import { Button } from "@/components/ui/button";
 import { RentalRequest } from "@/types";
 import { useCreateReview } from "@/hooks/use-reviews";
-import { Star } from "lucide-react";
+import { Star, Package, User } from "lucide-react";
 
 interface Props {
     rental: RentalRequest;
     targetUserId?: string;
     dialogTitle?: string;
+    showListingRating?: boolean;
     onClose: () => void;
 }
 
-export function ReviewDialog({ rental, targetUserId, dialogTitle, onClose }: Props) {
-    const [rating, setRating] = useState(0);
+function StarPicker({
+    value,
+    onChange,
+    label,
+    icon,
+}: {
+    value: number;
+    onChange: (v: number) => void;
+    label: string;
+    icon: React.ReactNode;
+}) {
     const [hovered, setHovered] = useState(0);
+
+    return (
+        <div>
+            <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+                {icon}
+                {label}
+            </p>
+            <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                        key={star}
+                        type="button"
+                        onMouseEnter={() => setHovered(star)}
+                        onMouseLeave={() => setHovered(0)}
+                        onClick={() => onChange(star)}
+                    >
+                        <Star
+                            className={`h-8 w-8 transition-colors ${
+                                star <= (hovered || value)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                            }`}
+                        />
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+export function ReviewDialog({
+    rental,
+    targetUserId,
+    dialogTitle,
+    showListingRating = false,
+    onClose,
+}: Props) {
+    const [rating, setRating] = useState(0);
+    const [listingRating, setListingRating] = useState(0);
     const [comment, setComment] = useState("");
     const { mutate: createReview, isPending } = useCreateReview();
 
     const handleSubmit = () => {
         if (rating === 0) return;
+        if (showListingRating && listingRating === 0) return;
+
         createReview({
             rental_request_id: rental.id,
             target_user_id: targetUserId ?? rental.listing.owner_id,
             rating,
+            listing_rating: showListingRating ? listingRating : undefined,
             comment: comment.trim() || undefined,
         });
         onClose();
     };
+
+    const isValid = rating > 0 && (!showListingRating || listingRating > 0);
 
     return (
         <Dialog open onOpenChange={onClose}>
@@ -47,31 +101,22 @@ export function ReviewDialog({ rental, targetUserId, dialogTitle, onClose }: Pro
                         {rental.listing.title}
                     </p>
 
-                    {/* Звёзды */}
-                    <div>
-                        <p className="text-sm font-medium mb-2">Оценка</p>
-                        <div className="flex gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                    key={star}
-                                    type="button"
-                                    onMouseEnter={() => setHovered(star)}
-                                    onMouseLeave={() => setHovered(0)}
-                                    onClick={() => setRating(star)}
-                                >
-                                    <Star
-                                        className={`h-8 w-8 transition-colors ${
-                                            star <= (hovered || rating)
-                                                ? "fill-yellow-400 text-yellow-400"
-                                                : "text-gray-300"
-                                        }`}
-                                    />
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <StarPicker
+                        value={rating}
+                        onChange={setRating}
+                        label="Оценка арендодателя"
+                        icon={<User className="h-4 w-4 text-muted-foreground" />}
+                    />
 
-                    {/* Комментарий */}
+                    {showListingRating && (
+                        <StarPicker
+                            value={listingRating}
+                            onChange={setListingRating}
+                            label="Оценка товара"
+                            icon={<Package className="h-4 w-4 text-muted-foreground" />}
+                        />
+                    )}
+
                     <div>
                         <p className="text-sm font-medium mb-2">
                             Комментарий (необязательно)
@@ -96,7 +141,7 @@ export function ReviewDialog({ rental, targetUserId, dialogTitle, onClose }: Pro
                         <Button
                             className="flex-1"
                             onClick={handleSubmit}
-                            disabled={isPending || rating === 0}
+                            disabled={isPending || !isValid}
                         >
                             Отправить
                         </Button>

@@ -82,6 +82,10 @@ export class UploadsService {
         return `${this.publicUrl}/${this.bucket}/${key}`;
     }
 
+    getPublicPrefix(): string {
+        return `${this.publicUrl}/${this.bucket}/`;
+    }
+
     normalizeUrl(url: string): string {
         const bucketPath = `/${this.bucket}/`;
         const idx = url.indexOf(bucketPath);

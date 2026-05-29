@@ -286,17 +286,18 @@ export function CallProvider({ children }: { children: ReactNode }) {
         setCallState((prev) => ({ ...prev, isMuted: enabled }));
     }, [callState.isMuted]);
 
-    // Socket setup
+    const accessToken = useAuthStore((s) => s.access_token);
+
+    // Socket setup — deps include accessToken so a token refresh recreates the socket
     useEffect(() => {
-        if (!isAuthenticated || !user) {
+        if (!isAuthenticated || !user || !accessToken) {
             socketRef.current?.disconnect();
             socketRef.current = null;
             return;
         }
 
-        const token = localStorage.getItem("access_token");
-        const socket = io(`${process.env.NEXT_PUBLIC_SOCKET_URL}/calls`, {
-            auth: { token },
+        const socket = io(`${window.location.origin}/calls`, {
+            auth: { token: accessToken },
         });
         socketRef.current = socket;
 
@@ -354,7 +355,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
             socketRef.current = null;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAuthenticated, user?.id]);
+    }, [isAuthenticated, user?.id, accessToken]);
 
     return (
         <CallContext.Provider

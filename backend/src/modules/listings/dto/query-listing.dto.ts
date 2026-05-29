@@ -6,6 +6,7 @@ import {
     IsOptional,
     IsString,
     IsUUID,
+    Max,
     Min,
 } from 'class-validator';
 
@@ -43,17 +44,19 @@ export class QueryListingDto {
     @Type(() => Number)
     @IsNumber()
     @Min(1)
+    @Max(10000)
     page?: number = 1;
 
     @IsOptional()
     @Type(() => Number)
     @IsNumber()
     @Min(1)
+    @Max(100)
     limit?: number = 12;
 
     @IsOptional()
-    @IsIn(['price', 'created_at', 'rating_avg'])
-    sortBy?: 'price' | 'created_at' | 'rating_avg';
+    @IsIn(['price', 'created_at', 'rating_avg', 'views_count'])
+    sortBy?: 'price' | 'created_at' | 'rating_avg' | 'views_count';
 
     @IsOptional()
     @IsIn(['asc', 'desc'])

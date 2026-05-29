@@ -20,6 +20,7 @@ export class AdminService {
                 rating_avg: true,
                 reviews_count: true,
                 created_at: true,
+                _count: { select: { listings: true } },
             },
             orderBy: { created_at: 'desc' },
         });

@@ -36,13 +36,16 @@ export class ChatsService {
         });
     }
 
-    async getMessages(chatId: string, userId: string) {
+    async getMessages(chatId: string, userId: string, limit = 50, before?: string) {
         await this.assertParticipant(chatId, userId);
-        return this.prisma.message.findMany({
+        const messages = await this.prisma.message.findMany({
             where: { chat_id: chatId },
             include: { sender: { select: { id: true, name: true, avatar_url: true } } },
-            orderBy: { created_at: 'asc' },
+            orderBy: { created_at: 'desc' },
+            take: Math.min(limit, 100),
+            ...(before && { cursor: { id: before }, skip: 1 }),
         });
+        return messages.reverse();
     }
 
     async createMessage(chatId: string, senderId: string, content: string) {

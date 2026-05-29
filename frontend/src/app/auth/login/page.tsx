@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const loginSchema = z.object({
     email: z.string().email("Введите корректный email"),
@@ -16,8 +18,10 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-export default function LoginPage() {
-    const { mutate: login, isPending } = useLogin();
+function LoginForm() {
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirect");
+    const { mutate: login, isPending } = useLogin(redirectTo);
 
     const { control, handleSubmit } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),
@@ -103,6 +107,14 @@ export default function LoginPage() {
                                 </Field>
                             )}
                         />
+                        <div className="flex justify-end">
+                            <Link
+                                href="/auth/forgot-password"
+                                className="text-sm text-blue-600 hover:underline"
+                            >
+                                Забыли пароль?
+                            </Link>
+                        </div>
                         <Button
                             type="submit"
                             className="w-full h-11"
@@ -114,5 +126,13 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <LoginForm />
+        </Suspense>
     );
 }

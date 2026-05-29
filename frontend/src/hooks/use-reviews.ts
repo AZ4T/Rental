@@ -6,6 +6,7 @@ interface CreateReviewDto {
     rental_request_id: string;
     target_user_id: string;
     rating: number;
+    listing_rating?: number;
     comment?: string;
 }
 

@@ -2,6 +2,8 @@ import {
     Body,
     Controller,
     Get,
+    Patch,
+    Param,
     Post,
     Req,
     UseGuards,
@@ -24,10 +26,17 @@ export class ReportsController {
         return this.reportsService.create(dto, req.user.userId);
     }
 
-    @UseGuards(RolesGuard)
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @Role('ADMIN')
     @Get()
     findAll() {
         return this.reportsService.findAll();
+    }
+
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Role('ADMIN')
+    @Patch(':id/status')
+    updateStatus(@Param('id') id: string, @Body('status') status: string) {
+        return this.reportsService.updateStatus(id, status);
     }
 }

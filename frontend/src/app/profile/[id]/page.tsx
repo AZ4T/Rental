@@ -1,14 +1,18 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import { useUser } from "@/hooks/use-profile";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Review } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Loader2 } from "lucide-react";
+import { Star, Loader2, Flag } from "lucide-react";
 import Link from "next/link";
+import { useUserListings } from "@/hooks/use-listings";
+import { ListingCard } from "@/components/listing-card";
+import { useAuthStore } from "@/store/auth.store";
+import { ReportModal } from "@/components/report-modal";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -17,6 +21,9 @@ interface Props {
 export default function UserProfilePage({ params }: Props) {
     const { id } = use(params);
     const { data: user, isLoading } = useUser(id);
+    const { data: userListings } = useUserListings(id);
+    const { user: me } = useAuthStore();
+    const [reportOpen, setReportOpen] = useState(false);
 
     const { data: reviews } = useQuery({
         queryKey: ["reviews", id],
@@ -47,7 +54,7 @@ export default function UserProfilePage({ params }: Props) {
                             {user.name.charAt(0).toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
-                    <div>
+                    <div className="flex-1">
                         <h1 className="text-2xl font-bold">{user.name}</h1>
                         {user.rating_avg && (
                             <div className="flex items-center gap-1 mt-2 text-sm">
@@ -62,13 +69,41 @@ export default function UserProfilePage({ params }: Props) {
                         )}
                         <p className="text-sm text-gray-500 mt-1">
                             На платформе с{" "}
-                            {new Date(user.created_at).toLocaleDateString(
-                                "ru-RU",
-                            )}
+                            {new Date(user.created_at).toLocaleDateString("ru-RU")}
                         </p>
                     </div>
+                    {me && me.id !== id && (
+                        <button
+                            onClick={() => setReportOpen(true)}
+                            className="shrink-0 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
+                        >
+                            <Flag className="h-3.5 w-3.5" />
+                            Пожаловаться
+                        </button>
+                    )}
                 </CardContent>
             </Card>
+
+            <ReportModal
+                open={reportOpen}
+                onClose={() => setReportOpen(false)}
+                type="USER"
+                targetId={id}
+            />
+
+            {/* Объявления пользователя */}
+            {userListings && userListings.length > 0 && (
+                <div>
+                    <h2 className="text-xl font-semibold mb-4">
+                        Объявления ({userListings.length})
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {userListings.map((listing) => (
+                            <ListingCard key={listing.id} listing={listing} />
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Отзывы */}
             <div>

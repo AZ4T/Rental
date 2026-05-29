@@ -20,7 +20,7 @@ import { ImageGallery } from "@/components/image-gallery";
 import { Share2, Check } from "lucide-react";
 import { useSimilarListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/style.css";
 import QRCode from "qrcode";
 import { useCompareStore } from "@/store/compare.store";
@@ -81,30 +81,33 @@ export default function ListingPage({ params }: Props) {
         listing?.category_id ?? "",
     );
 
-    const { add: addCompare, remove: removeCompare, has: inCompareStore } = useCompareStore();
+    const { add: addCompare, remove: removeCompare, has: inCompareStore, validate: validateCompare } = useCompareStore();
     const isFavorited = favorites?.some((f) => f.listing_id === id);
     const isOwner = user?.id === listing?.owner_id;
     const [heartAnimating, setHeartAnimating] = useState(false);
     const inCompare = listing ? inCompareStore(listing.id) : false;
     const [showReport, setShowReport] = useState(false);
 
-    // Калькулятор стоимости
-    const [calcFrom, setCalcFrom] = useState("");
-    const [calcTo, setCalcTo] = useState("");
+    // Выбор дат аренды
+    const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
 
     const calcDays =
-        calcFrom && calcTo
-            ? Math.max(
-                  1,
-                  Math.round(
-                      (new Date(calcTo).getTime() - new Date(calcFrom).getTime()) /
-                          86400000,
-                  ) + 1,
+        selectedRange?.from && selectedRange?.to
+            ? Math.ceil(
+                  (selectedRange.to.getTime() - selectedRange.from.getTime()) /
+                      (1000 * 60 * 60 * 24),
               )
             : 0;
-    const calcTotal = calcDays > 0 && listing
-        ? calcDays * Number(listing.price) + Number(listing.deposit)
-        : 0;
+    const calcTotal =
+        calcDays > 0 && listing
+            ? calcDays * Number(listing.price) + Number(listing.deposit)
+            : 0;
+    const calcFromStr = selectedRange?.from
+        ? selectedRange.from.toISOString().split("T")[0]
+        : "";
+    const calcToStr = selectedRange?.to
+        ? selectedRange.to.toISOString().split("T")[0]
+        : "";
 
     useEffect(() => {
         if (listing) saveRecentlyViewed(listing);
@@ -165,11 +168,20 @@ export default function ListingPage({ params }: Props) {
                                 {listing.category.name}
                             </Badge>
                         </div>
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
                             <div className="flex items-center gap-1 text-gray-500">
                                 <MapPin className="h-4 w-4" />
                                 <span>{listing.city}</span>
                             </div>
+                            {listing.rating_avg ? (
+                                <div className="flex items-center gap-1 text-amber-500">
+                                    <Star className="h-4 w-4 fill-amber-400" />
+                                    <span className="font-semibold text-sm">{Number(listing.rating_avg).toFixed(1)}</span>
+                                    <span className="text-gray-400 text-xs">({listing.reviews_count})</span>
+                                </div>
+                            ) : (
+                                <span className="text-xs text-gray-400">нет оценок товара</span>
+                            )}
                             <div className="flex items-center gap-1 text-gray-400 text-sm">
                                 <Eye className="h-3.5 w-3.5" />
                                 <span>{listing.views_count ?? 0} просмотров</span>
@@ -196,47 +208,31 @@ export default function ListingPage({ params }: Props) {
                                 </span>
                             </div>
 
-                            {/* Калькулятор стоимости */}
+                            {/* Расчёт стоимости */}
                             {!isOwner && (
                                 <div className="border-t pt-3 space-y-2">
-                                    <p className="text-xs font-medium text-muted-foreground">Рассчитать стоимость</p>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">С</label>
-                                            <input
-                                                type="date"
-                                                value={calcFrom}
-                                                min={new Date().toISOString().split("T")[0]}
-                                                onChange={(e) => setCalcFrom(e.target.value)}
-                                                className="w-full text-base border rounded-md px-2 py-1 bg-background"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-muted-foreground">По</label>
-                                            <input
-                                                type="date"
-                                                value={calcTo}
-                                                min={calcFrom || new Date().toISOString().split("T")[0]}
-                                                onChange={(e) => setCalcTo(e.target.value)}
-                                                className="w-full text-base border rounded-md px-2 py-1 bg-background"
-                                            />
-                                        </div>
-                                    </div>
-                                    {calcDays > 0 && (
-                                        <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
-                                            <div className="flex justify-between text-muted-foreground">
-                                                <span>{calcDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
-                                                <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
+                                    {calcDays > 0 ? (
+                                        <>
+                                            <p className="text-xs font-medium text-muted-foreground">Расчёт стоимости</p>
+                                            <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
+                                                <div className="flex justify-between text-muted-foreground">
+                                                    <span>{calcDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
+                                                    <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
+                                                </div>
+                                                <div className="flex justify-between text-muted-foreground">
+                                                    <span>Залог</span>
+                                                    <span>{Number(listing.deposit).toLocaleString()} ₸</span>
+                                                </div>
+                                                <div className="flex justify-between font-bold border-t pt-1">
+                                                    <span>Итого</span>
+                                                    <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
+                                                </div>
                                             </div>
-                                            <div className="flex justify-between text-muted-foreground">
-                                                <span>Залог</span>
-                                                <span>{Number(listing.deposit).toLocaleString()} ₸</span>
-                                            </div>
-                                            <div className="flex justify-between font-bold border-t pt-1">
-                                                <span>Итого</span>
-                                                <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
-                                            </div>
-                                        </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-xs text-muted-foreground">
+                                            Выберите даты на календаре ниже
+                                        </p>
                                     )}
                                 </div>
                             )}
@@ -323,10 +319,16 @@ export default function ListingPage({ params }: Props) {
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => {
-                                    if (listing) {
-                                        inCompare ? removeCompare(listing.id) : addCompare(listing);
-                                        toast.success(inCompare ? "Убрано из сравнения" : "Добавлено к сравнению");
+                                    if (!listing) return;
+                                    if (inCompare) {
+                                        removeCompare(listing.id);
+                                        toast.success("Убрано из сравнения");
+                                        return;
                                     }
+                                    const error = validateCompare(listing);
+                                    if (error) { toast.error(error); return; }
+                                    addCompare(listing);
+                                    toast.success("Добавлено к сравнению");
                                 }}
                                 title={inCompare ? "Убрать из сравнения" : "Сравнить"}
                                 className={`flex items-center gap-1.5 text-sm transition-colors ${inCompare ? "text-blue-600" : "text-muted-foreground hover:text-foreground"}`}
@@ -381,35 +383,80 @@ export default function ListingPage({ params }: Props) {
                 </p>
             </div>
 
-            {/* Календарь занятости */}
+            {/* Календарь дат */}
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Занятые даты
+                        {isOwner ? "Занятые даты" : "Выберите даты аренды"}
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    {bookedRanges.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                            Нет забронированных дат
-                        </p>
+                <CardContent className="space-y-4">
+                    {isOwner ? (
+                        bookedRanges.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                Нет забронированных дат
+                            </p>
+                        ) : (
+                            <DayPicker
+                                mode="multiple"
+                                selected={bookedRanges.flatMap((r) => {
+                                    const days: Date[] = [];
+                                    const cur = new Date(r.from);
+                                    while (cur <= r.to) {
+                                        days.push(new Date(cur));
+                                        cur.setDate(cur.getDate() + 1);
+                                    }
+                                    return days;
+                                })}
+                                disabled
+                                showOutsideDays={false}
+                            />
+                        )
                     ) : (
-                        <DayPicker
-                            mode="multiple"
-                            selected={bookedRanges.flatMap((r) => {
-                                const days: Date[] = [];
-                                const cur = new Date(r.from);
-                                while (cur <= r.to) {
-                                    days.push(new Date(cur));
-                                    cur.setDate(cur.getDate() + 1);
-                                }
-                                return days;
-                            })}
-                            disabled
-                            showOutsideDays={false}
-                            className="rdp-compact"
-                        />
+                        <>
+                            {bookedRanges.length > 0 && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span className="inline-block w-3 h-3 rounded-sm bg-red-200 border border-red-400" />
+                                    Занято
+                                    <span className="inline-block w-3 h-3 rounded-sm bg-blue-200 border border-blue-400 ml-2" />
+                                    Выбранный период
+                                </div>
+                            )}
+                            <DayPicker
+                                mode="range"
+                                selected={selectedRange}
+                                onSelect={setSelectedRange}
+                                disabled={[{ before: new Date() }, ...bookedRanges]}
+                                modifiers={{ booked: bookedRanges }}
+                                modifiersStyles={{
+                                    booked: {
+                                        backgroundColor: "#fef2f2",
+                                        color: "#dc2626",
+                                        textDecoration: "line-through",
+                                        opacity: 0.8,
+                                    },
+                                }}
+                                showOutsideDays={false}
+                                numberOfMonths={2}
+                            />
+                            {calcDays > 0 && (
+                                <div className="bg-muted rounded-lg p-3 space-y-1 text-sm border-t pt-4">
+                                    <div className="flex justify-between text-muted-foreground">
+                                        <span>{calcDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
+                                        <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
+                                    </div>
+                                    <div className="flex justify-between text-muted-foreground">
+                                        <span>Залог (возвратный)</span>
+                                        <span>{Number(listing.deposit).toLocaleString()} ₸</span>
+                                    </div>
+                                    <div className="flex justify-between font-bold border-t pt-1">
+                                        <span>Итого</span>
+                                        <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </CardContent>
             </Card>
@@ -445,6 +492,8 @@ export default function ListingPage({ params }: Props) {
             {showRentalDialog && (
                 <RentalRequestDialog
                     listing={listing}
+                    initialStartDate={calcFromStr}
+                    initialEndDate={calcToStr}
                     onClose={() => setShowRentalDialog(false)}
                 />
             )}

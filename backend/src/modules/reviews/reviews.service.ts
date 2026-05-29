@@ -39,7 +39,6 @@ export class ReviewsService {
             );
         }
 
-        // Проверяем что этот автор ещё не оставлял отзыв по этой заявке
         const exists = await this.prisma.review.findUnique({
             where: {
                 rental_request_id_author_id: {
@@ -50,19 +49,27 @@ export class ReviewsService {
         });
         if (exists) throw new BadRequestException('Вы уже оставили отзыв');
 
-        // Создаём отзыв
+        const targetUserId = isRenter
+            ? rentalRequest.listing.owner_id
+            : rentalRequest.renter_id;
+
         const review = await this.prisma.review.create({
             data: {
                 author_id: authorId,
-                target_user_id: dto.target_user_id,
+                target_user_id: targetUserId,
                 rental_request_id: dto.rental_request_id,
                 rating: dto.rating,
+                listing_rating: isRenter ? dto.listing_rating : undefined,
                 comment: dto.comment,
             },
         });
 
-        // Обновляем рейтинг пользователя
-        await this.updateUserRating(dto.target_user_id);
+        await this.updateUserRating(targetUserId);
+
+        // Обновляем рейтинг товара (только арендатор оценивает товар)
+        if (isRenter && dto.listing_rating) {
+            await this.updateListingRating(rentalRequest.listing_id);
+        }
 
         return review;
     }
@@ -86,7 +93,6 @@ export class ReviewsService {
         });
     }
 
-    // Пересчитываем рейтинг пользователя
     private async updateUserRating(userId: string) {
         const result = await this.prisma.review.aggregate({
             where: { target_user_id: userId },
@@ -99,6 +105,25 @@ export class ReviewsService {
             data: {
                 rating_avg: result._avg.rating ?? 0,
                 reviews_count: result._count.rating,
+            },
+        });
+    }
+
+    private async updateListingRating(listingId: string) {
+        const result = await this.prisma.review.aggregate({
+            where: {
+                rentalRequest: { listing_id: listingId },
+                listing_rating: { not: null },
+            },
+            _avg: { listing_rating: true },
+            _count: { listing_rating: true },
+        });
+
+        await this.prisma.listing.update({
+            where: { id: listingId },
+            data: {
+                rating_avg: result._avg.listing_rating ?? null,
+                reviews_count: result._count.listing_rating,
             },
         });
     }

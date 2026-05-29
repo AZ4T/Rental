@@ -1,8 +1,11 @@
 import {
     Controller,
+    DefaultValuePipe,
     Get,
+    ParseIntPipe,
     Post,
     Param,
+    Query,
     UseGuards,
     Request,
 } from '@nestjs/common';
@@ -36,8 +39,10 @@ export class ChatsController {
     getMessages(
         @Param('id') id: string,
         @Request() req: { user: { userId: string } },
+        @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+        @Query('before') before?: string,
     ) {
-        return this.chatsService.getMessages(id, req.user.userId);
+        return this.chatsService.getMessages(id, req.user.userId, limit, before);
     }
 
     @Post(':id/read')

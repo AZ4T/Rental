@@ -33,17 +33,20 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 client.handshake.auth?.token ||
                 client.handshake.headers?.authorization?.replace('Bearer ', '');
 
-            const payload = this.jwtService.verify<{ sub: string }>(token, {
+            const payload = this.jwtService.verify<{ sub: string; exp: number }>(token, {
                 secret: this.config.getOrThrow('JWT_SECRET'),
             });
             client.userId = payload.sub;
+
+            const msUntilExpiry = Math.min(payload.exp * 1000 - Date.now(), 2_147_483_647);
+            client.data.expiryTimer = setTimeout(() => client.disconnect(), msUntilExpiry);
         } catch {
             client.disconnect();
         }
     }
 
     handleDisconnect(client: AuthSocket) {
-        void client;
+        clearTimeout(client.data.expiryTimer as ReturnType<typeof setTimeout>);
     }
 
     @SubscribeMessage('join_chat')
@@ -51,8 +54,8 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: AuthSocket,
         @MessageBody() chatId: string,
     ) {
-        await client.join(chatId);
         await this.chatsService.markAsRead(chatId, client.userId);
+        await client.join(chatId);
     }
 
     @SubscribeMessage('leave_chat')

@@ -193,20 +193,31 @@ export default function IncomingRentalsPage() {
                                                 QR
                                             </Button>
                                         )}
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="flex-1"
-                                            onClick={() =>
-                                                updateStatus({
-                                                    id: rental.id,
-                                                    status: "COMPLETED",
-                                                })
-                                            }
-                                            disabled={isPending || rental.payment_status !== "PAID"}
-                                        >
-                                            Завершить аренду
-                                        </Button>
+                                        <div className="flex-1 flex flex-col gap-1">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="w-full"
+                                                onClick={() =>
+                                                    updateStatus({
+                                                        id: rental.id,
+                                                        status: "COMPLETED",
+                                                    })
+                                                }
+                                                disabled={
+                                                    isPending ||
+                                                    rental.payment_status !== "PAID" ||
+                                                    !rental.return_images?.length
+                                                }
+                                            >
+                                                Завершить аренду
+                                            </Button>
+                                            {rental.payment_status === "PAID" && !rental.return_images?.length && (
+                                                <p className="text-xs text-muted-foreground text-center">
+                                                    Ожидается фото возврата от арендатора
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )}

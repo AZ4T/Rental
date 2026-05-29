@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     ForbiddenException,
     Injectable,
     NotFoundException,
@@ -73,7 +74,9 @@ export class ListingsService {
                         ? { owner: { rating_avg: order } }
                         : sortBy === 'price'
                           ? { price: order }
-                          : { created_at: order },
+                          : sortBy === 'views_count'
+                            ? { views_count: order }
+                            : { created_at: order },
                 skip: (page - 1) * limit,
                 take: limit,
             }),
@@ -91,7 +94,7 @@ export class ListingsService {
         };
     }
 
-    async findOne(id: string) {
+    private async fetchListing(id: string) {
         const listing = await this.prisma.listing.findUnique({
             where: { id },
             include: {
@@ -108,16 +111,26 @@ export class ListingsService {
                 },
             },
         });
-
         if (!listing) throw new NotFoundException('Объявление не найдено');
+        return listing;
+    }
 
-        // Increment views asynchronously (don't block response)
+    // Public endpoint: increments view counter (not called by update/delete)
+    async findOne(id: string) {
+        const listing = await this.fetchListing(id);
+
         void this.prisma.listing.update({
             where: { id },
             data: { views_count: { increment: 1 } },
-        });
+        }).catch(() => {});
+        listing.views_count += 1;
 
         return this.normalizeImages(listing);
+    }
+
+    // Internal use only — no view increment
+    async findOneInternal(id: string) {
+        return this.normalizeImages(await this.fetchListing(id));
     }
 
     async getAnalytics(id: string, userId: string) {
@@ -157,8 +170,7 @@ export class ListingsService {
         const requests = await this.prisma.rentalRequest.findMany({
             where: {
                 listing_id: id,
-                status: 'APPROVED',
-                payment_status: 'PAID',
+                status: { in: ['PENDING', 'APPROVED'] },
             },
             select: { start_date: true, end_date: true },
         });
@@ -187,6 +199,26 @@ export class ListingsService {
             data: data.map((l) => this.normalizeImages(l)),
             meta: { total: data.length },
         };
+    }
+
+    async findByUser(userId: string) {
+        const data = await this.prisma.listing.findMany({
+            where: { owner_id: userId },
+            include: {
+                images: true,
+                category: true,
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        avatar_url: true,
+                        rating_avg: true,
+                    },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        });
+        return data.map((l) => this.normalizeImages(l));
     }
 
     async findSimilar(listingId: string, categoryId: string) {
@@ -238,6 +270,14 @@ export class ListingsService {
 
     async create(dto: CreateListingDto, userId: string) {
         const { image_urls, ...rest } = dto;
+
+        const prefix = this.uploadsService.getPublicPrefix();
+        for (const url of image_urls) {
+            if (!url.startsWith(prefix)) {
+                throw new BadRequestException('Недопустимый URL изображения');
+            }
+        }
+
         return this.prisma.listing.create({
             data: {
                 ...rest,
@@ -251,7 +291,7 @@ export class ListingsService {
     }
 
     async update(id: string, dto: UpdateListingDto, userId: string) {
-        const listing = await this.findOne(id);
+        const listing = await this.findOneInternal(id);
         if (listing.owner_id !== userId) {
             throw new ForbiddenException('Нет доступа');
         }
@@ -285,7 +325,7 @@ export class ListingsService {
     }
 
     async delete(id: string, userId: string) {
-        const listing = await this.findOne(id);
+        const listing = await this.findOneInternal(id);
         if (listing.owner_id !== userId) {
             throw new ForbiddenException('Нет доступа');
         }

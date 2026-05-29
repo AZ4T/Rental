@@ -33,7 +33,7 @@ async function bootstrap() {
                 /^http:\/\/localhost(:\d+)?$/.test(origin) ||
                 /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
                 /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
-                /^http:\/\/172\.\d+\.\d+\.\d+(:\d+)?$/.test(origin);
+                /^http:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+(:\d+)?$/.test(origin);
             callback(null, allowed);
         },
         credentials: true,

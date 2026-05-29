@@ -11,6 +11,7 @@ import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Listing } from "@/types";
 import { useCompareStore } from "@/store/compare.store";
+import { toast } from "sonner";
 
 interface ListingCardProps {
     listing: Listing;
@@ -22,12 +23,15 @@ export function ListingCard({ listing }: ListingCardProps) {
     const { mutate: addFavorite } = useAddFavorite();
     const { mutate: removeFavorite } = useRemoveFavorite();
     const [heartAnimating, setHeartAnimating] = useState(false);
-    const { add, remove, has } = useCompareStore();
+    const { add, remove, has, validate } = useCompareStore();
     const inCompare = has(listing.id);
 
     const handleCompare = (e: React.MouseEvent) => {
         e.preventDefault();
-        inCompare ? remove(listing.id) : add(listing);
+        if (inCompare) { remove(listing.id); return; }
+        const error = validate(listing);
+        if (error) { toast.error(error); return; }
+        add(listing);
     };
 
     const isFavorited = favorites?.some((f) => f.listing_id === listing.id);
@@ -119,14 +123,14 @@ export function ListingCard({ listing }: ListingCardProps) {
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            {listing.owner.rating_avg && (
+                            {listing.rating_avg ? (
                                 <div className="flex items-center gap-1">
                                     <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                    <span>
-                                        {Number(listing.owner.rating_avg).toFixed(1)}
-                                    </span>
+                                    <span>{Number(listing.rating_avg).toFixed(1)}</span>
                                 </div>
-                            )}
+                            ) : listing.reviews_count === 0 ? (
+                                <span className="text-xs text-muted-foreground">нет оценок</span>
+                            ) : null}
                             <div className="flex items-center gap-1">
                                 <Eye className="h-3 w-3" />
                                 <span>{listing.views_count ?? 0}</span>

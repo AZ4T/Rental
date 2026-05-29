@@ -28,18 +28,23 @@ export class NotificationsGateway
                 client.handshake.auth?.token ||
                 client.handshake.headers?.authorization?.replace('Bearer ', '');
 
-            const payload = this.jwtService.verify<{ sub: string }>(token, {
+            const payload = this.jwtService.verify<{ sub: string; exp: number }>(token, {
                 secret: this.config.getOrThrow('JWT_SECRET'),
             });
 
             client.data.userId = payload.sub;
             await client.join(`user:${payload.sub}`);
+
+            const msUntilExpiry = payload.exp * 1000 - Date.now();
+            client.data.expiryTimer = setTimeout(() => client.disconnect(), msUntilExpiry);
         } catch {
             client.disconnect();
         }
     }
 
-    handleDisconnect(_client: Socket) {}
+    handleDisconnect(client: Socket) {
+        clearTimeout(client.data.expiryTimer as ReturnType<typeof setTimeout>);
+    }
 
     sendToUser(userId: string, event: string, data: unknown) {
         this.server.to(`user:${userId}`).emit(event, data);

@@ -1,15 +1,25 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private config: ConfigService,
+    ) {}
+
+    private allowedAvatarPrefix(): string {
+        const publicUrl = this.config.getOrThrow<string>('MINIO_PUBLIC_URL');
+        const bucket = this.config.getOrThrow<string>('MINIO_BUCKET');
+        return `${publicUrl}/${bucket}/`;
+    }
 
     async findByEmail(email: string) {
         return this.prisma.user.findUnique({
-            where: { email },
+            where: { email: email.toLowerCase() },
         });
     }
 
@@ -42,12 +52,17 @@ export class UsersService {
     }
 
     async updateProfile(id: string, dto: UpdateProfileDto) {
+        // Empty string means "clear avatar"; a non-empty value must come from our storage
+        if (dto.avatar_url && !dto.avatar_url.startsWith(this.allowedAvatarPrefix())) {
+            throw new BadRequestException('avatar_url must point to application storage');
+        }
+
         return this.prisma.user.update({
             where: { id },
             data: {
                 ...(dto.name && { name: dto.name }),
                 ...(dto.avatar_url !== undefined && {
-                    avatar_url: dto.avatar_url,
+                    avatar_url: dto.avatar_url || null,
                 }),
             },
             select: {

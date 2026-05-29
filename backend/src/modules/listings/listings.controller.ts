@@ -37,6 +37,11 @@ export class ListingsController {
         return this.listingsService.findMyListings(req.user.userId);
     }
 
+    @Get('user/:userId')
+    findByUser(@Param('userId') userId: string) {
+        return this.listingsService.findByUser(userId);
+    }
+
     @Get(':id/similar')
     getSimilar(
         @Param('id') id: string,
