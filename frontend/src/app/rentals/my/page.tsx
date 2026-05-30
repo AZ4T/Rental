@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
 import { useUploadImage } from "@/hooks/use-upload";
+import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { RentalRequest } from "@/types";
 import { useAuthStore } from "@/store/auth.store";
 import api from "@/services/api";
@@ -273,7 +275,9 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
 export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
+    const { mutate: openChat } = useOrCreateChat();
     const { user } = useAuthStore();
+    const router = useRouter();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
     const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
 
@@ -363,7 +367,22 @@ export default function MyRentalsPage() {
                                             <span className="font-semibold text-blue-600">
                                                 {Number(rental.total_price).toLocaleString()} ₸
                                             </span>
-                                            <div className="flex gap-2">
+                                            <div className="flex gap-2 flex-wrap justify-end">
+                                                {rental.status === "APPROVED" && (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            openChat(rental.listing.owner_id, {
+                                                                onSuccess: (chat) =>
+                                                                    router.push(`/chats/${chat.id}`),
+                                                            })
+                                                        }
+                                                    >
+                                                        <MessageSquare className="h-4 w-4 mr-1" />
+                                                        Написать владельцу
+                                                    </Button>
+                                                )}
                                                 {rental.status === "APPROVED" &&
                                                     rental.payment_status === "UNPAID" && (
                                                         <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-950/20 rounded-lg px-3 py-2 border border-orange-200 dark:border-orange-800">
