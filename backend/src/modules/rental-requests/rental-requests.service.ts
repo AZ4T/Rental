@@ -296,6 +296,7 @@ export class RentalRequestsService {
             where: { qr_token: token, status: 'APPROVED', payment_status: 'UNPAID' },
             include: {
                 listing: { include: { images: true } },
+                renter: { select: { id: true, name: true, avatar_url: true } },
             },
         });
         if (!req) throw new NotFoundException('QR-код недействителен или аренда уже оплачена');

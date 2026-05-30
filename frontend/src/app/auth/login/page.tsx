@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useAuthStore } from "@/store/auth.store";
 
 const loginSchema = z.object({
     email: z.string().email("Введите корректный email"),
@@ -22,6 +23,14 @@ function LoginForm() {
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirect");
     const { mutate: login, isPending } = useLogin(redirectTo);
+    const { isAuthenticated } = useAuthStore();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.replace(redirectTo && redirectTo.startsWith("/") ? redirectTo : "/");
+        }
+    }, [isAuthenticated, redirectTo, router]);
 
     const { control, handleSubmit } = useForm<LoginForm>({
         resolver: zodResolver(loginSchema),

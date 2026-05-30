@@ -152,14 +152,16 @@ export function useLogout() {
     const router = useRouter();
     const queryClient = useQueryClient();
 
+    const doLogout = () => {
+        disconnectSocket();
+        logout();
+        queryClient.clear();
+        router.push("/auth/login");
+    };
+
     return useMutation({
         mutationFn: () => api.post("/auth/logout").then((r) => r.data),
-
-        onSuccess: () => {
-            disconnectSocket();
-            logout();
-            queryClient.clear();
-            router.push("/auth/login");
-        },
+        onSuccess: doLogout,
+        onError: doLogout,
     });
 }
