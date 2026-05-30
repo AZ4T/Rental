@@ -59,7 +59,7 @@ export function useOrCreateChat() {
 
 export function useChatMessages(chatId: string) {
     const queryClient = useQueryClient();
-    const { user } = useAuthStore();
+    const { user, access_token } = useAuthStore();
     const [messages, setMessages] = useState<Message[]>([]);
     const joinedRef = useRef(false);
 
@@ -75,7 +75,7 @@ export function useChatMessages(chatId: string) {
     }, [data]);
 
     useEffect(() => {
-        if (!chatId || !user) return;
+        if (!chatId || !user || !access_token) return;
         const socket = getSocket();
 
         const joinChat = () => {
@@ -102,7 +102,7 @@ export function useChatMessages(chatId: string) {
             socket.emit("leave_chat", chatId);
             joinedRef.current = false;
         };
-    }, [chatId, user, queryClient]);
+    }, [chatId, user, access_token, queryClient]);
 
     const sendMessage = (content: string) => {
         const socket = getSocket();

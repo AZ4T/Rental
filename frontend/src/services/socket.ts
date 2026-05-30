@@ -21,6 +21,15 @@ export function getSocket(): Socket {
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
     });
+    // "io server disconnect" means the server explicitly kicked us (e.g. bad token).
+    // Socket.IO does NOT auto-reconnect in this case, so we reset the module-level
+    // reference so the next getSocket() call creates a fresh socket with the latest token.
+    socket.on("disconnect", (reason) => {
+        if (reason === "io server disconnect") {
+            socket?.removeAllListeners();
+            socket = null;
+        }
+    });
     return socket;
 }
 
