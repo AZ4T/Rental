@@ -28,8 +28,8 @@ async function bootstrap() {
 
     app.enableCors({
         origin: (origin, callback) => {
-            // Разрешаем localhost и любые локальные IP (192.168.x.x, 10.x.x.x)
             const allowed = !origin ||
+                /^https?:\/\/rental\.bolatbekov\.com(:\d+)?$/.test(origin) ||
                 /^http:\/\/localhost(:\d+)?$/.test(origin) ||
                 /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin) ||
                 /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/.test(origin) ||
