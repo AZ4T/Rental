@@ -27,7 +27,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             void Notification.requestPermission();
         }
 
-        notifSocket = io(`${window.location.origin}/notifications`, {
+        notifSocket = io(window.location.origin, {
+            path: '/ws-notifications',
             auth: { token: accessToken },
         });
 

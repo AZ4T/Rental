@@ -16,7 +16,7 @@ interface AuthSocket extends Socket {
     userId: string;
 }
 
-@WebSocketGateway({ cors: { origin: '*' }, namespace: 'chats' })
+@WebSocketGateway({ cors: { origin: '*' }, path: '/ws-chats' })
 export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;

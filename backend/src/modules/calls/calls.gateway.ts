@@ -25,7 +25,7 @@ interface PendingCall {
 const RING_TIMEOUT_MS = 30_000;
 
 @Injectable()
-@WebSocketGateway({ cors: { origin: '*' }, namespace: 'calls' })
+@WebSocketGateway({ cors: { origin: '*' }, path: '/ws-calls' })
 export class CallsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;

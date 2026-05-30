@@ -296,7 +296,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
             return;
         }
 
-        const socket = io(`${window.location.origin}/calls`, {
+        const socket = io(window.location.origin, {
+            path: '/ws-calls',
             auth: { token: accessToken },
         });
         socketRef.current = socket;

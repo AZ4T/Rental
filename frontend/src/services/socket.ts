@@ -12,7 +12,8 @@ export function getSocket(): Socket {
         socket.removeAllListeners();
         socket.disconnect();
     }
-    socket = io(`${window.location.origin}/chats`, {
+    socket = io(window.location.origin, {
+        path: '/ws-chats',
         // auth as a function: called on every connection attempt including reconnects,
         // so it always picks up the latest token after a refresh
         auth: (cb) => cb({ token: useAuthStore.getState().access_token }),

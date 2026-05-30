@@ -5,7 +5,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
-import { SharedIoAdapter } from './shared-io.adapter';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -48,8 +47,6 @@ async function bootstrap() {
         .build();
     const document = SwaggerModule.createDocument(app, swaggerConfig);
     SwaggerModule.setup('api/docs', app, document);
-
-    app.useWebSocketAdapter(new SharedIoAdapter(app));
 
     await app.listen(process.env.PORT ?? 3001);
 }

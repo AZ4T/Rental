@@ -10,7 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
-@WebSocketGateway({ cors: { origin: '*' }, namespace: 'notifications' })
+@WebSocketGateway({ cors: { origin: '*' }, path: '/ws-notifications' })
 export class NotificationsGateway
     implements OnGatewayConnection, OnGatewayDisconnect
 {
