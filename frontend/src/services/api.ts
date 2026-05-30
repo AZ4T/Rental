@@ -58,9 +58,12 @@ api.interceptors.response.use(
                 original.headers.Authorization = `Bearer ${access_token}`;
                 return api(original);
             } catch {
-                useAuthStore.getState().logout();
+                const { user, logout } = useAuthStore.getState();
+                const wasAuthenticated = !!user;
+                logout();
                 if (
                     typeof window !== "undefined" &&
+                    wasAuthenticated &&
                     !isRedirectingToLogin &&
                     !window.location.pathname.startsWith("/auth/")
                 ) {
