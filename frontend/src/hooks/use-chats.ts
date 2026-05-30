@@ -62,6 +62,8 @@ export function useChatMessages(chatId: string) {
     const { user, access_token } = useAuthStore();
     const [messages, setMessages] = useState<Message[]>([]);
     const joinedRef = useRef(false);
+    // Tracks the socket that has new_message listener so sendMessage uses the same one
+    const activeSocketRef = useRef<ReturnType<typeof getSocket> | null>(null);
 
     const { data, isLoading } = useQuery<Message[]>({
         queryKey: ["chats", chatId, "messages"],
@@ -77,6 +79,7 @@ export function useChatMessages(chatId: string) {
     useEffect(() => {
         if (!chatId || !user || !access_token) return;
         const socket = getSocket();
+        activeSocketRef.current = socket;
 
         const joinChat = () => {
             socket.emit("join_chat", chatId);
@@ -101,11 +104,16 @@ export function useChatMessages(chatId: string) {
             socket.off("connect", joinChat);
             socket.emit("leave_chat", chatId);
             joinedRef.current = false;
+            if (activeSocketRef.current === socket) {
+                activeSocketRef.current = null;
+            }
         };
     }, [chatId, user, access_token, queryClient]);
 
     const sendMessage = (content: string) => {
-        const socket = getSocket();
+        // Prefer the socket that already has new_message listener set up;
+        // fall back to getSocket() which may create a new one (auto-join in gateway handles room membership)
+        const socket = activeSocketRef.current ?? getSocket();
         socket.emit("send_message", { chatId, content });
     };
 

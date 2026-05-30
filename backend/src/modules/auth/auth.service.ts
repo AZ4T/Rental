@@ -89,14 +89,14 @@ export class AuthService {
             });
         } catch {
             this.logger.warn(`refresh failed (invalid token) | ip=${ip} ua=${ua}`);
-            res.clearCookie('refresh_token');
+            this.clearRefreshCookie(res);
             throw new UnauthorizedException('Refresh токен недействителен');
         }
 
         const stored = await this.prisma.refreshToken.findUnique({ where: { jti: payload.jti } });
         if (!stored) {
             this.logger.warn(`refresh failed (unknown jti) | userId=${payload.sub} ip=${ip}`);
-            res.clearCookie('refresh_token');
+            this.clearRefreshCookie(res);
             throw new UnauthorizedException('Refresh токен недействителен');
         }
 
@@ -107,7 +107,7 @@ export class AuthService {
                 where: { user_id: payload.sub, revoked: false },
                 data: { revoked: true },
             });
-            res.clearCookie('refresh_token');
+            this.clearRefreshCookie(res);
             throw new UnauthorizedException('Подозрительная активность — все сессии отозваны');
         }
 
@@ -119,12 +119,22 @@ export class AuthService {
         const user = await this.usersService.findById(payload.sub);
         if (!user) {
             this.logger.warn(`refresh failed (user deleted) | userId=${payload.sub} ip=${ip}`);
-            res.clearCookie('refresh_token');
+            this.clearRefreshCookie(res);
             throw new UnauthorizedException('Пользователь не найден');
         }
 
         this.logger.log(`refresh success | userId=${payload.sub} ip=${ip} ua=${ua}`);
         return this.issueTokens(payload.sub, payload.email, user.role, user.token_version, payload.device_id, res);
+    }
+
+    private clearRefreshCookie(res: Response) {
+        const secure = this.config.get('COOKIE_SECURE') === 'true';
+        res.clearCookie('refresh_token', {
+            httpOnly: true,
+            secure,
+            sameSite: secure ? 'none' : 'lax',
+            path: '/',
+        });
     }
 
     async logout(res: Response, userId: string | undefined, ip: string, rawRefreshToken?: string) {

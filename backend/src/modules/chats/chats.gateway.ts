@@ -71,11 +71,16 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: AuthSocket,
         @MessageBody() data: { chatId: string; content: string },
     ) {
+        if (!client.userId) return;
         const message = await this.chatsService.createMessage(
             data.chatId,
             client.userId,
             data.content,
         );
+        // Ensure sender is in the room so they receive the new_message broadcast
+        if (!client.rooms.has(data.chatId)) {
+            await client.join(data.chatId);
+        }
         this.server.to(data.chatId).emit('new_message', message);
         return message;
     }
