@@ -60,6 +60,7 @@ services:
             SMTP_FROM: ${SMTP_FROM}
             RESEND_API_KEY: ${RESEND_API_KEY}
             APP_URL: ${APP_URL}
+            FRONTEND_URL: ${FRONTEND_URL}
         ports:
             - "3001:3001"
 
