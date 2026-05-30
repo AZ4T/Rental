@@ -91,11 +91,23 @@ export default function ListingPage({ params }: Props) {
     // Выбор дат аренды
     const [selectedRange, setSelectedRange] = useState<DateRange | undefined>(undefined);
 
+    const handleRangeSelect = (range: DateRange | undefined, selectedDay: Date) => {
+        if (!range && selectedRange?.from && !selectedRange.to) {
+            // Повторный клик на ту же дату — однодневная аренда
+            setSelectedRange({ from: selectedDay, to: selectedDay });
+        } else {
+            setSelectedRange(range);
+        }
+    };
+
     const calcDays =
         selectedRange?.from && selectedRange?.to
-            ? Math.ceil(
-                  (selectedRange.to.getTime() - selectedRange.from.getTime()) /
-                      (1000 * 60 * 60 * 24),
+            ? Math.max(
+                  1,
+                  Math.ceil(
+                      (selectedRange.to.getTime() - selectedRange.from.getTime()) /
+                          (1000 * 60 * 60 * 24),
+                  ),
               )
             : 0;
     const calcTotal =
@@ -426,7 +438,7 @@ export default function ListingPage({ params }: Props) {
                             <DayPicker
                                 mode="range"
                                 selected={selectedRange}
-                                onSelect={setSelectedRange}
+                                onSelect={handleRangeSelect}
                                 disabled={[{ before: new Date() }, ...bookedRanges]}
                                 modifiers={{ booked: bookedRanges }}
                                 modifiersStyles={{
