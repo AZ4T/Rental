@@ -60,9 +60,9 @@ export class RentalRequestsService {
             throw new BadRequestException('Дата начала не может быть в прошлом');
         }
 
-        if (end <= start) {
+        if (end < start) {
             throw new BadRequestException(
-                'Дата окончания должна быть позже даты начала',
+                'Дата окончания не может быть раньше даты начала',
             );
         }
 
@@ -110,7 +110,7 @@ export class RentalRequestsService {
             const hours = Math.ceil(diffMs / (1000 * 60 * 60));
             total_price = Number(listing.price.mul(hours).div(24).toFixed(2));
         } else {
-            const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            const days = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
             total_price = Number(listing.price.mul(days).toFixed(2));
         }
 

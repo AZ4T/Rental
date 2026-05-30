@@ -71,7 +71,7 @@ export function RentalRequestDialog({
             : 0;
 
     const totalHours = diffMs > 0 ? diffMs / (1000 * 60 * 60) : 0;
-    const totalDays = diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
+    const totalDays = startDate && endDate ? Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24))) : 0;
 
     const hourlyRate = Number(listing.price) / 24;
     const rentalCost = useHourly
@@ -82,7 +82,7 @@ export function RentalRequestDialog({
     const isValid =
         startDate &&
         endDate &&
-        diffMs > 0 &&
+        diffMs >= 0 &&
         agreed;
 
     const { mutate: createRequest, isPending } = useMutation({
@@ -103,7 +103,7 @@ export function RentalRequestDialog({
 
     const handleSubmit = () => {
         if (!startDate || !endDate) { toast.error("Выберите даты"); return; }
-        if (diffMs <= 0) { toast.error("Дата окончания должна быть позже даты начала"); return; }
+        if (diffMs < 0) { toast.error("Дата окончания не может быть раньше даты начала"); return; }
         if (!agreed) { toast.error("Необходимо принять условия аренды"); return; }
         createRequest();
     };
@@ -175,7 +175,7 @@ export function RentalRequestDialog({
                     </div>
 
                     {/* Cost breakdown */}
-                    {diffMs > 0 && (
+                    {startDate && endDate && (
                         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-1.5 text-sm">
                             {useHourly ? (
                                 <>
