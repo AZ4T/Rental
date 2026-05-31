@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Request, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { WalletService } from './wallet.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -32,7 +32,7 @@ export class WalletController {
 
     @Post('pay/:rentalRequestId')
     pay(
-        @Param('rentalRequestId') rentalRequestId: string,
+        @Param('rentalRequestId', ParseUUIDPipe) rentalRequestId: string,
         @Request() req: { user: { userId: string } },
     ) {
         return this.walletService.pay(rentalRequestId, req.user.userId);

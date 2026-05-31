@@ -4,6 +4,7 @@ import {
     Post,
     Delete,
     Param,
+    ParseUUIDPipe,
     UseGuards,
     Req,
 } from '@nestjs/common';
@@ -24,12 +25,12 @@ export class FavoritesController {
     }
 
     @Post(':listingId')
-    add(@Param('listingId') listingId: string, @Req() req: AuthRequest) {
+    add(@Param('listingId', ParseUUIDPipe) listingId: string, @Req() req: AuthRequest) {
         return this.favoritesService.add(req.user.userId, listingId);
     }
 
     @Delete(':listingId')
-    remove(@Param('listingId') listingId: string, @Req() req: AuthRequest) {
+    remove(@Param('listingId', ParseUUIDPipe) listingId: string, @Req() req: AuthRequest) {
         return this.favoritesService.remove(req.user.userId, listingId);
     }
 }

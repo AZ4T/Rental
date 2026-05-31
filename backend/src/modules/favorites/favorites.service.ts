@@ -1,8 +1,4 @@
-import {
-    Injectable,
-    ConflictException,
-    NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -37,18 +33,13 @@ export class FavoritesService {
         });
         if (!listing) throw new NotFoundException('Объявление не найдено');
 
-        const exists = await this.prisma.favorite.findUnique({
-            where: {
-                user_id_listing_id: {
-                    user_id: userId,
-                    listing_id: listingId,
-                },
-            },
-        });
-        if (exists) throw new ConflictException('Уже в избранном');
-
-        return this.prisma.favorite.create({
-            data: { user_id: userId, listing_id: listingId },
+        // Idempotent: if already in favorites, return the existing row instead of
+        // racing two clients into a P2002. UI just toggles "in favorites" — no
+        // reason to treat a second click as an error.
+        return this.prisma.favorite.upsert({
+            where: { user_id_listing_id: { user_id: userId, listing_id: listingId } },
+            update: {},
+            create: { user_id: userId, listing_id: listingId },
         });
     }
 

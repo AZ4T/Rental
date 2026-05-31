@@ -3,6 +3,7 @@ import {
     DefaultValuePipe,
     Get,
     ParseIntPipe,
+    ParseUUIDPipe,
     Post,
     Param,
     Query,
@@ -29,7 +30,7 @@ export class ChatsController {
 
     @Post('with/:userId')
     findOrCreate(
-        @Param('userId') userId: string,
+        @Param('userId', ParseUUIDPipe) userId: string,
         @Request() req: { user: { userId: string } },
     ) {
         return this.chatsService.findOrCreate(req.user.userId, userId);
@@ -37,7 +38,7 @@ export class ChatsController {
 
     @Get(':id/messages')
     getMessages(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Request() req: { user: { userId: string } },
         @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
         @Query('before') before?: string,
@@ -47,7 +48,7 @@ export class ChatsController {
 
     @Post(':id/read')
     markAsRead(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Request() req: { user: { userId: string } },
     ) {
         return this.chatsService.markAsRead(id, req.user.userId);

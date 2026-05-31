@@ -4,6 +4,7 @@ import {
     Get,
     Patch,
     Param,
+    ParseUUIDPipe,
     Post,
     Req,
     UseGuards,
@@ -37,7 +38,7 @@ export class ReportsController {
     @UseGuards(RolesGuard)
     @Role('ADMIN')
     @Patch(':id/status')
-    updateStatus(@Param('id') id: string, @Body() dto: UpdateReportStatusDto) {
+    updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateReportStatusDto) {
         return this.reportsService.updateStatus(id, dto.status);
     }
 }

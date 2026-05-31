@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -62,21 +62,26 @@ export default function EditListingPage({ params }: Props) {
         },
     });
 
+    // Only seed the form ONCE from the fetched listing — otherwise a query
+    // refetch (window focus, mutation invalidation) would wipe out the user's
+    // in-progress edits.
+    const seededRef = useRef(false);
     useEffect(() => {
         if (!listing) return;
 
-        // Заполняем форму
-        reset({
-            title: listing.title,
-            description: listing.description,
-            price: String(listing.price),
-            deposit: String(listing.deposit),
-            city: listing.city,
-            category_id: listing.category_id,
-        });
-        setImageUrls(listing.images.map((img) => img.image_url));
+        if (!seededRef.current) {
+            reset({
+                title: listing.title,
+                description: listing.description,
+                price: String(listing.price),
+                deposit: String(listing.deposit),
+                city: listing.city,
+                category_id: listing.category_id,
+            });
+            setImageUrls(listing.images.map((img) => img.image_url));
+            seededRef.current = true;
+        }
 
-        // Редирект если не владелец
         if (user && listing.owner_id !== user.id) {
             router.push(`/listings/${id}`);
         }
@@ -126,9 +131,11 @@ export default function EditListingPage({ params }: Props) {
             return;
         }
 
-        for (const file of files) {
-            const url = await uploadImage(file);
-            setImageUrls((prev) => [...prev, url]);
+        try {
+            const urls = await Promise.all(files.map((f) => uploadImage(f)));
+            setImageUrls((prev) => [...prev, ...urls]);
+        } catch {
+            // useUploadImage already shows the toast on per-file failure
         }
     };
 

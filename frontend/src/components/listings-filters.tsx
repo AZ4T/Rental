@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ListingFilters } from "@/types";
@@ -34,10 +34,19 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                 .then((r) => r.data),
     });
 
+    // Seed slider from server bounds ONCE so a later refetch doesn't snap the
+    // user's adjusted slider back to default. Active filter values take
+    // precedence over the bare server bounds.
+    const seededRangeRef = useRef(false);
     useEffect(() => {
-        if (priceRangeData) {
-            setPriceRange([priceRangeData.min, priceRangeData.max]);
+        if (priceRangeData && !seededRangeRef.current) {
+            setPriceRange([
+                filters.price_min ?? priceRangeData.min,
+                filters.price_max ?? priceRangeData.max,
+            ]);
+            seededRangeRef.current = true;
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [priceRangeData]);
 
     useEffect(() => {

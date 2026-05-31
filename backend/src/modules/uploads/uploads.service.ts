@@ -7,16 +7,17 @@ import {
     PutObjectCommand,
     S3Client,
 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { extname } from 'path';
+import { fileTypeFromBuffer } from 'file-type';
+import sharp from 'sharp';
 
 @Injectable()
 export class UploadsService {
+    private readonly logger = new Logger(UploadsService.name);
     private s3: S3Client;
     private bucket: string;
-
     private publicUrl: string;
 
     constructor(private config: ConfigService) {
@@ -34,48 +35,104 @@ export class UploadsService {
         this.bucket = config.getOrThrow('MINIO_BUCKET');
         this.publicUrl = config.get('MINIO_PUBLIC_URL') || endpoint;
 
-        void this.ensureBucket();
+        // Retry with backoff if MinIO is still warming up at app startup
+        void this.ensureBucketWithRetry();
+    }
+
+    private async ensureBucketWithRetry(): Promise<void> {
+        const delays = [1000, 2000, 5000, 10000, 20000];
+        for (const delay of delays) {
+            try {
+                await this.ensureBucket();
+                this.logger.log(`MinIO bucket "${this.bucket}" ready`);
+                return;
+            } catch (e) {
+                this.logger.warn(
+                    `MinIO not ready (${(e as Error).message}), retrying in ${delay}ms`,
+                );
+                await new Promise((r) => setTimeout(r, delay));
+            }
+        }
+        this.logger.error('MinIO bucket initialization failed after retries — uploads will throw');
     }
 
     private async ensureBucket() {
+        let bucketExists = false;
         try {
             await this.s3.send(new HeadBucketCommand({ Bucket: this.bucket }));
+            bucketExists = true;
         } catch {
-            await this.s3.send(
-                new CreateBucketCommand({ Bucket: this.bucket }),
-            );
+            await this.s3.send(new CreateBucketCommand({ Bucket: this.bucket }));
         }
 
-        const policy = {
-            Version: '2012-10-17',
-            Statement: [
-                {
-                    Effect: 'Allow',
-                    Principal: '*',
-                    Action: ['s3:GetObject'],
-                    Resource: [`arn:aws:s3:::${this.bucket}/*`],
-                },
-            ],
-        };
-
-        await this.s3.send(
-            new PutBucketPolicyCommand({
-                Bucket: this.bucket,
-                Policy: JSON.stringify(policy),
-            }),
-        );
+        // Skip re-applying the policy on every restart — only set it when we
+        // actually create the bucket.
+        if (!bucketExists) {
+            const policy = {
+                Version: '2012-10-17',
+                Statement: [
+                    {
+                        Effect: 'Allow',
+                        Principal: '*',
+                        Action: ['s3:GetObject'],
+                        Resource: [`arn:aws:s3:::${this.bucket}/*`],
+                    },
+                ],
+            };
+            await this.s3.send(
+                new PutBucketPolicyCommand({
+                    Bucket: this.bucket,
+                    Policy: JSON.stringify(policy),
+                }),
+            );
+        }
     }
 
     async uploadFile(file: Express.Multer.File): Promise<string> {
-        const ext = extname(file.originalname);
-        const key = `${randomUUID()}${ext}`;
+        // 1) Magic-byte sniff — client-supplied mimetype can lie. An attacker
+        // can send a .exe with Content-Type: image/jpeg; this catches that.
+        const detected = await fileTypeFromBuffer(file.buffer);
+        const allowedMimes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+        if (!detected || !allowedMimes.has(detected.mime)) {
+            throw new BadRequestException('Файл не является изображением (JPEG/PNG/WEBP)');
+        }
+
+        // 2) Re-encode with sharp — strips ALL metadata (incl. EXIF GPS),
+        // normalizes the file, and clamps dimensions so we don't store a 50MP
+        // photo that crashes phones when they try to render it.
+        let processed: Buffer;
+        let outMime: string;
+        let outExt: string;
+        try {
+            const pipeline = sharp(file.buffer, { failOn: 'error' })
+                .rotate() // honor EXIF orientation, then strip the rest
+                .resize({ width: 2000, height: 2000, fit: 'inside', withoutEnlargement: true });
+
+            if (detected.mime === 'image/png') {
+                processed = await pipeline.png({ compressionLevel: 8 }).toBuffer();
+                outMime = 'image/png';
+                outExt = '.png';
+            } else if (detected.mime === 'image/webp') {
+                processed = await pipeline.webp({ quality: 85 }).toBuffer();
+                outMime = 'image/webp';
+                outExt = '.webp';
+            } else {
+                processed = await pipeline.jpeg({ quality: 85, mozjpeg: true }).toBuffer();
+                outMime = 'image/jpeg';
+                outExt = '.jpg';
+            }
+        } catch {
+            throw new BadRequestException('Не удалось обработать изображение');
+        }
+
+        const key = `${randomUUID()}${outExt}`;
 
         await this.s3.send(
             new PutObjectCommand({
                 Bucket: this.bucket,
                 Key: key,
-                Body: file.buffer,
-                ContentType: file.mimetype,
+                Body: processed,
+                ContentType: outMime,
             }),
         );
 

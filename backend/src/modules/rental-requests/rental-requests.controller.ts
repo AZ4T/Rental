@@ -3,6 +3,7 @@ import {
     Controller,
     Get,
     Param,
+    ParseUUIDPipe,
     Patch,
     Post,
     Req,
@@ -51,14 +52,14 @@ export class RentalRequestsController {
 
     // owner gets QR token for a rental request
     @Get(':id/qr')
-    getQrToken(@Param('id') id: string, @Req() req: AuthRequest) {
+    getQrToken(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
         return this.rentalRequestsService.getQrToken(id, req.user.userId);
     }
 
     // add return images (renter or owner)
     @Post(':id/return-images')
     addReturnImages(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Body() body: { images: string[] },
         @Req() req: AuthRequest,
     ) {
@@ -68,7 +69,7 @@ export class RentalRequestsController {
     // owner updates status
     @Patch(':id/status')
     updateStatus(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Body() dto: UpdateStatusDto,
         @Req() req: AuthRequest,
     ) {
@@ -81,7 +82,7 @@ export class RentalRequestsController {
 
     // renter cancels
     @Patch(':id/cancel')
-    cancel(@Param('id') id: string, @Req() req: AuthRequest) {
+    cancel(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
         return this.rentalRequestsService.cancel(id, req.user.userId);
     }
 }

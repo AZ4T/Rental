@@ -4,14 +4,19 @@ import {
     Post,
     Delete,
     Param,
+    ParseUUIDPipe,
     Body,
+    Req,
     UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/role.decorator';
 import { CreateCategoryDto } from '../categories/dto/create-category.dto';
+
+type AuthRequest = Request & { user: { userId: string } };
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Role('ADMIN')
@@ -25,12 +30,12 @@ export class AdminController {
     }
 
     @Delete('users/:id')
-    deleteUser(@Param('id') id: string) {
-        return this.adminService.deleteUser(id);
+    deleteUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
+        return this.adminService.deleteUser(id, req.user.userId);
     }
 
     @Delete('listings/:id')
-    deleteListing(@Param('id') id: string) {
+    deleteListing(@Param('id', ParseUUIDPipe) id: string) {
         return this.adminService.deleteListing(id);
     }
 
@@ -40,7 +45,7 @@ export class AdminController {
     }
 
     @Delete('categories/:id')
-    deleteCategory(@Param('id') id: string) {
+    deleteCategory(@Param('id', ParseUUIDPipe) id: string) {
         return this.adminService.deleteCategory(id);
     }
 

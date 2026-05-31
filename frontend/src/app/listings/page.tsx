@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
 import { ListingsFilters } from "@/components/listings-filters";
@@ -30,8 +30,24 @@ function getSavedSearches(): SavedSearch[] {
     }
 }
 
-function saveSearch(filters: ListingFilters): void {
+function searchKey(filters: ListingFilters): string {
+    return JSON.stringify({
+        s: filters.search ?? "",
+        c: filters.city ?? "",
+        pm: filters.price_min ?? null,
+        px: filters.price_max ?? null,
+        cat: filters.category_ids?.slice().sort() ?? [],
+        sb: filters.sortBy ?? "",
+        so: filters.sortOrder ?? "",
+    });
+}
+
+function saveSearch(filters: ListingFilters): boolean {
     const searches = getSavedSearches();
+    const key = searchKey(filters);
+    if (searches.some((s) => searchKey(s.filters) === key)) {
+        return false; // Already saved
+    }
     const label =
         [
             filters.search,
@@ -51,6 +67,7 @@ function saveSearch(filters: ListingFilters): void {
         ...searches,
     ].slice(0, 5);
     localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(updated));
+    return true;
 }
 
 function removeSavedSearch(id: string): void {
@@ -58,17 +75,42 @@ function removeSavedSearch(id: string): void {
     localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(searches));
 }
 
+function filtersFromParams(params: URLSearchParams): ListingFilters {
+    const catIds = params.get("category_ids");
+    return {
+        page: Number(params.get("page")) || 1,
+        limit: Number(params.get("limit")) || 12,
+        search: params.get("search") || undefined,
+        city: params.get("city") || undefined,
+        price_min: params.get("price_min") ? Number(params.get("price_min")) : undefined,
+        price_max: params.get("price_max") ? Number(params.get("price_max")) : undefined,
+        category_ids: catIds ? catIds.split(",") : undefined,
+        sortBy: (params.get("sortBy") as ListingFilters["sortBy"]) || undefined,
+        sortOrder: (params.get("sortOrder") as ListingFilters["sortOrder"]) || undefined,
+    };
+}
+
+function paramsFromFilters(filters: ListingFilters): string {
+    const p = new URLSearchParams();
+    if (filters.search) p.set("search", filters.search);
+    if (filters.city) p.set("city", filters.city);
+    if (filters.price_min !== undefined) p.set("price_min", String(filters.price_min));
+    if (filters.price_max !== undefined) p.set("price_max", String(filters.price_max));
+    if (filters.category_ids?.length) p.set("category_ids", filters.category_ids.join(","));
+    if (filters.sortBy) p.set("sortBy", filters.sortBy);
+    if (filters.sortOrder) p.set("sortOrder", filters.sortOrder);
+    if (filters.page && filters.page !== 1) p.set("page", String(filters.page));
+    return p.toString();
+}
+
 function ListingsCatalog() {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
 
-    const [filters, setFilters] = useState<ListingFilters>({
-        page: 1,
-        limit: 12,
-        search: searchParams.get("search") ?? undefined,
-        category_ids: searchParams.get("category_ids")
-            ? [searchParams.get("category_ids")!]
-            : undefined,
-    });
+    const [filters, setFilters] = useState<ListingFilters>(() =>
+        filtersFromParams(new URLSearchParams(searchParams.toString())),
+    );
 
     const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
     const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -77,16 +119,15 @@ function ListingsCatalog() {
         setSavedSearches(getSavedSearches());
     }, []);
 
+    // Sync filters → URL so the state is bookmarkable / shareable and the back
+    // button works. Use replace to avoid one history entry per keystroke.
     useEffect(() => {
-        const search = searchParams.get("search") ?? undefined;
-        const catId = searchParams.get("category_ids");
-        setFilters((f) => ({
-            ...f,
-            search: search || undefined,
-            category_ids: catId ? [catId] : f.category_ids,
-            page: 1,
-        }));
-    }, [searchParams]);
+        const next = paramsFromFilters(filters);
+        const current = searchParams.toString();
+        if (next !== current) {
+            router.replace(`${pathname}${next ? `?${next}` : ""}`, { scroll: false });
+        }
+    }, [filters, pathname, router, searchParams]);
 
     const { data, isLoading, isError } = useListings(
         viewMode === "map" ? { ...filters, limit: 100 } : filters,
@@ -176,9 +217,13 @@ function ListingsCatalog() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                            saveSearch(filters);
+                            const saved = saveSearch(filters);
                             setSavedSearches(getSavedSearches());
-                            toast.success("Поиск сохранён");
+                            if (saved) {
+                                toast.success("Поиск сохранён");
+                            } else {
+                                toast.info("Такой поиск уже сохранён");
+                            }
                         }}
                     >
                         <Bookmark className="h-4 w-4 mr-2" />

@@ -4,6 +4,7 @@ import {
     Delete,
     Get,
     Param,
+    ParseUUIDPipe,
     Patch,
     Post,
     Query,
@@ -38,34 +39,34 @@ export class ListingsController {
     }
 
     @Get('user/:userId')
-    findByUser(@Param('userId') userId: string) {
+    findByUser(@Param('userId', ParseUUIDPipe) userId: string) {
         return this.listingsService.findByUser(userId);
     }
 
     @Get(':id/similar')
     getSimilar(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Query('category_id') categoryId: string,
     ) {
         return this.listingsService.findSimilar(id, categoryId);
     }
 
     @Get(':id/availability')
-    getAvailability(@Param('id') id: string) {
+    getAvailability(@Param('id', ParseUUIDPipe) id: string) {
         return this.listingsService.getAvailability(id);
     }
 
     @UseGuards(JwtAuthGuard)
     @Get(':id/analytics')
     getAnalytics(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Req() req: Request & { user: { userId: string } },
     ) {
         return this.listingsService.getAnalytics(id, req.user.userId);
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
+    findOne(@Param('id', ParseUUIDPipe) id: string) {
         return this.listingsService.findOne(id);
     }
 
@@ -81,7 +82,7 @@ export class ListingsController {
     @UseGuards(JwtAuthGuard)
     @Patch(':id')
     update(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Body() dto: UpdateListingDto,
         @Req() req: Request & { user: { userId: string } },
     ) {
@@ -91,7 +92,7 @@ export class ListingsController {
     @UseGuards(JwtAuthGuard)
     @Delete(':id')
     delete(
-        @Param('id') id: string,
+        @Param('id', ParseUUIDPipe) id: string,
         @Req() req: Request & { user: { userId: string } },
     ) {
         return this.listingsService.delete(id, req.user.userId);

@@ -3,6 +3,7 @@ import {
     Get,
     Post,
     Param,
+    ParseUUIDPipe,
     Body,
     UseGuards,
     Req,
@@ -20,7 +21,7 @@ export class ReviewsController {
 
     // Отзывы о конкретном пользователе — публичный
     @Get('user/:userId')
-    findByUser(@Param('userId') userId: string) {
+    findByUser(@Param('userId', ParseUUIDPipe) userId: string) {
         return this.reviewsService.findByUser(userId);
     }
 

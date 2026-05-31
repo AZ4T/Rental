@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateReportDto } from './dto/create-report.dto';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class ReportsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private notificationsGateway: NotificationsGateway,
+    ) {}
 
     async create(dto: CreateReportDto, reporterId: string) {
         // Verify target exists to prevent phantom reports
@@ -51,7 +55,7 @@ export class ReportsService {
     }
 
     async updateStatus(id: string, status: string) {
-        return this.prisma.report.update({
+        const updated = await this.prisma.report.update({
             where: { id },
             data: { status },
             include: {
@@ -60,5 +64,22 @@ export class ReportsService {
                 },
             },
         });
+
+        // Let the reporter know an admin acted on their report
+        const label =
+            status === 'RESOLVED'
+                ? 'Ваша жалоба рассмотрена и удовлетворена'
+                : status === 'REJECTED'
+                  ? 'Ваша жалоба отклонена'
+                  : status === 'REVIEWING'
+                    ? 'Ваша жалоба принята в работу'
+                    : `Статус жалобы: ${status}`;
+        this.notificationsGateway.sendToUser(updated.reporter_id, 'report_status_changed', {
+            message: label,
+            reportId: updated.id,
+            status,
+        });
+
+        return updated;
     }
 }

@@ -3,6 +3,7 @@ import {
     Get,
     Patch,
     Param,
+    ParseUUIDPipe,
     Body,
     UseGuards,
     Req,
@@ -33,7 +34,7 @@ export class UsersController {
     }
 
     @Get(':id')
-    getProfile(@Param('id') id: string) {
+    getProfile(@Param('id', ParseUUIDPipe) id: string) {
         return this.usersService.getProfile(id);
     }
 }
