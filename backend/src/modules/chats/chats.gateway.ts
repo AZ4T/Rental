@@ -57,8 +57,13 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         @ConnectedSocket() client: AuthSocket,
         @MessageBody() chatId: string,
     ) {
-        await this.chatsService.markAsRead(chatId, client.userId);
+        const { updated } = await this.chatsService.markAsRead(chatId, client.userId);
         await client.join(chatId);
+        // Broadcast to the reader's personal room so their other tabs/devices
+        // update unread badges instantly (no waiting for the 10s refetch).
+        if (updated > 0) {
+            this.server.to(`user:${client.userId}`).emit('chat_read', { chatId, count: updated });
+        }
     }
 
     @SubscribeMessage('leave_chat')

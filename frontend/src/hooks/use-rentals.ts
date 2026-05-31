@@ -32,13 +32,22 @@ export function useIncomingRentalsCount() {
         queryKey: ["rentals", "incoming", "count"],
         queryFn: () =>
             api
-                .get<RentalRequest[]>("/rental-requests/incoming")
-                .then(
-                    (r) =>
-                        r.data.filter((req) => req.status === "PENDING").length,
-                ),
-        enabled: isAuthenticated, // ← только если залогинен
-        refetchOnWindowFocus: false, // ← не обновлять при фокусе
+                .get<{ count: number }>("/rental-requests/incoming/new-count")
+                .then((r) => r.data.count),
+        enabled: isAuthenticated,
+        refetchOnWindowFocus: false,
+    });
+}
+
+// Marks all current incoming requests as "seen" — called when the user opens
+// the incoming-requests page so the badge disappears.
+export function useMarkIncomingSeen() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: () => api.post("/rental-requests/incoming/seen").then((r) => r.data),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["rentals", "incoming", "count"] });
+        },
     });
 }
 

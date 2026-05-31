@@ -85,12 +85,18 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
                 });
             }
         };
+        const handleChatRead = () => {
+            // Server marked messages read for this user — refresh unread counts
+            // on every screen instantly (no waiting for the 10s polling refetch).
+            queryClient.invalidateQueries({ queryKey: ["chats"] });
+            queryClient.invalidateQueries({ queryKey: ["chats", "unread"] });
+        };
         chatsSocket.on("chat_updated", handleChatUpdated);
+        chatsSocket.on("chat_read", handleChatRead);
 
         return () => {
-            // Just remove our listener — the chats socket is shared with chat pages
-            // and will be torn down by useLogout via disconnectSocket().
             chatsSocket.off("chat_updated", handleChatUpdated);
+            chatsSocket.off("chat_read", handleChatRead);
             notifSocket?.disconnect();
             notifSocket = null;
         };

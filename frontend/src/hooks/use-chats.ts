@@ -89,6 +89,10 @@ export function useChatMessages(chatId: string) {
         };
 
         joinChat();
+        // Optimistic invalidation — drop unread counts as soon as the user
+        // enters the chat. The server's chat_read broadcast confirms shortly.
+        queryClient.invalidateQueries({ queryKey: ["chats"] });
+        queryClient.invalidateQueries({ queryKey: ["chats", "unread"] });
 
         const handleNew = (msg: Message) => {
             setMessages((prev) =>

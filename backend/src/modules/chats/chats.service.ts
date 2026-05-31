@@ -60,12 +60,13 @@ export class ChatsService {
         });
     }
 
-    async markAsRead(chatId: string, userId: string) {
+    async markAsRead(chatId: string, userId: string): Promise<{ updated: number }> {
         await this.assertParticipant(chatId, userId);
-        await this.prisma.message.updateMany({
+        const result = await this.prisma.message.updateMany({
             where: { chat_id: chatId, sender_id: { not: userId }, is_read: false },
             data: { is_read: true },
         });
+        return { updated: result.count };
     }
 
     async getUnreadCount(userId: string) {

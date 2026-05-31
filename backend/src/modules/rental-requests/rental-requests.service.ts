@@ -148,6 +148,30 @@ export class RentalRequestsService {
         });
     }
 
+    async getNewIncomingCount(userId: string): Promise<{ count: number }> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: { last_seen_incoming_at: true },
+        });
+        const since = user?.last_seen_incoming_at ?? new Date(0);
+        const count = await this.prisma.rentalRequest.count({
+            where: {
+                status: 'PENDING',
+                listing: { owner_id: userId },
+                created_at: { gt: since },
+            },
+        });
+        return { count };
+    }
+
+    async markIncomingSeen(userId: string): Promise<{ ok: true }> {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { last_seen_incoming_at: new Date() },
+        });
+        return { ok: true };
+    }
+
     async findIncomingRequests(userId: string) {
         return this.prisma.rentalRequest.findMany({
             where: { listing: { owner_id: userId } },

@@ -50,6 +50,7 @@ model User {
   balance          Decimal  @default(0) @db.Decimal(10, 2)
   deposit_balance  Decimal  @default(0) @db.Decimal(10, 2)
   token_version    Int      @default(0)
+  last_seen_incoming_at DateTime?
   created_at     DateTime @default(now())
 
   listings        Listing[]

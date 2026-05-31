@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCall } from "@/providers/call-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Phone, PhoneOff, Mic, MicOff } from "lucide-react";
+import { Phone, PhoneOff, Mic, MicOff, Video } from "lucide-react";
 
 function VideoCallView() {
     const { localVideoRef, remoteVideoRef, remoteStreamRef } = useCall();
@@ -75,6 +75,21 @@ export function CallOverlay() {
                 ) : (
                     /* Top gradient - avatar view */
                     <div className="bg-gradient-to-b from-blue-600 to-blue-700 px-6 pt-8 pb-10 flex flex-col items-center gap-3">
+                        {/* Тип звонка — крупный значок над аватаркой */}
+                        <div className="inline-flex items-center gap-1.5 bg-white/15 text-white text-xs font-semibold rounded-full px-3 py-1 backdrop-blur-sm">
+                            {isVideo ? (
+                                <>
+                                    <Video className="h-3.5 w-3.5" />
+                                    Видеозвонок
+                                </>
+                            ) : (
+                                <>
+                                    <Phone className="h-3.5 w-3.5" />
+                                    Аудиозвонок
+                                </>
+                            )}
+                        </div>
+
                         <Avatar className="h-24 w-24 ring-4 ring-white/30">
                             <AvatarImage src={peerAvatar ?? ""} />
                             <AvatarFallback className="text-3xl bg-blue-500 text-white">
@@ -84,7 +99,7 @@ export function CallOverlay() {
                         <div className="text-center text-white">
                             <p className="text-xl font-bold">{peerName}</p>
                             <p className="text-sm text-blue-100 mt-1">
-                                {status === "incoming" && (isVideo ? "Входящий видеозвонок..." : "Входящий звонок...")}
+                                {status === "incoming" && "Входящий вызов..."}
                                 {status === "outgoing" && "Вызов..."}
                                 {status === "active" && timer}
                             </p>
@@ -125,9 +140,15 @@ export function CallOverlay() {
                                     onClick={acceptCall}
                                     className="h-16 w-16 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center transition-colors shadow-lg animate-pulse"
                                 >
-                                    <Phone className="h-6 w-6 text-white" />
+                                    {isVideo ? (
+                                        <Video className="h-6 w-6 text-white" />
+                                    ) : (
+                                        <Phone className="h-6 w-6 text-white" />
+                                    )}
                                 </button>
-                                <span className="text-xs text-gray-500">Принять</span>
+                                <span className="text-xs text-gray-500">
+                                    {isVideo ? "Принять видео" : "Принять"}
+                                </span>
                             </div>
                         </div>
                     ) : (

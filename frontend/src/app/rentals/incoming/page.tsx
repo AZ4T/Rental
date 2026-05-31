@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useIncomingRentals, useUpdateRentalStatus } from "@/hooks/use-rentals";
+import { useEffect, useState } from "react";
+import { useIncomingRentals, useUpdateRentalStatus, useMarkIncomingSeen } from "@/hooks/use-rentals";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
@@ -20,9 +20,15 @@ export default function IncomingRentalsPage() {
     const { data: rentals, isLoading } = useIncomingRentals();
     const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
     const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
+    const { mutate: markSeen } = useMarkIncomingSeen();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
     const [qrRentalId, setQrRentalId] = useState<string | null>(null);
     const router = useRouter();
+
+    // Clear the "new requests" badge on page open
+    useEffect(() => {
+        markSeen();
+    }, [markSeen]);
 
     if (isLoading) {
         return (

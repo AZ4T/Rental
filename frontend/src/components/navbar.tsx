@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { useUnreadCount } from "@/hooks/use-chats";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Plus, MessageCircle, Inbox, Heart, ClipboardList, Wallet, ShieldCheck, User as UserIcon, Info } from "lucide-react";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -75,55 +75,39 @@ export function Navbar() {
                         />
                     </form>
 
-                    {/* Десктоп навигация */}
-                    <nav className="hidden md:flex items-center gap-6">
+                    {/* Десктоп навигация — только основные ссылки, остальное в аватарке */}
+                    <nav className="hidden md:flex items-center gap-1">
                         <Link
                             href="/listings"
-                            className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                            className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                             Объявления
                         </Link>
                         {isAuthenticated && (
                             <>
                                 <Link
-                                    href="/rentals/my"
-                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                                >
-                                    Мои заявки
-                                </Link>
-                                <Link
                                     href="/rentals/incoming"
-                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white relative"
+                                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors relative inline-flex items-center gap-1.5"
                                 >
-                                    Входящие заявки
+                                    <Inbox className="h-4 w-4" />
+                                    Заявки
                                     {!!incomingCount && (
-                                        <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                                            {incomingCount}
+                                        <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
+                                            {incomingCount > 9 ? "9+" : incomingCount}
                                         </span>
                                     )}
                                 </Link>
                                 <Link
                                     href="/chats"
-                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white relative"
+                                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors relative inline-flex items-center gap-1.5"
                                 >
+                                    <MessageCircle className="h-4 w-4" />
                                     Сообщения
                                     {!!unreadCount && (
-                                        <span className="absolute -top-2 -right-4 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                        <span className="ml-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
                                             {unreadCount > 9 ? "9+" : unreadCount}
                                         </span>
                                     )}
-                                </Link>
-                                <Link
-                                    href="/favorites"
-                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                                >
-                                    Избранное
-                                </Link>
-                                <Link
-                                    href="/about"
-                                    className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                                >
-                                    О платформе
                                 </Link>
                             </>
                         )}
@@ -134,18 +118,20 @@ export function Navbar() {
                         <ThemeToggle />
                         {isAuthenticated && user ? (
                             <>
+                                {/* Prominent "Разместить" — больше, ярче, всегда заметно */}
                                 <Button
                                     asChild
-                                    size="sm"
-                                    className="hidden md:flex"
+                                    size="default"
+                                    className="hidden md:inline-flex gap-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all font-medium"
                                 >
                                     <Link href="/listings/create">
-                                        + Разместить
+                                        <Plus className="h-4 w-4" />
+                                        Разместить
                                     </Link>
                                 </Button>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Avatar className="cursor-pointer h-10 w-10">
+                                        <Avatar className="cursor-pointer h-10 w-10 ring-2 ring-transparent hover:ring-blue-500/30 transition-all">
                                             <AvatarImage
                                                 src={user.avatar_url ?? ""}
                                             />
@@ -158,33 +144,61 @@ export function Navbar() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent
                                         align="end"
-                                        className="w-48"
+                                        className="w-56"
                                     >
+                                        <div className="px-2 py-1.5">
+                                            <p className="text-sm font-semibold truncate">{user.name}</p>
+                                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                        </div>
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem asChild>
-                                            <Link href="/profile/me">
+                                            <Link href="/profile/me" className="cursor-pointer">
+                                                <UserIcon className="h-4 w-4 mr-2" />
                                                 Мой профиль
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <Link href="/profile/my-listings">
+                                            <Link href="/profile/my-listings" className="cursor-pointer">
+                                                <ClipboardList className="h-4 w-4 mr-2" />
                                                 Мои объявления
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <Link href="/wallet">
+                                            <Link href="/rentals/my" className="cursor-pointer">
+                                                <ClipboardList className="h-4 w-4 mr-2" />
+                                                Мои заявки
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/favorites" className="cursor-pointer">
+                                                <Heart className="h-4 w-4 mr-2" />
+                                                Избранное
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/wallet" className="cursor-pointer">
+                                                <Wallet className="h-4 w-4 mr-2" />
                                                 Кошелёк
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/about" className="cursor-pointer">
+                                                <Info className="h-4 w-4 mr-2" />
+                                                О платформе
                                             </Link>
                                         </DropdownMenuItem>
                                         {user.role === "ADMIN" && (
                                             <DropdownMenuItem asChild>
-                                                <Link href="/admin">
+                                                <Link href="/admin" className="cursor-pointer">
+                                                    <ShieldCheck className="h-4 w-4 mr-2" />
                                                     Админ панель
                                                 </Link>
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
-                                            className="text-red-500"
+                                            className="text-red-500 cursor-pointer"
                                             // onSelect lets Radix close the menu cleanly,
                                             // then we trigger logout on the next tick so the
                                             // dropdown isn't unmounted mid-animation —

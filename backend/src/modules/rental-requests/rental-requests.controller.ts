@@ -37,6 +37,18 @@ export class RentalRequestsController {
         return this.rentalRequestsService.findIncomingRequests(req.user.userId);
     }
 
+    // Number of incoming requests created since the last time the user opened the page
+    @Get('incoming/new-count')
+    getNewIncomingCount(@Req() req: AuthRequest) {
+        return this.rentalRequestsService.getNewIncomingCount(req.user.userId);
+    }
+
+    // Called when the user opens the incoming-requests page — clears the badge
+    @Post('incoming/seen')
+    markIncomingSeen(@Req() req: AuthRequest) {
+        return this.rentalRequestsService.markIncomingSeen(req.user.userId);
+    }
+
     // owner gets QR token for a rental request
     @Get(':id/qr')
     getQrToken(@Param('id') id: string, @Req() req: AuthRequest) {
