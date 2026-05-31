@@ -105,7 +105,38 @@ export class AuthService {
         }
 
         if (stored.revoked) {
-            // Токен уже был использован — возможна кража. Отзываем все сессии пользователя.
+            // Grace window: a token revoked in the last 5 seconds is almost certainly
+            // a duplicate concurrent refresh from the same client (e.g. multiple tabs,
+            // or AuthInitializer racing with an API retry). Find the freshest active
+            // token for the same user+device and reissue against THAT instead of
+            // nuking every session as a "reuse" event.
+            const GRACE_MS = 5_000;
+            const revokedAt = stored.created_at.getTime();
+            if (Date.now() - revokedAt < GRACE_MS) {
+                const replacement = await this.prisma.refreshToken.findFirst({
+                    where: {
+                        user_id: payload.sub,
+                        device_id: payload.device_id,
+                        revoked: false,
+                        expires_at: { gt: new Date() },
+                    },
+                    orderBy: { created_at: 'desc' },
+                });
+                if (replacement) {
+                    this.logger.log(`refresh grace-hit | userId=${payload.sub} ip=${ip} ua=${ua}`);
+                    const user = await this.usersService.findById(payload.sub);
+                    if (user) {
+                        // Rotate replacement too, then issue brand new pair
+                        await this.prisma.refreshToken.update({
+                            where: { jti: replacement.jti },
+                            data: { revoked: true },
+                        });
+                        return this.issueTokens(payload.sub, payload.email, user.role, user.token_version, payload.device_id, res, mobile);
+                    }
+                }
+            }
+
+            // Real reuse — token used after grace window has passed. Treat as theft.
             this.logger.warn(`REFRESH TOKEN REUSE DETECTED | userId=${payload.sub} ip=${ip} ua=${ua}`);
             await this.prisma.refreshToken.updateMany({
                 where: { user_id: payload.sub, revoked: false },
