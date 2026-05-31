@@ -185,7 +185,14 @@ export function Navbar() {
                                         <DropdownMenuSeparator />
                                         <DropdownMenuItem
                                             className="text-red-500"
-                                            onClick={() => logout()}
+                                            // onSelect lets Radix close the menu cleanly,
+                                            // then we trigger logout on the next tick so the
+                                            // dropdown isn't unmounted mid-animation —
+                                            // otherwise Radix leaves a pointer-events:none
+                                            // lock on <body> that freezes the whole page.
+                                            onSelect={() => {
+                                                setTimeout(() => logout(), 0);
+                                            }}
                                         >
                                             Выйти
                                         </DropdownMenuItem>
