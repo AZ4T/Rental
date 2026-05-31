@@ -5,6 +5,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ChatsService {
     constructor(private prisma: PrismaService) {}
 
+    async getChatById(chatId: string) {
+        return this.prisma.chat.findUnique({ where: { id: chatId } });
+    }
+
     async findOrCreate(userAId: string, userBId: string) {
         const [p1, p2] = [userAId, userBId].sort();
 

@@ -37,6 +37,9 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 secret: this.config.getOrThrow('JWT_SECRET'),
             });
             client.userId = payload.sub;
+            // Personal room — receives broadcasts from any chat the user participates in,
+            // even when the user is not on a specific chat page.
+            await client.join(`user:${payload.sub}`);
 
             const msUntilExpiry = Math.min(payload.exp * 1000 - Date.now(), 2_147_483_647);
             client.data.expiryTimer = setTimeout(() => client.disconnect(), msUntilExpiry);
@@ -81,7 +84,19 @@ export class ChatsGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (!client.rooms.has(data.chatId)) {
             await client.join(data.chatId);
         }
+        // Broadcast to chat room (open chat → instant update)
         this.server.to(data.chatId).emit('new_message', message);
+
+        // Also broadcast to BOTH participants' personal rooms so receivers update
+        // unread badges & chat list from any screen, even with no chat open.
+        const chat = await this.chatsService.getChatById(data.chatId);
+        if (chat) {
+            const targets = [
+                `user:${chat.participant1_id}`,
+                `user:${chat.participant2_id}`,
+            ];
+            this.server.to(targets).emit('chat_updated', { chatId: data.chatId, message });
+        }
         return message;
     }
 }

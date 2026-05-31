@@ -114,7 +114,7 @@ export class RentalRequestsService {
             total_price = Number(listing.price.mul(days).toFixed(2));
         }
 
-        return this.prisma.rentalRequest.create({
+        const created = await this.prisma.rentalRequest.create({
             data: {
                 listing_id: dto.listing_id,
                 renter_id: renterId,
@@ -125,6 +125,14 @@ export class RentalRequestsService {
             },
             include: { listing: true },
         });
+
+        // Notify owner about new incoming request so badge updates in real-time
+        this.notificationsGateway.sendToUser(listing.owner_id, 'incoming_rental', {
+            message: `Новая заявка на "${listing.title}"`,
+            rentalRequestId: created.id,
+        });
+
+        return created;
     }
 
     async findMyRequests(userId: string) {

@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/store/auth.store";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { getSocket } from "@/services/socket";
 
 let notifSocket: Socket | null = null;
 
@@ -55,7 +56,41 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             }
         });
 
+        notifSocket.on("incoming_rental", (data: { message: string }) => {
+            toast.info(data.message, { duration: 6000 });
+            queryClient.invalidateQueries({ queryKey: ["rentals", "incoming"] });
+            queryClient.invalidateQueries({ queryKey: ["rentals", "incoming", "count"] });
+            if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "granted") {
+                new Notification("Rental — новая заявка", {
+                    body: data.message,
+                    icon: "/favicon.ico",
+                });
+            }
+        });
+
+        // Eagerly open chats socket so we get message notifications anywhere in the app,
+        // not only when the user has a specific chat open.
+        const chatsSocket = getSocket();
+        const handleChatUpdated = (data: { chatId: string; message: { sender_id: string; content: string; sender: { name: string } } }) => {
+            const me = useAuthStore.getState().user?.id;
+            queryClient.invalidateQueries({ queryKey: ["chats"] });
+            queryClient.invalidateQueries({ queryKey: ["chats", "unread"] });
+            // Don't notify about our own outgoing messages
+            if (data.message.sender_id === me) return;
+            toast.info(`${data.message.sender.name}: ${data.message.content.slice(0, 80)}`, { duration: 5000 });
+            if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "granted") {
+                new Notification(`Rental — ${data.message.sender.name}`, {
+                    body: data.message.content.slice(0, 200),
+                    icon: "/favicon.ico",
+                });
+            }
+        };
+        chatsSocket.on("chat_updated", handleChatUpdated);
+
         return () => {
+            // Just remove our listener — the chats socket is shared with chat pages
+            // and will be torn down by useLogout via disconnectSocket().
+            chatsSocket.off("chat_updated", handleChatUpdated);
             notifSocket?.disconnect();
             notifSocket = null;
         };
