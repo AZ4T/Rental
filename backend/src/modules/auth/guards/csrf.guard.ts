@@ -8,6 +8,13 @@ export class CsrfGuard implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest<Request>();
+
+        // Mobile clients don't use cookies, so CSRF (which relies on auto-sent
+        // cookies) doesn't apply. They identify themselves via this header.
+        if (request.headers['x-mobile-client'] === '1') {
+            return true;
+        }
+
         const origin = request.headers['origin'];
         const referer = request.headers['referer'];
 

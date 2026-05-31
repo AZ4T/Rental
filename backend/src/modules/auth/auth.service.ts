@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
@@ -47,11 +48,23 @@ export class AuthService {
 
         const password_hash = await bcrypt.hash(dto.password, 10);
 
-        const user = await this.usersService.create({
-            name: dto.name,
-            email,
-            password_hash,
-        });
+        // Race-safe create: two simultaneous registrations with the same email
+        // both pass findByEmail (no record yet), then one wins the unique-index
+        // race and the loser throws P2002. Convert to the same friendly error.
+        let user;
+        try {
+            user = await this.usersService.create({
+                name: dto.name,
+                email,
+                password_hash,
+            });
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                this.logger.warn(`register conflict (race) | email=${maskEmail(email)} ip=${ip}`);
+                throw new BadRequestException('Не удалось создать аккаунт');
+            }
+            throw e;
+        }
 
         this.logger.log(`register success | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
         return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res, mobile);
@@ -105,11 +118,12 @@ export class AuthService {
         }
 
         if (stored.revoked) {
-            // Grace window: a token revoked in the last 5 seconds is almost certainly
-            // a duplicate concurrent refresh from the same client (e.g. multiple tabs,
-            // or AuthInitializer racing with an API retry). Find the freshest active
-            // token for the same user+device and reissue against THAT instead of
-            // nuking every session as a "reuse" event.
+            // Grace window: a token revoked within the last 5 seconds is almost
+            // always a duplicate concurrent refresh from the same client (e.g.
+            // two tabs, or AuthInitializer racing with an API retry inside the
+            // response interceptor). We return the SAME currently-active token
+            // instead of rotating again — both racing clients then end up with
+            // the identical cookie and neither has its session destroyed.
             const GRACE_MS = 5_000;
             const revokedAt = stored.created_at.getTime();
             if (Date.now() - revokedAt < GRACE_MS) {
@@ -126,17 +140,23 @@ export class AuthService {
                     this.logger.log(`refresh grace-hit | userId=${payload.sub} ip=${ip} ua=${ua}`);
                     const user = await this.usersService.findById(payload.sub);
                     if (user) {
-                        // Rotate replacement too, then issue brand new pair
-                        await this.prisma.refreshToken.update({
-                            where: { jti: replacement.jti },
-                            data: { revoked: true },
-                        });
-                        return this.issueTokens(payload.sub, payload.email, user.role, user.token_version, payload.device_id, res, mobile);
+                        return this.reissueAccessTokenOnly(
+                            payload.sub,
+                            payload.email,
+                            user.role,
+                            user.token_version,
+                            payload.device_id,
+                            replacement.jti,
+                            replacement.expires_at,
+                            res,
+                            mobile,
+                        );
                     }
                 }
             }
 
-            // Real reuse — token used after grace window has passed. Treat as theft.
+            // Real reuse — token used after the grace window has passed. Treat
+            // as a stolen-token replay and burn every session.
             this.logger.warn(`REFRESH TOKEN REUSE DETECTED | userId=${payload.sub} ip=${ip} ua=${ua}`);
             await this.prisma.refreshToken.updateMany({
                 where: { user_id: payload.sub, revoked: false },
@@ -172,25 +192,35 @@ export class AuthService {
         });
     }
 
-    async logout(res: Response, userId: string | undefined, ip: string, rawRefreshToken?: string) {
+    async logout(res: Response, ip: string, rawRefreshToken?: string) {
+        // Identify the user from the refresh_token cookie (signature-verified,
+        // not just decoded — otherwise a forged cookie could trigger writes
+        // for arbitrary users).
+        let userId: string | undefined;
+        let jti: string | undefined;
+        if (rawRefreshToken) {
+            try {
+                const payload = this.jwtService.verify<{ sub: string; jti: string }>(rawRefreshToken, {
+                    secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
+                });
+                userId = payload.sub;
+                jti = payload.jti;
+            } catch { /* invalid/expired token — still clear the cookie below */ }
+        }
+
         if (userId) {
-            // Инкремент token_version — все выданные access_token немедленно невалидны
+            // Bump token_version → outstanding access_tokens immediately invalid
             await this.prisma.user.update({
                 where: { id: userId },
                 data: { token_version: { increment: 1 } },
             });
         }
 
-        if (rawRefreshToken) {
-            try {
-                const payload = this.jwtService.decode(rawRefreshToken) as { jti?: string } | null;
-                if (payload?.jti) {
-                    await this.prisma.refreshToken.updateMany({
-                        where: { jti: payload.jti },
-                        data: { revoked: true },
-                    });
-                }
-            } catch { /* невалидный токен — игнорируем */ }
+        if (jti) {
+            await this.prisma.refreshToken.updateMany({
+                where: { jti },
+                data: { revoked: true },
+            });
         }
 
         this.logger.log(`logout | userId=${userId ?? 'unknown'} ip=${ip}`);
@@ -201,14 +231,20 @@ export class AuthService {
 
     async forgotPassword(dto: ForgotPasswordDto, ip: string) {
         const email = dto.email.toLowerCase();
-        const user = await this.usersService.findByEmail(email);
+        // Process everything asynchronously so the response time is identical
+        // whether the email exists or not — prevents enumeration via timing.
+        void this.processForgotPassword(email, ip).catch((err) => {
+            this.logger.warn(`forgot-password processing error | email=${maskEmail(email)} err=${(err as Error).message}`);
+        });
 
-        // Always return the same response to prevent email enumeration
+        return { message: 'Если аккаунт существует, письмо будет отправлено' };
+    }
+
+    private async processForgotPassword(email: string, ip: string) {
+        const user = await this.usersService.findByEmail(email);
         if (!user) {
             this.logger.warn(`forgot-password (unknown email) | email=${maskEmail(email)} ip=${ip}`);
-            // Timing equalization: match the bcrypt work done on the happy path
-            await bcrypt.hash('dummy-constant-timing', 10);
-            return { message: 'Если аккаунт существует, письмо будет отправлено' };
+            return;
         }
 
         // Invalidate previous unused tokens for this user
@@ -227,11 +263,9 @@ export class AuthService {
 
         await this.mailer.sendPasswordReset(user.email, rawToken);
         this.logger.log(`forgot-password email sent | userId=${user.id} ip=${ip}`);
-
-        return { message: 'Если аккаунт существует, письмо будет отправлено' };
     }
 
-    async resetPassword(dto: ResetPasswordDto, ip: string) {
+    async resetPassword(dto: ResetPasswordDto, res: Response, ip: string) {
         const token_hash = createHash('sha256').update(dto.token).digest('hex');
 
         const record = await this.prisma.passwordResetToken.findUnique({ where: { token_hash } });
@@ -250,7 +284,7 @@ export class AuthService {
         const password_hash = await bcrypt.hash(dto.password, 10);
 
         // Invalidate all sessions: bump token_version + revoke all refresh tokens
-        await this.prisma.user.update({
+        const updatedUser = await this.prisma.user.update({
             where: { id: record.user_id },
             data: { password_hash, token_version: { increment: 1 } },
         });
@@ -260,11 +294,22 @@ export class AuthService {
             data: { revoked: true },
         });
 
+        // Clear refresh cookie so the browser doesn't ping /auth/refresh with
+        // a now-revoked token (which would trigger a false reuse alarm).
+        this.clearRefreshCookie(res);
+
+        // Notify the user that their password was just reset. If they didn't
+        // do it themselves, they have a chance to react. Fire-and-forget so a
+        // failing mailer doesn't break the reset flow.
+        void this.mailer.sendPasswordChangedNotice(updatedUser.email).catch((err) => {
+            this.logger.warn(`reset-password notice failed | userId=${record.user_id} err=${(err as Error).message}`);
+        });
+
         this.logger.log(`reset-password success | userId=${record.user_id} ip=${ip}`);
         return { message: 'Пароль успешно изменён. Войдите заново.' };
     }
 
-    async changePassword(userId: string, dto: ChangePasswordDto, ip: string) {
+    async changePassword(userId: string, dto: ChangePasswordDto, res: Response, ip: string) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new UnauthorizedException();
 
@@ -276,7 +321,7 @@ export class AuthService {
 
         const password_hash = await bcrypt.hash(dto.new_password, 10);
 
-        // Invalidate all other sessions (keeps current session by bumping version in issueTokens on next login)
+        // Invalidate every session — user has to re-login on every device
         await this.prisma.user.update({
             where: { id: userId },
             data: { password_hash, token_version: { increment: 1 } },
@@ -287,8 +332,58 @@ export class AuthService {
             data: { revoked: true },
         });
 
+        this.clearRefreshCookie(res);
+
+        void this.mailer.sendPasswordChangedNotice(user.email).catch((err) => {
+            this.logger.warn(`change-password notice failed | userId=${userId} err=${(err as Error).message}`);
+        });
+
         this.logger.log(`change-password success | userId=${userId} ip=${ip}`);
         return { message: 'Пароль успешно изменён. Войдите заново.' };
+    }
+
+    /**
+     * Issue a fresh access_token but reuse an existing active refresh token
+     * (same jti, same exp). Called only from the grace-window code path to
+     * make concurrent racing refreshes converge on the same refresh_token.
+     */
+    private async reissueAccessTokenOnly(
+        userId: string,
+        email: string,
+        role: string,
+        tokenVersion: number,
+        deviceId: string,
+        existingJti: string,
+        existingExpiresAt: Date,
+        res: Response,
+        mobile: boolean,
+    ) {
+        const accessPayload = { sub: userId, email, role, version: tokenVersion };
+        const refreshPayload = { sub: userId, email, role, jti: existingJti, device_id: deviceId };
+
+        const access_token = this.jwtService.sign(accessPayload, {
+            secret: this.config.getOrThrow('JWT_SECRET'),
+            expiresIn: this.config.get('JWT_EXPIRES_IN') || '15m',
+        });
+
+        // Re-sign the same refresh payload with whatever lifetime remains.
+        // jwtService.sign needs a positive expiresIn; clamp to 1 second minimum.
+        const secondsLeft = Math.max(1, Math.floor((existingExpiresAt.getTime() - Date.now()) / 1000));
+        const refresh_token = this.jwtService.sign(refreshPayload, {
+            secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
+            expiresIn: secondsLeft,
+        });
+
+        const cookieSecure = this.config.get('COOKIE_SECURE') === 'true';
+        res.cookie('refresh_token', refresh_token, {
+            httpOnly: true,
+            secure: cookieSecure,
+            sameSite: cookieSecure ? 'none' : 'lax',
+            maxAge: secondsLeft * 1000,
+        });
+
+        const user = await this.usersService.getProfile(userId);
+        return mobile ? { access_token, refresh_token, user } : { access_token, user };
     }
 
     private async issueTokens(userId: string, email: string, role: string, tokenVersion: number, deviceId: string, res: Response, mobile = false) {

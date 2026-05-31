@@ -53,12 +53,14 @@ export class AuthController {
         return this.authService.refresh(req, res, extractIp(req), req.headers['user-agent'] ?? '', isMobile(req));
     }
 
-    @UseGuards(JwtAuthGuard)
+    // No JwtAuthGuard: logout must work even when the access_token is already
+    // expired, otherwise the user is stuck "half logged out" (UI cleared but
+    // cookie + DB session still alive). We identify the user from the refresh
+    // token cookie if it's valid; otherwise we still clear the cookie.
     @Post('logout')
     logout(@Res({ passthrough: true }) res: Response, @Req() req: Request) {
-        const user = req.user as { userId: string } | undefined;
         const rawRefreshToken = req.cookies['refresh_token'] as string | undefined;
-        return this.authService.logout(res, user?.userId, extractIp(req), rawRefreshToken);
+        return this.authService.logout(res, extractIp(req), rawRefreshToken);
     }
 
     @Throttle({ default: { ttl: 3600_000, limit: 3 } })
@@ -69,14 +71,22 @@ export class AuthController {
 
     @Throttle({ default: { ttl: 60_000, limit: 5 } })
     @Post('reset-password')
-    resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
-        return this.authService.resetPassword(dto, extractIp(req));
+    resetPassword(
+        @Body() dto: ResetPasswordDto,
+        @Res({ passthrough: true }) res: Response,
+        @Req() req: Request,
+    ) {
+        return this.authService.resetPassword(dto, res, extractIp(req));
     }
 
     @UseGuards(JwtAuthGuard)
     @Post('change-password')
-    changePassword(@Body() dto: ChangePasswordDto, @Req() req: Request) {
+    changePassword(
+        @Body() dto: ChangePasswordDto,
+        @Res({ passthrough: true }) res: Response,
+        @Req() req: Request,
+    ) {
         const user = req.user as { userId: string };
-        return this.authService.changePassword(user.userId, dto, extractIp(req));
+        return this.authService.changePassword(user.userId, dto, res, extractIp(req));
     }
 }

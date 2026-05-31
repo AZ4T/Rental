@@ -57,7 +57,22 @@ api.interceptors.response.use(
                 const access_token = await doRefresh();
                 original.headers.Authorization = `Bearer ${access_token}`;
                 return api(original);
-            } catch {
+            } catch (refreshError: unknown) {
+                // Only force logout if the refresh ITSELF was rejected by the
+                // server (real auth failure). On transient network errors we
+                // keep the session intact so a flaky wifi doesn't kick the user.
+                const status =
+                    typeof refreshError === "object" &&
+                    refreshError !== null &&
+                    "response" in refreshError
+                        ? (refreshError as { response?: { status?: number } }).response?.status
+                        : undefined;
+                const isAuthFailure = status === 401 || status === 403;
+                if (!isAuthFailure) {
+                    // Don't touch local state — surface the original error so callers can retry.
+                    return Promise.reject(refreshError);
+                }
+
                 const { user, logout } = useAuthStore.getState();
                 const wasAuthenticated = !!user;
                 logout();
@@ -68,6 +83,12 @@ api.interceptors.response.use(
                     !window.location.pathname.startsWith("/auth/")
                 ) {
                     isRedirectingToLogin = true;
+                    // Reset the flag once the navigation completes — the new page
+                    // re-evaluates this module fresh, but if the browser ever
+                    // recycles us via bfcache we want the next failure to redirect again.
+                    setTimeout(() => {
+                        isRedirectingToLogin = false;
+                    }, 5_000);
                     window.location.href = "/auth/login";
                 }
             }
