@@ -51,8 +51,15 @@ export default function MyProfilePage() {
     ) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const url = await uploadImage(file);
-        updateProfile({ avatar_url: url });
+        try {
+            const url = await uploadImage(file);
+            updateProfile({ avatar_url: url });
+        } catch {
+            // useUploadImage already shows a toast on failure
+        } finally {
+            // Allow re-selecting the same file
+            e.target.value = "";
+        }
     };
 
     const handleSave = () => {
@@ -171,9 +178,13 @@ export default function MyProfilePage() {
                     {newPassword && confirmPassword && newPassword !== confirmPassword && (
                         <p className="text-sm text-red-500">Пароли не совпадают</p>
                     )}
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                        После смены пароля вас выкинет — войдите заново с новым паролем.
+                    </p>
                     <Button
                         onClick={() => {
                             if (!currentPassword || newPassword !== confirmPassword || newPassword.length < 8) return;
+                            if (!confirm("После смены пароля все ваши сессии будут завершены. Продолжить?")) return;
                             changePassword({ current_password: currentPassword, new_password: newPassword });
                         }}
                         disabled={

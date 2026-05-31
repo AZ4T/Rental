@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Listing, PaginatedResponse, ListingFilters } from "@/types";
+import { useAuthStore } from "@/store/auth.store";
 
 export function useListings(filters: ListingFilters = {}) {
     return useQuery({
@@ -48,12 +49,14 @@ export function useDeleteListing() {
 }
 
 export function useMyListings() {
+    const { isAuthenticated } = useAuthStore();
     return useQuery({
         queryKey: ["listings", "my"],
         queryFn: () =>
             api
                 .get<PaginatedResponse<Listing>>("/listings/my")
                 .then((r) => r.data),
+        enabled: isAuthenticated,
     });
 }
 

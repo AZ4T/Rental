@@ -14,7 +14,6 @@ import { Star, Package, User } from "lucide-react";
 
 interface Props {
     rental: RentalRequest;
-    targetUserId?: string;
     dialogTitle?: string;
     showListingRating?: boolean;
     onClose: () => void;
@@ -64,7 +63,6 @@ function StarPicker({
 
 export function ReviewDialog({
     rental,
-    targetUserId,
     dialogTitle,
     showListingRating = false,
     onClose,
@@ -78,14 +76,18 @@ export function ReviewDialog({
         if (rating === 0) return;
         if (showListingRating && listingRating === 0) return;
 
-        createReview({
-            rental_request_id: rental.id,
-            target_user_id: targetUserId ?? rental.listing.owner_id,
-            rating,
-            listing_rating: showListingRating ? listingRating : undefined,
-            comment: comment.trim() || undefined,
-        });
-        onClose();
+        createReview(
+            {
+                rental_request_id: rental.id,
+                rating,
+                listing_rating: showListingRating ? listingRating : undefined,
+                comment: comment.trim() || undefined,
+            },
+            {
+                onSuccess: () => onClose(),
+                // onError: keep dialog open so user can retry — toast is shown by the hook
+            },
+        );
     };
 
     const isValid = rating > 0 && (!showListingRating || listingRating > 0);

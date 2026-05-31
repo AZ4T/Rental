@@ -12,7 +12,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../auth/decorators/role.decorator';
 import { ReportsService } from './reports.service';
-import { CreateReportDto } from './dto/create-report.dto';
+import { CreateReportDto, UpdateReportStatusDto } from './dto/create-report.dto';
+import type { Request } from 'express';
 
 type AuthRequest = Request & { user: { userId: string } };
 
@@ -26,17 +27,17 @@ export class ReportsController {
         return this.reportsService.create(dto, req.user.userId);
     }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(RolesGuard)
     @Role('ADMIN')
     @Get()
     findAll() {
         return this.reportsService.findAll();
     }
 
-    @UseGuards(JwtAuthGuard, RolesGuard)
+    @UseGuards(RolesGuard)
     @Role('ADMIN')
     @Patch(':id/status')
-    updateStatus(@Param('id') id: string, @Body('status') status: string) {
-        return this.reportsService.updateStatus(id, status);
+    updateStatus(@Param('id') id: string, @Body() dto: UpdateReportStatusDto) {
+        return this.reportsService.updateStatus(id, dto.status);
     }
 }

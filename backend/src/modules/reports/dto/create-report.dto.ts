@@ -1,11 +1,11 @@
-import { IsString, IsIn, IsOptional } from 'class-validator';
+import { IsString, IsIn, IsOptional, IsUUID, MaxLength } from 'class-validator';
 
 export class CreateReportDto {
     @IsString()
     @IsIn(['USER', 'LISTING', 'RENTAL'])
     type: string;
 
-    @IsString()
+    @IsUUID()
     target_id: string;
 
     @IsString()
@@ -14,5 +14,12 @@ export class CreateReportDto {
 
     @IsOptional()
     @IsString()
+    @MaxLength(2000)
     description?: string;
+}
+
+export class UpdateReportStatusDto {
+    @IsString()
+    @IsIn(['PENDING', 'REVIEWING', 'RESOLVED', 'REJECTED'])
+    status: string;
 }

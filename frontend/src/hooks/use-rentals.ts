@@ -5,20 +5,24 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth.store";
 
 export function useMyRentals() {
+    const { isAuthenticated } = useAuthStore();
     return useQuery({
         queryKey: ["rentals", "my"],
         queryFn: () =>
             api.get<RentalRequest[]>("/rental-requests/my").then((r) => r.data),
+        enabled: isAuthenticated,
     });
 }
 
 export function useIncomingRentals() {
+    const { isAuthenticated } = useAuthStore();
     return useQuery({
         queryKey: ["rentals", "incoming"],
         queryFn: () =>
             api
                 .get<RentalRequest[]>("/rental-requests/incoming")
                 .then((r) => r.data),
+        enabled: isAuthenticated,
     });
 }
 

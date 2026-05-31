@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Transaction } from "@/types";
+import { useAuthStore } from "@/store/auth.store";
 
 interface WalletData {
     balance: number;
@@ -9,9 +10,11 @@ interface WalletData {
 }
 
 export function useWallet() {
+    const { isAuthenticated } = useAuthStore();
     return useQuery<WalletData>({
         queryKey: ["wallet"],
         queryFn: () => api.get("/wallet").then((r) => r.data),
+        enabled: isAuthenticated,
     });
 }
 

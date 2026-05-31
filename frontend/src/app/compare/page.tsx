@@ -34,7 +34,7 @@ function RowCell({ children, highlight }: { children: React.ReactNode; highlight
 function CompareGrid({ items }: { items: Listing[] }) {
     const { remove } = useCompareStore();
 
-    const lowestPrice = Math.min(...items.map((i) => i.price));
+    const lowestPrice = Math.min(...items.map((i) => Number(i.price)));
 
     return (
         <div className="overflow-x-auto">
@@ -111,27 +111,29 @@ function CompareGrid({ items }: { items: Listing[] }) {
 
                 {/* ── Price ── */}
                 <RowLabel>Цена / сутки</RowLabel>
-                {items.map((item) => (
-                    <RowCell key={item.id} highlight={item.price === lowestPrice}>
-                        <span
-                            className={`font-semibold ${
-                                item.price === lowestPrice
-                                    ? "text-green-600 dark:text-green-400"
-                                    : ""
-                            }`}
-                        >
-                            {item.price.toLocaleString("ru-RU")} ₸
-                        </span>
-                        {item.price === lowestPrice && items.length > 1 && (
-                            <Badge
-                                variant="secondary"
-                                className="ml-1.5 text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                {items.map((item) => {
+                    const itemPrice = Number(item.price);
+                    const isBest = itemPrice === lowestPrice;
+                    return (
+                        <RowCell key={item.id} highlight={isBest}>
+                            <span
+                                className={`font-semibold ${
+                                    isBest ? "text-green-600 dark:text-green-400" : ""
+                                }`}
                             >
-                                Лучшая цена
-                            </Badge>
-                        )}
-                    </RowCell>
-                ))}
+                                {itemPrice.toLocaleString("ru-RU")} ₸
+                            </span>
+                            {isBest && items.length > 1 && (
+                                <Badge
+                                    variant="secondary"
+                                    className="ml-1.5 text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                                >
+                                    Лучшая цена
+                                </Badge>
+                            )}
+                        </RowCell>
+                    );
+                })}
 
                 {/* ── Deposit ── */}
                 <RowLabel>Залог</RowLabel>

@@ -33,19 +33,21 @@ export interface Chat {
 }
 
 export function useMyChats(enabled = true) {
+    const { isAuthenticated } = useAuthStore();
     return useQuery<Chat[]>({
         queryKey: ["chats"],
         queryFn: () => api.get("/chats").then((r) => r.data),
-        enabled,
+        enabled: enabled && isAuthenticated,
         refetchInterval: 10000,
     });
 }
 
 export function useUnreadCount(enabled = true) {
+    const { isAuthenticated } = useAuthStore();
     return useQuery<number>({
         queryKey: ["chats", "unread"],
         queryFn: () => api.get("/chats/unread-count").then((r) => r.data),
-        enabled,
+        enabled: enabled && isAuthenticated,
         refetchInterval: 10000,
     });
 }

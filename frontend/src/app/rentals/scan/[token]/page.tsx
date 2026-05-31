@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { usePayRental } from "@/hooks/use-wallet";
 import { useAuthStore } from "@/store/auth.store";
+import api from "@/services/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,12 +40,9 @@ export default function ScanRentalPage({ params }: Props) {
     const { data: rental, isLoading, isError } = useQuery<ScanRentalData>({
         queryKey: ["rental-scan", token],
         queryFn: () =>
-            fetch(`/api/rental-requests/scan/${token}`)
-                .then((res) => {
-                    if (!res.ok) throw new Error("Не удалось загрузить данные");
-                    return res.json() as Promise<ScanRentalData>;
-                }),
+            api.get<ScanRentalData>(`/rental-requests/scan/${token}`).then((r) => r.data),
         enabled: !!token,
+        retry: false,
     });
 
     const { mutate: pay, isPending: isPaying } = usePayRental();

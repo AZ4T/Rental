@@ -251,7 +251,6 @@ export default function IncomingRentalsPage() {
             {reviewRental && reviewRental.renter && (
                 <ReviewDialog
                     rental={reviewRental}
-                    targetUserId={reviewRental.renter.id}
                     dialogTitle="Оценить арендатора"
                     onClose={() => setReviewRental(null)}
                 />

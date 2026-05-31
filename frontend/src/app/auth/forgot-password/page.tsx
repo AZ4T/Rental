@@ -23,9 +23,23 @@ export default function ForgotPasswordPage() {
                 </div>
 
                 {isSuccess ? (
-                    <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-4 text-sm text-green-800 dark:text-green-300">
-                        Если аккаунт с таким email существует, письмо уже отправлено.
-                        Проверьте папку «Входящие» и «Спам».
+                    <div className="space-y-3">
+                        <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-4 text-sm text-green-800 dark:text-green-300">
+                            Если аккаунт с таким email существует, письмо уже отправлено.
+                            Проверьте папку «Входящие» и «Спам».
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Письмо не пришло? Проверьте, что email написан без опечаток, и подождите 1–2 минуты.
+                            Ссылка действует 1 час. Можно{" "}
+                            <button
+                                type="button"
+                                onClick={() => window.location.reload()}
+                                className="text-blue-600 hover:underline"
+                            >
+                                попробовать ещё раз
+                            </button>
+                            .
+                        </p>
                     </div>
                 ) : (
                     <form

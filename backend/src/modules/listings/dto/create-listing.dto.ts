@@ -1,13 +1,25 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsString, IsUUID, Min, MinLength } from 'class-validator';
+import {
+    ArrayMaxSize,
+    ArrayMinSize,
+    IsArray,
+    IsNumber,
+    IsString,
+    IsUUID,
+    MaxLength,
+    Min,
+    MinLength,
+} from 'class-validator';
 
 export class CreateListingDto {
     @IsString()
     @MinLength(3)
+    @MaxLength(255)
     title: string;
 
     @IsString()
     @MinLength(10)
+    @MaxLength(5000)
     description: string;
 
     @Type(() => Number)
@@ -21,11 +33,16 @@ export class CreateListingDto {
     deposit: number;
 
     @IsString()
+    @MinLength(2)
+    @MaxLength(255)
     city: string;
 
     @IsUUID()
     category_id: string;
 
+    @IsArray()
+    @ArrayMinSize(1, { message: 'Добавьте хотя бы одну фотографию' })
+    @ArrayMaxSize(5, { message: 'Максимум 5 фотографий' })
     @IsString({ each: true })
     image_urls: string[];
 }

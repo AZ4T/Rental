@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMyRentals, useCancelRental } from "@/hooks/use-rentals";
 import { useUploadImage } from "@/hooks/use-upload";
 import { useOrCreateChat } from "@/hooks/use-chats";
+import { usePayRental } from "@/hooks/use-wallet";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,8 @@ import {
     Clock,
     Upload,
     ImageIcon,
-    Smartphone,
+    QrCode,
+    CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -212,9 +214,24 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
         const files = Array.from(e.target.files ?? []);
         if (!files.length) return;
 
+        const existing = rental.return_images?.length ?? 0;
+        if (existing + files.length > 10) {
+            toast.error("Максимум 10 фото возврата");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
+        const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
+        if (oversized.length > 0) {
+            toast.error("Файл слишком большой. Максимум 10 МБ");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+        }
+
         try {
             const urls = await Promise.all(files.map((f) => uploadImage(f)));
-            submitReturnImages(urls);
+            const merged = [...(rental.return_images ?? []), ...urls];
+            submitReturnImages(merged);
         } catch {
             // error already toasted by useUploadImage
         }
@@ -276,10 +293,12 @@ export default function MyRentalsPage() {
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
     const { mutate: openChat } = useOrCreateChat();
+    const { mutate: payRental, isPending: isPaying } = usePayRental();
     const { user } = useAuthStore();
     const router = useRouter();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
     const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
+    const [payingId, setPayingId] = useState<string | null>(null);
 
     function toggleTimeline(id: string) {
         setExpandedTimeline((prev) => {
@@ -383,14 +402,6 @@ export default function MyRentalsPage() {
                                                         Написать владельцу
                                                     </Button>
                                                 )}
-                                                {rental.status === "APPROVED" &&
-                                                    rental.payment_status === "UNPAID" && (
-                                                        <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 dark:bg-orange-950/20 rounded-lg px-3 py-2 border border-orange-200 dark:border-orange-800">
-                                                            <Smartphone className="h-4 w-4 shrink-0" />
-                                                            Оплатите с мобильного приложения
-                                                        </div>
-                                                    )}
-
                                                 {rental.status === "PENDING" && (
                                                     <Button
                                                         variant="outline"
@@ -436,6 +447,49 @@ export default function MyRentalsPage() {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Оплата — для одобренных но неоплаченных */}
+                                {rental.status === "APPROVED" && rental.payment_status === "UNPAID" && (
+                                    <div className="mt-3 border-t pt-3 space-y-3">
+                                        <div className="flex items-start gap-2 text-sm rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 px-3 py-2">
+                                            <QrCode className="h-4 w-4 mt-0.5 shrink-0 text-blue-600" />
+                                            <div className="flex-1">
+                                                <p className="font-medium text-blue-900 dark:text-blue-200">
+                                                    Оплата при встрече
+                                                </p>
+                                                <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+                                                    Владелец покажет QR-код при передаче — отсканируйте телефоном, чтобы оплатить.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full"
+                                            disabled={isPaying && payingId === rental.id}
+                                            onClick={() => {
+                                                setPayingId(rental.id);
+                                                payRental(rental.id, {
+                                                    onSuccess: () => {
+                                                        toast.success("Оплата прошла успешно");
+                                                        setPayingId(null);
+                                                    },
+                                                    onError: (e: Error) => {
+                                                        toast.error(e.message ?? "Ошибка оплаты");
+                                                        setPayingId(null);
+                                                    },
+                                                });
+                                            }}
+                                        >
+                                            {isPaying && payingId === rental.id ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <CreditCard className="h-4 w-4 mr-2" />
+                                            )}
+                                            Оплатить сейчас
+                                        </Button>
+                                    </div>
+                                )}
 
                                 {/* Фото возврата — только для оплаченных аренд */}
                                 {rental.status === "APPROVED" && rental.payment_status === "PAID" && (

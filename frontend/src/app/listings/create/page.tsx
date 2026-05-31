@@ -100,9 +100,11 @@ export default function CreateListingPage() {
             return;
         }
 
-        for (const file of files) {
-            const url = await uploadImage(file);
-            setImageUrls((prev) => [...prev, url]);
+        try {
+            const urls = await Promise.all(files.map((f) => uploadImage(f)));
+            setImageUrls((prev) => [...prev, ...urls]);
+        } catch {
+            // useUploadImage already toasts per-failure
         }
     };
 
@@ -132,9 +134,11 @@ export default function CreateListingPage() {
             return;
         }
 
-        for (const file of files) {
-            const url = await uploadImage(file);
-            setImageUrls((prev) => [...prev, url]);
+        try {
+            const urls = await Promise.all(files.map((f) => uploadImage(f)));
+            setImageUrls((prev) => [...prev, ...urls]);
+        } catch {
+            // useUploadImage already toasts per-failure
         }
     };
 

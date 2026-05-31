@@ -23,7 +23,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             return;
         }
 
-        if (typeof window !== "undefined" && Notification.permission === "default") {
+        if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "default") {
             void Notification.requestPermission();
         }
 
@@ -35,7 +35,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         notifSocket.on("rental_status_changed", (data: { message: string }) => {
             toast.info(data.message, { duration: 6000 });
             queryClient.invalidateQueries({ queryKey: ["rentals"] });
-            if (typeof window !== "undefined" && Notification.permission === "granted") {
+            if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "granted") {
                 new Notification("Rental — изменение статуса", {
                     body: data.message,
                     icon: "/favicon.ico",
@@ -47,7 +47,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             toast.success(data.message, { duration: 6000 });
             queryClient.invalidateQueries({ queryKey: ["wallet"] });
             queryClient.invalidateQueries({ queryKey: ["rentals"] });
-            if (typeof window !== "undefined" && Notification.permission === "granted") {
+            if (typeof window !== "undefined" && typeof Notification !== "undefined" && Notification.permission === "granted") {
                 new Notification("Rental — оплата получена", {
                     body: data.message,
                     icon: "/favicon.ico",

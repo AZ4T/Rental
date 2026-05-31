@@ -103,7 +103,8 @@ export class ReviewsService {
         await this.prisma.user.update({
             where: { id: userId },
             data: {
-                rating_avg: result._avg.rating ?? 0,
+                // null when no reviews (vs 0 which is misleading "0 stars")
+                rating_avg: result._avg.rating ?? null,
                 reviews_count: result._count.rating,
             },
         });
