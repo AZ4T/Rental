@@ -10,8 +10,24 @@ import {
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
-import { fileTypeFromBuffer } from 'file-type';
 import sharp from 'sharp';
+
+// file-type 19+ is ESM-only. NestJS compiles to CommonJS, so a top-level
+// `import` statement makes TypeScript emit `require('file-type')` which
+// blows up at runtime. Bypass TS transpilation with the Function trick so
+// we get a true dynamic ESM import, then cache the resolved function.
+type FileTypeFromBuffer = (buf: Uint8Array) => Promise<{ mime: string } | undefined>;
+const dynamicImport = new Function('m', 'return import(m)') as (
+    m: string,
+) => Promise<{ fileTypeFromBuffer: FileTypeFromBuffer }>;
+let _fileTypeFromBuffer: FileTypeFromBuffer | null = null;
+async function fileTypeFromBuffer(buf: Buffer): Promise<{ mime: string } | undefined> {
+    if (!_fileTypeFromBuffer) {
+        const mod = await dynamicImport('file-type');
+        _fileTypeFromBuffer = mod.fileTypeFromBuffer;
+    }
+    return _fileTypeFromBuffer(buf);
+}
 
 @Injectable()
 export class UploadsService {
