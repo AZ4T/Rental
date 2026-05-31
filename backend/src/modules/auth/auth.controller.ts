@@ -16,6 +16,12 @@ function extractIp(req: Request): string {
     return req.ip ?? 'unknown';
 }
 
+// Mobile clients can't use httpOnly cookies, so they identify themselves
+// via this header and receive the refresh_token in the response body.
+function isMobile(req: Request): boolean {
+    return req.headers['x-mobile-client'] === '1';
+}
+
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) {}
@@ -27,7 +33,7 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
         @Req() req: Request,
     ) {
-        return this.authService.register(dto, res, extractIp(req), req.headers['user-agent'] ?? '');
+        return this.authService.register(dto, res, extractIp(req), req.headers['user-agent'] ?? '', isMobile(req));
     }
 
     @Throttle({ default: { ttl: 60_000, limit: 5 } })
@@ -37,14 +43,14 @@ export class AuthController {
         @Res({ passthrough: true }) res: Response,
         @Req() req: Request,
     ) {
-        return this.authService.login(dto, res, extractIp(req), req.headers['user-agent'] ?? '');
+        return this.authService.login(dto, res, extractIp(req), req.headers['user-agent'] ?? '', isMobile(req));
     }
 
     @Throttle({ default: { ttl: 60_000, limit: 10 } })
     @UseGuards(CsrfGuard)
     @Post('refresh')
     refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-        return this.authService.refresh(req, res, extractIp(req), req.headers['user-agent'] ?? '');
+        return this.authService.refresh(req, res, extractIp(req), req.headers['user-agent'] ?? '', isMobile(req));
     }
 
     @UseGuards(JwtAuthGuard)

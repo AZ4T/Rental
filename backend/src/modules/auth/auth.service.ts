@@ -35,7 +35,7 @@ export class AuthService {
         private mailer: MailerService,
     ) {}
 
-    async register(dto: RegisterDto, res: Response, ip: string, ua: string) {
+    async register(dto: RegisterDto, res: Response, ip: string, ua: string, mobile = false) {
         const email = dto.email.toLowerCase();
         const exists = await this.usersService.findByEmail(email);
         if (exists) {
@@ -54,10 +54,10 @@ export class AuthService {
         });
 
         this.logger.log(`register success | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
-        return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res);
+        return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res, mobile);
     }
 
-    async login(dto: LoginDto, res: Response, ip: string, ua: string) {
+    async login(dto: LoginDto, res: Response, ip: string, ua: string, mobile = false) {
         const email = dto.email.toLowerCase();
         const user = await this.usersService.findByEmail(email);
         if (!user) {
@@ -72,11 +72,15 @@ export class AuthService {
         }
 
         this.logger.log(`login success | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
-        return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res);
+        return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res, mobile);
     }
 
-    async refresh(req: Request, res: Response, ip: string, ua: string) {
-        const refreshToken = req.cookies['refresh_token'] as string | undefined;
+    async refresh(req: Request, res: Response, ip: string, ua: string, mobile = false) {
+        // Web uses httpOnly cookie; mobile clients can't use cookies so they POST
+        // refresh_token in the request body.
+        const refreshToken =
+            (req.cookies['refresh_token'] as string | undefined) ||
+            ((req.body as { refresh_token?: string } | undefined)?.refresh_token as string | undefined);
         if (!refreshToken) {
             this.logger.warn(`refresh failed (no cookie) | ip=${ip} ua=${ua}`);
             throw new UnauthorizedException('Нет refresh токена');
@@ -124,7 +128,7 @@ export class AuthService {
         }
 
         this.logger.log(`refresh success | userId=${payload.sub} ip=${ip} ua=${ua}`);
-        return this.issueTokens(payload.sub, payload.email, user.role, user.token_version, payload.device_id, res);
+        return this.issueTokens(payload.sub, payload.email, user.role, user.token_version, payload.device_id, res, mobile);
     }
 
     private clearRefreshCookie(res: Response) {
@@ -255,7 +259,7 @@ export class AuthService {
         return { message: 'Пароль успешно изменён. Войдите заново.' };
     }
 
-    private async issueTokens(userId: string, email: string, role: string, tokenVersion: number, deviceId: string, res: Response) {
+    private async issueTokens(userId: string, email: string, role: string, tokenVersion: number, deviceId: string, res: Response, mobile = false) {
         const jti = randomUUID();
         const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
@@ -290,6 +294,9 @@ export class AuthService {
 
         const cookieSecure = this.config.get('COOKIE_SECURE') === 'true';
 
+        // Web clients keep refresh_token in an httpOnly cookie.
+        // Mobile clients can't use cookies — we additionally return refresh_token
+        // in the body so they can persist it in SecureStore.
         res.cookie('refresh_token', refresh_token, {
             httpOnly: true,
             secure: cookieSecure,
@@ -299,6 +306,6 @@ export class AuthService {
 
         const user = await this.usersService.getProfile(userId);
 
-        return { access_token, user };
+        return mobile ? { access_token, refresh_token, user } : { access_token, user };
     }
 }
