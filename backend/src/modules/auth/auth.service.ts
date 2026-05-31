@@ -163,7 +163,8 @@ export class AuthService {
         }
 
         this.logger.log(`logout | userId=${userId ?? 'unknown'} ip=${ip}`);
-        res.clearCookie('refresh_token');
+        // Must match cookie set options (secure/sameSite/path) or browser ignores the clear
+        this.clearRefreshCookie(res);
         return { message: 'Вышли успешно' };
     }
 

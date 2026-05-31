@@ -51,10 +51,10 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Авторизован → редирект с логина на главную
-    if (isAuthRoute && authenticated) {
-        return NextResponse.redirect(new URL("/", request.url));
-    }
+    // Auth pages: always reachable. We can't tell from the cookie alone whether
+    // the session is still valid server-side — bouncing users away on a stale
+    // refresh_token cookie would trap them in a loop they can't escape from.
+    void isAuthRoute;
 
     return NextResponse.next();
 }
