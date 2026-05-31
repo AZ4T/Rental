@@ -12,6 +12,7 @@ import { CallOverlay } from "@/components/call-overlay";
 import { CompareBar } from "@/components/compare-bar";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { AuthInitializer } from "@/components/auth-initializer";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 export const metadata: Metadata = {
     title: "Rental App",
@@ -41,9 +42,10 @@ export default function RootLayout({
                         <NotificationsProvider>
                             <CallProvider>
                                 <Navbar />
-                                <main className="max-w-7xl mx-auto px-4 py-8">
+                                <main className="max-w-7xl mx-auto px-4 py-8 pb-24 md:pb-8">
                                     {children}
                                 </main>
+                                <MobileBottomNav />
                                 <ScrollToTop />
                                 <CompareBar />
                                 <KeyboardShortcuts />

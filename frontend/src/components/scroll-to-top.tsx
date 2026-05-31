@@ -18,7 +18,7 @@ export function ScrollToTop() {
     return (
         <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:opacity-90 transition-opacity"
+            className="fixed bottom-20 md:bottom-6 right-6 z-50 bg-primary text-primary-foreground rounded-full p-3 shadow-lg hover:opacity-90 transition-opacity"
         >
             <ArrowUp className="h-5 w-5" />
         </button>

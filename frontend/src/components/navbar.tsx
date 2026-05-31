@@ -6,7 +6,6 @@ import { useLogout } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -16,31 +15,32 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { useUnreadCount } from "@/hooks/use-chats";
-import { Menu, X, Plus, MessageCircle, Inbox, Heart, ClipboardList, Wallet, ShieldCheck, User as UserIcon, Info } from "lucide-react";
+import {
+    Menu,
+    X,
+    Plus,
+    MessageCircle,
+    Inbox,
+    Heart,
+    ClipboardList,
+    Wallet,
+    ShieldCheck,
+    User as UserIcon,
+    Info,
+    Search,
+    Sun,
+    Moon,
+} from "lucide-react";
 import { useState } from "react";
-import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-function ThemeToggle() {
-    const { theme, setTheme } = useTheme();
-    return (
-        <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="relative"
-        >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-        </Button>
-    );
-}
+import { NavBadge } from "@/components/nav-badge";
 
 export function Navbar() {
     const { user, isAuthenticated } = useAuthStore();
     const { mutate: logout } = useLogout();
     const { data: incomingCount } = useIncomingRentalsCount();
     const { data: unreadCount } = useUnreadCount(isAuthenticated);
+    const { theme, setTheme } = useTheme();
     const [mobileOpen, setMobileOpen] = useState(false);
     const router = useRouter();
     const [search, setSearch] = useState("");
@@ -50,23 +50,27 @@ export function Navbar() {
         if (search.trim()) {
             router.push(`/listings?search=${encodeURIComponent(search.trim())}`);
             setSearch("");
+            setMobileOpen(false);
         }
     };
+
+    const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
 
     return (
         <>
             <header className="border-b bg-white dark:bg-gray-950 dark:border-gray-800 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
                     {/* Лого */}
-                    <Link href="/" className="text-xl font-bold text-blue-600">
+                    <Link href="/" className="text-xl font-bold text-blue-600 shrink-0">
                         Rental
                     </Link>
 
+                    {/* Поиск — десктоп */}
                     <form
                         onSubmit={handleSearch}
                         className="hidden md:flex items-center relative"
                     >
-                        <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none" />
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -91,11 +95,7 @@ export function Navbar() {
                                 >
                                     <Inbox className="h-4 w-4" />
                                     Заявки
-                                    {!!incomingCount && (
-                                        <span className="ml-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
-                                            {incomingCount > 9 ? "9+" : incomingCount}
-                                        </span>
-                                    )}
+                                    <NavBadge count={incomingCount ?? 0} color="red" className="ml-0.5" />
                                 </Link>
                                 <Link
                                     href="/chats"
@@ -103,19 +103,14 @@ export function Navbar() {
                                 >
                                     <MessageCircle className="h-4 w-4" />
                                     Сообщения
-                                    {!!unreadCount && (
-                                        <span className="ml-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] px-1 flex items-center justify-center">
-                                            {unreadCount > 9 ? "9+" : unreadCount}
-                                        </span>
-                                    )}
+                                    <NavBadge count={unreadCount ?? 0} color="blue" className="ml-0.5" />
                                 </Link>
                             </>
                         )}
                     </nav>
 
                     {/* Правая часть */}
-                    <div className="flex items-center gap-3">
-                        <ThemeToggle />
+                    <div className="flex items-center gap-2 md:gap-3 shrink-0">
                         {isAuthenticated && user ? (
                             <>
                                 {/* Prominent "Разместить" — больше, ярче, всегда заметно */}
@@ -182,6 +177,26 @@ export function Navbar() {
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                            // Don't auto-close the menu so the user can toggle and see the change
+                                            onSelect={(e) => {
+                                                e.preventDefault();
+                                                toggleTheme();
+                                            }}
+                                            className="cursor-pointer"
+                                        >
+                                            {theme === "dark" ? (
+                                                <>
+                                                    <Sun className="h-4 w-4 mr-2" />
+                                                    Светлая тема
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Moon className="h-4 w-4 mr-2" />
+                                                    Тёмная тема
+                                                </>
+                                            )}
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/about" className="cursor-pointer">
                                                 <Info className="h-4 w-4 mr-2" />
@@ -214,7 +229,16 @@ export function Navbar() {
                                 </DropdownMenu>
                             </>
                         ) : (
-                            <div className="hidden md:flex gap-2">
+                            <div className="hidden md:flex items-center gap-2">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={toggleTheme}
+                                    aria-label="Сменить тему"
+                                >
+                                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                                </Button>
                                 <Button variant="ghost" asChild size="sm">
                                     <Link href="/auth/login">Войти</Link>
                                 </Button>
@@ -230,6 +254,7 @@ export function Navbar() {
                         <button
                             className="md:hidden p-2 -mr-2"
                             onClick={() => setMobileOpen(!mobileOpen)}
+                            aria-label="Меню"
                         >
                             {mobileOpen ? (
                                 <X className="h-6 w-6" />
@@ -240,9 +265,25 @@ export function Navbar() {
                     </div>
                 </div>
 
-                {/* Мобильное меню — вне основного div */}
+                {/* Мобильное меню */}
                 {mobileOpen && (
                     <div className="md:hidden border-t dark:border-gray-800 bg-white dark:bg-gray-950 animate-slideDown">
+                        {/* Поиск в шапке мобильного меню */}
+                        <form
+                            onSubmit={handleSearch}
+                            className="px-4 pt-3"
+                        >
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                <input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Поиск..."
+                                    className="w-full pl-9 pr-4 py-2 text-sm rounded-full border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                                />
+                            </div>
+                        </form>
+
                         <nav className="flex flex-col px-4 py-3 gap-1">
                             <Link
                                 href="/listings"
@@ -266,11 +307,7 @@ export function Navbar() {
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
                                     >
                                         Входящие заявки
-                                        {!!incomingCount && (
-                                            <span className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                                                {incomingCount}
-                                            </span>
-                                        )}
+                                        <NavBadge count={incomingCount ?? 0} color="red" />
                                     </Link>
                                     <Link
                                         href="/chats"
@@ -278,11 +315,7 @@ export function Navbar() {
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
                                     >
                                         Сообщения
-                                        {!!unreadCount && (
-                                            <span className="bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                                                {unreadCount > 9 ? "9+" : unreadCount}
-                                            </span>
-                                        )}
+                                        <NavBadge count={unreadCount ?? 0} color="blue" />
                                     </Link>
                                     <Link
                                         href="/favorites"
@@ -292,11 +325,18 @@ export function Navbar() {
                                         Избранное
                                     </Link>
                                     <Link
-                                        href="/listings/create"
+                                        href="/wallet"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
-                                        + Разместить
+                                        Кошелёк
+                                    </Link>
+                                    <Link
+                                        href="/listings/create"
+                                        onClick={() => setMobileOpen(false)}
+                                        className="py-2 text-sm font-semibold text-blue-600"
+                                    >
+                                        + Разместить объявление
                                     </Link>
                                     <Link
                                         href="/about"
@@ -325,6 +365,22 @@ export function Navbar() {
                                     </Link>
                                 </>
                             )}
+                            <button
+                                onClick={toggleTheme}
+                                className="py-2 text-sm text-gray-600 dark:text-gray-300 text-left flex items-center gap-2"
+                            >
+                                {theme === "dark" ? (
+                                    <>
+                                        <Sun className="h-4 w-4" />
+                                        Светлая тема
+                                    </>
+                                ) : (
+                                    <>
+                                        <Moon className="h-4 w-4" />
+                                        Тёмная тема
+                                    </>
+                                )}
+                            </button>
                         </nav>
                     </div>
                 )}

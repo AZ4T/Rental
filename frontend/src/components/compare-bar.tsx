@@ -9,7 +9,7 @@ export function CompareBar() {
     if (items.length === 0) return null;
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t shadow-2xl px-3 py-2 sm:py-3">
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t shadow-2xl px-3 py-2 sm:py-3">
             <div className="max-w-7xl mx-auto flex items-center gap-2 sm:gap-4">
                 {/* Items */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-1 overflow-x-auto min-w-0">

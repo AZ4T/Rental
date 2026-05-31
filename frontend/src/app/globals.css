@@ -188,3 +188,16 @@
 .animate-heart {
     animation: heartPop 0.3s ease-in-out;
 }
+
+@keyframes pulseBadge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.25);
+    }
+}
+
+.animate-pulse-badge {
+    animation: pulseBadge 0.6s ease-in-out 2;
+}
