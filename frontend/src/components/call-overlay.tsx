@@ -6,18 +6,34 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Phone, PhoneOff, Mic, MicOff, Video } from "lucide-react";
 
 function VideoCallView() {
-    const { localVideoRef, remoteVideoRef, remoteStreamRef } = useCall();
+    const { localVideoRef, remoteVideoRef, localStreamRef, remoteStreamRef } = useCall();
     const remoteEl = useRef<HTMLVideoElement | null>(null);
+    const localEl = useRef<HTMLVideoElement | null>(null);
 
+    // Streams are produced before this component mounts (in initiateVideoCall /
+    // acceptCall, where status flips to "outgoing" / "active"). The <video>
+    // elements only exist while VideoCallView is mounted, so we wire srcObject
+    // here on mount.
     useEffect(() => {
-        if (!remoteEl.current) return;
-        remoteVideoRef.current = remoteEl.current;
-        if (remoteStreamRef.current) {
-            remoteEl.current.srcObject = remoteStreamRef.current;
-            remoteEl.current.play().catch(() => {});
+        if (remoteEl.current) {
+            remoteVideoRef.current = remoteEl.current;
+            if (remoteStreamRef.current) {
+                remoteEl.current.srcObject = remoteStreamRef.current;
+                remoteEl.current.play().catch(() => {});
+            }
         }
-        return () => { remoteVideoRef.current = null; };
-    }, [remoteVideoRef, remoteStreamRef]);
+        if (localEl.current) {
+            localVideoRef.current = localEl.current;
+            if (localStreamRef.current) {
+                localEl.current.srcObject = localStreamRef.current;
+                localEl.current.play().catch(() => {});
+            }
+        }
+        return () => {
+            remoteVideoRef.current = null;
+            localVideoRef.current = null;
+        };
+    }, [remoteVideoRef, localVideoRef, remoteStreamRef, localStreamRef]);
 
     return (
         <div className="relative w-full bg-black" style={{ aspectRatio: "16/9" }}>
@@ -30,7 +46,7 @@ function VideoCallView() {
             />
             {/* Local stream - picture in picture */}
             <video
-                ref={localVideoRef}
+                ref={localEl}
                 autoPlay
                 playsInline
                 muted

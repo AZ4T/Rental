@@ -78,6 +78,7 @@ interface CallContextValue {
     toggleMute: () => void;
     localVideoRef: { current: HTMLVideoElement | null };
     remoteVideoRef: { current: HTMLVideoElement | null };
+    localStreamRef: { current: MediaStream | null };
     remoteStreamRef: { current: MediaStream | null };
 }
 
@@ -217,11 +218,8 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             localStreamRef.current = stream;
-
-            // Show local video preview
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
+            // VideoCallView wires srcObject onto its <video> element when it
+            // mounts — see call-overlay.tsx.
 
             const pc = await createPC(calleeId);
             stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -260,10 +258,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
             isVideo ? { video: true, audio: true } : { audio: true },
         );
         localStreamRef.current = stream;
-
-        if (isVideo && localVideoRef.current) {
-            localVideoRef.current.srcObject = stream;
-        }
+        // VideoCallView wires srcObject onto its <video> on mount.
 
         const pc = await createPC(incoming.callerId);
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
@@ -392,7 +387,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
 
     return (
         <CallContext.Provider
-            value={{ callState, initiateCall, initiateVideoCall, acceptCall, rejectCall, endCall, toggleMute, localVideoRef, remoteVideoRef, remoteStreamRef }}
+            value={{ callState, initiateCall, initiateVideoCall, acceptCall, rejectCall, endCall, toggleMute, localVideoRef, remoteVideoRef, localStreamRef, remoteStreamRef }}
         >
             {children}
         </CallContext.Provider>
