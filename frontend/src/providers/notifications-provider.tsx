@@ -56,6 +56,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             }
         });
 
+        // Renter side of the same event — fired when their payment goes
+        // through. Lets /rentals/my refresh even when paid via QR scan
+        // in a different tab.
+        notifSocket.on("payment_made", (data: { message: string }) => {
+            toast.success(data.message, { duration: 4000 });
+            queryClient.invalidateQueries({ queryKey: ["wallet"] });
+            queryClient.invalidateQueries({ queryKey: ["rentals"] });
+        });
+
         notifSocket.on("incoming_rental", (data: { message: string }) => {
             toast.info(data.message, { duration: 6000 });
             queryClient.invalidateQueries({ queryKey: ["rentals", "incoming"] });

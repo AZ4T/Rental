@@ -235,6 +235,13 @@ export class WalletService {
             rentalRequestId,
         });
 
+        // Tell the renter too so their /rentals/my refreshes across tabs
+        // (e.g. they paid from the QR-scan page in a new tab).
+        this.notificationsGateway.sendToUser(renterId, 'payment_made', {
+            message: `Оплата за аренду "${title}" прошла успешно`,
+            rentalRequestId,
+        });
+
         return { success: true, ownerEarnings, platformFee };
     }
 

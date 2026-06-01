@@ -142,31 +142,63 @@ export function RentalRequestDialog({
                         </div>
                     </div>
 
-                    {/* Return time (optional) */}
+                    {/* Return time (optional). iOS Safari's native time picker
+                        was unreliable inside this modal — scroll did not commit
+                        the value and users had to tap. Two plain <select>s
+                        render as native dropdowns on every platform and never
+                        misbehave. */}
                     <div className="space-y-1">
                         <Label className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                             Время возврата
                             <span className="text-xs text-muted-foreground font-normal">(необязательно — для почасового расчёта)</span>
                         </Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                type="time"
-                                value={returnTime}
-                                onChange={(e) => setReturnTime(e.target.value)}
-                                className="w-40"
-                            />
-                            {returnTime && (
-                                <button
-                                    type="button"
-                                    onClick={() => setReturnTime("")}
-                                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
-                                >
-                                    <X className="h-3.5 w-3.5" />
-                                    Сбросить
-                                </button>
-                            )}
-                        </div>
+                        {(() => {
+                            const [h, m] = returnTime ? returnTime.split(":") : ["", ""];
+                            const setTime = (hh: string, mm: string) => {
+                                if (!hh && !mm) return setReturnTime("");
+                                setReturnTime(`${hh || "00"}:${mm || "00"}`);
+                            };
+                            return (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <select
+                                        value={h}
+                                        onChange={(e) => setTime(e.target.value, m)}
+                                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                                    >
+                                        <option value="">—</option>
+                                        {Array.from({ length: 24 }, (_, i) => (
+                                            <option key={i} value={String(i).padStart(2, "0")}>
+                                                {String(i).padStart(2, "0")} ч
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="text-muted-foreground">:</span>
+                                    <select
+                                        value={m}
+                                        onChange={(e) => setTime(h, e.target.value)}
+                                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                                    >
+                                        <option value="">—</option>
+                                        {["00", "15", "30", "45"].map((mm) => (
+                                            <option key={mm} value={mm}>
+                                                {mm} мин
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {returnTime && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setReturnTime("")}
+                                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
+                                        >
+                                            <X className="h-3.5 w-3.5" />
+                                            Сбросить
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })()}
                         {returnTime && (
                             <p className="text-xs text-blue-600">
                                 Расчёт по часам: {hourlyRate.toFixed(0)} ₸/час

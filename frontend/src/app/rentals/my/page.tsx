@@ -35,19 +35,11 @@ import api from "@/services/api";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-function calcProgress(startDate: string, endDate: string): number {
-    const now = Date.now();
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
-    if (end <= start) return 100;
-    const raw = ((now - start) / (end - start)) * 100;
-    return Math.min(100, Math.max(0, raw));
-}
-
 function daysBetween(a: string, b: string): number {
     const msPerDay = 1000 * 60 * 60 * 24;
-    return Math.round(
-        (new Date(b).getTime() - new Date(a).getTime()) / msPerDay,
+    return Math.max(
+        1,
+        Math.round((new Date(b).getTime() - new Date(a).getTime()) / msPerDay),
     );
 }
 
@@ -57,6 +49,15 @@ function daysElapsed(startDate: string): number {
         0,
         Math.round((Date.now() - new Date(startDate).getTime()) / msPerDay),
     );
+}
+
+// Drive the bar from the same rounded-day metric as the label so "1 of 1"
+// shows 100% instead of the previous 77% (ms-based) mismatch.
+function calcProgress(startDate: string, endDate: string): number {
+    const total = daysBetween(startDate, endDate);
+    if (total <= 0) return 100;
+    const elapsed = Math.min(total, daysElapsed(startDate));
+    return (elapsed / total) * 100;
 }
 
 function fmt(iso: string): string {
@@ -76,11 +77,11 @@ function RentalProgressBar({ startDate, endDate }: ProgressBarProps) {
     const total = daysBetween(startDate, endDate);
 
     return (
-        <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+        <div className="mt-3 mb-4">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
                 <span>Прогресс аренды</span>
                 <span>
-                    {elapsed} дней из {total}
+                    {elapsed} дн. из {total}
                 </span>
             </div>
             <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">

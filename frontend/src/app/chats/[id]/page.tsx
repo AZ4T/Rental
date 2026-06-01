@@ -63,11 +63,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </Link>
                 {other && (
                     <>
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={other.avatar_url ?? ""} />
-                            <AvatarFallback>{other.name.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-semibold flex-1">{other.name}</span>
+                        <Link
+                            href={`/profile/${other.id}`}
+                            className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+                        >
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={other.avatar_url ?? ""} />
+                                <AvatarFallback>{other.name.charAt(0).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold truncate">{other.name}</span>
+                        </Link>
                         <Button
                             variant="ghost"
                             size="icon"
