@@ -50,9 +50,11 @@ echo ">> Symlinking cert into /etc/turnserver/…"
 mkdir -p /etc/turnserver
 ln -sf "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" /etc/turnserver/cert.pem
 ln -sf "/etc/letsencrypt/live/$DOMAIN/privkey.pem" /etc/turnserver/pkey.pem
-# coturn runs as `turnserver`, give it traversal rights
+# coturn runs as `turnserver`, give it traversal rights through LE dirs
+# AND read access to the actual privkey file (LE defaults to 600/root-only).
 chmod 755 /etc/letsencrypt/{live,archive}
 chmod 755 "/etc/letsencrypt/live/$DOMAIN" "/etc/letsencrypt/archive/$DOMAIN"
+chmod 644 "/etc/letsencrypt/archive/$DOMAIN"/privkey*.pem
 
 echo ">> Auto-reload coturn after cert renewal…"
 mkdir -p /etc/letsencrypt/renewal-hooks/deploy
