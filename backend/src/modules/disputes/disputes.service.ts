@@ -5,6 +5,12 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import {
+    I18nBadRequest,
+    I18nConflict,
+    I18nForbidden,
+    I18nNotFound,
+} from '../../i18n/i18n.exception';
 import { DisputeStatus } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
@@ -25,39 +31,39 @@ export class DisputesService {
             where: { id: dto.rental_request_id },
             include: { listing: true },
         });
-        if (!rental) throw new NotFoundException('Аренда не найдена');
+        if (!rental) throw new I18nNotFound('rental.requestNotFound');
 
         const isRenter = rental.renter_id === userId;
         const isOwner = rental.listing.owner_id === userId;
         if (!isRenter && !isOwner) {
-            throw new ForbiddenException('Вы не участник этой аренды');
+            throw new I18nForbidden('dispute.notParticipant');
         }
 
         if (rental.payment_status !== 'PAID') {
-            throw new BadRequestException('Спор можно открыть только по оплаченной аренде');
+            throw new I18nBadRequest('dispute.rentalNotPaid');
         }
 
         // Disallow disputes once rental is already fully completed (deposit already moved).
         // The renter must dispute BEFORE owner clicks "complete".
         if (rental.status === 'COMPLETED') {
-            throw new BadRequestException('Аренда уже завершена — спор больше не открыть');
+            throw new I18nBadRequest('dispute.rentalCompleted');
         }
         if (rental.status !== 'APPROVED') {
-            throw new BadRequestException('Спор доступен только для активных аренд');
+            throw new I18nBadRequest('dispute.rentalNotActive');
         }
 
         const existing = await this.prisma.dispute.findUnique({
             where: { rental_request_id: dto.rental_request_id },
         });
         if (existing) {
-            throw new ConflictException('Спор уже открыт');
+            throw new I18nConflict('dispute.alreadyOpen');
         }
 
         // Validate evidence URLs are from our storage
         if (dto.evidence?.length) {
             const prefix = this.uploadsService.getPublicPrefix();
             if (dto.evidence.some((url) => !url.startsWith(prefix))) {
-                throw new BadRequestException('Недопустимые URL доказательств');
+                throw new I18nBadRequest('dispute.invalidEvidence');
             }
         }
 
@@ -88,20 +94,20 @@ export class DisputesService {
             where: { id: disputeId },
             include: { rentalRequest: { include: { listing: true } } },
         });
-        if (!dispute) throw new NotFoundException('Спор не найден');
+        if (!dispute) throw new I18nNotFound('common.notFound');
         if (dispute.status !== 'OPEN') {
-            throw new BadRequestException('Спор уже закрыт — нельзя добавить доказательства');
+            throw new I18nBadRequest('dispute.alreadyClosed');
         }
 
         const isRenter = dispute.rentalRequest.renter_id === userId;
         const isOwner = dispute.rentalRequest.listing.owner_id === userId;
         if (!isRenter && !isOwner) {
-            throw new ForbiddenException('Нет доступа к этому спору');
+            throw new I18nForbidden('common.forbidden');
         }
 
         const prefix = this.uploadsService.getPublicPrefix();
         if (dto.images.some((url) => !url.startsWith(prefix))) {
-            throw new BadRequestException('Недопустимые URL изображений');
+            throw new I18nBadRequest('dispute.invalidEvidence');
         }
 
         const field = isRenter ? 'renter_evidence' : 'owner_evidence';
@@ -147,13 +153,13 @@ export class DisputesService {
                 openedBy: { select: { id: true, name: true, avatar_url: true } },
             },
         });
-        if (!dispute) throw new NotFoundException('Спор не найден');
+        if (!dispute) throw new I18nNotFound('common.notFound');
 
         const isParticipant =
             dispute.rentalRequest.renter_id === userId ||
             dispute.rentalRequest.listing.owner_id === userId;
         if (!isParticipant) {
-            throw new ForbiddenException('Нет доступа к этому спору');
+            throw new I18nForbidden('common.forbidden');
         }
         return dispute;
     }
@@ -183,9 +189,9 @@ export class DisputesService {
                 rentalRequest: { include: { listing: true } },
             },
         });
-        if (!dispute) throw new NotFoundException('Спор не найден');
+        if (!dispute) throw new I18nNotFound('common.notFound');
         if (dispute.status !== 'OPEN') {
-            throw new BadRequestException('Спор уже закрыт');
+            throw new I18nBadRequest('dispute.alreadyClosed');
         }
 
         const rental = dispute.rentalRequest;
@@ -203,20 +209,16 @@ export class DisputesService {
                 break;
             case 'RESOLVED_SPLIT': {
                 if (dto.deposit_to_renter == null) {
-                    throw new BadRequestException(
-                        'Для частичного решения нужно указать сумму возврата арендатору',
-                    );
+                    throw new I18nBadRequest('dispute.splitMissing');
                 }
                 if (dto.deposit_to_renter < 0 || dto.deposit_to_renter > deposit) {
-                    throw new BadRequestException(
-                        `Сумма должна быть от 0 до ${deposit}`,
-                    );
+                    throw new I18nBadRequest('dispute.splitOutOfRange', { max: deposit });
                 }
                 depositToRenter = dto.deposit_to_renter;
                 break;
             }
             default:
-                throw new BadRequestException('Неизвестный статус');
+                throw new I18nBadRequest('common.invalidRequest');
         }
 
         const depositToOwner = deposit - depositToRenter;

@@ -4,6 +4,11 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import {
+    I18nBadRequest,
+    I18nForbidden,
+    I18nNotFound,
+} from '../../i18n/i18n.exception';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateRentalRequestDto } from './dto/create-rental-request.dto';
@@ -47,14 +52,14 @@ export class RentalRequestsService {
         const listing = await this.prisma.listing.findUnique({
             where: { id: dto.listing_id },
         });
-        if (!listing) throw new NotFoundException('Объявление не найдено');
+        if (!listing) throw new I18nNotFound('rental.listingNotFound');
 
         if (listing.owner_id === renterId) {
-            throw new BadRequestException('Нельзя арендовать свое объявление');
+            throw new I18nBadRequest('rental.ownerSelfRent');
         }
 
         if (await this.usersService.isBlockedEitherWay(renterId, listing.owner_id)) {
-            throw new ForbiddenException('Нельзя арендовать у заблокированного пользователя (или который заблокировал вас)');
+            throw new I18nForbidden('rental.blockedByOwner');
         }
 
         const start = new Date(dto.start_date);
@@ -63,13 +68,11 @@ export class RentalRequestsService {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (start < today) {
-            throw new BadRequestException('Дата начала не может быть в прошлом');
+            throw new I18nBadRequest('rental.datesPast');
         }
 
         if (end < start) {
-            throw new BadRequestException(
-                'Дата окончания не может быть раньше даты начала',
-            );
+            throw new I18nBadRequest('rental.datesInverted');
         }
 
         // Проверка пересечения с собственными активными заявками
@@ -85,9 +88,7 @@ export class RentalRequestsService {
             },
         });
         if (duplicate) {
-            throw new BadRequestException(
-                'У вас уже есть активная заявка на эти даты',
-            );
+            throw new I18nBadRequest('rental.datesOverlap');
         }
 
         // Проверка пересечения дат с одобренными оплаченными заявками
@@ -103,9 +104,7 @@ export class RentalRequestsService {
             },
         });
         if (conflict) {
-            throw new BadRequestException(
-                'Выбранные даты уже заняты. Пожалуйста, выберите другие даты',
-            );
+            throw new I18nBadRequest('rental.datesOverlap');
         }
 
         const diffMs = end.getTime() - start.getTime();
@@ -207,17 +206,15 @@ export class RentalRequestsService {
             include: { listing: true },
         });
 
-        if (!request) throw new NotFoundException('Заявка не найдена');
+        if (!request) throw new I18nNotFound('rental.requestNotFound');
 
         if (request.listing.owner_id !== userId) {
-            throw new ForbiddenException('Нет доступа');
+            throw new I18nForbidden('rental.notOwner');
         }
 
         // State machine: only allow valid transitions
         if (!VALID_TRANSITIONS[request.status]?.includes(dto.status)) {
-            throw new BadRequestException(
-                `Недопустимый переход статуса: ${request.status} → ${dto.status}`,
-            );
+            throw new I18nBadRequest('rental.statusInvalid');
         }
 
         // Нельзя завершить неоплаченную аренду
@@ -225,9 +222,7 @@ export class RentalRequestsService {
             dto.status === 'COMPLETED' &&
             request.payment_status !== 'PAID'
         ) {
-            throw new BadRequestException(
-                'Нельзя завершить аренду без оплаты',
-            );
+            throw new I18nBadRequest('wallet.notApproved');
         }
 
         // Нельзя завершить без фото возврата
@@ -235,9 +230,7 @@ export class RentalRequestsService {
             dto.status === 'COMPLETED' &&
             (!request.return_images || request.return_images.length === 0)
         ) {
-            throw new BadRequestException(
-                'Нельзя завершить аренду без фото возврата',
-            );
+            throw new I18nBadRequest('rental.returnPhotosRequired');
         }
 
         const updated = await this.prisma.rentalRequest.update({
@@ -304,10 +297,10 @@ export class RentalRequestsService {
         const request = await this.prisma.rentalRequest.findUnique({
             where: { id },
         });
-        if (!request) throw new NotFoundException('Заявка не найдена');
+        if (!request) throw new I18nNotFound('rental.requestNotFound');
 
         if (request.renter_id !== userId) {
-            throw new ForbiddenException('Нет доступа');
+            throw new I18nForbidden('common.forbidden');
         }
         if (request.status !== 'PENDING') {
             throw new BadRequestException(
@@ -354,7 +347,7 @@ export class RentalRequestsService {
         const req = await this.prisma.rentalRequest.findUnique({ where: { id }, include: { listing: true } });
         if (!req) throw new NotFoundException('Заявка не найдена');
         if (req.renter_id !== userId && req.listing.owner_id !== userId) {
-            throw new ForbiddenException('Нет доступа');
+            throw new I18nForbidden('common.forbidden');
         }
         return this.prisma.rentalRequest.update({
             where: { id },

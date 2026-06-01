@@ -4,6 +4,11 @@ import {
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
+import {
+    I18nBadRequest,
+    I18nForbidden,
+    I18nNotFound,
+} from '../../i18n/i18n.exception';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
@@ -63,7 +68,7 @@ export class WalletService {
 
     async topUp(userId: string, amount: number) {
         if (amount <= 0 || amount > 50_000) {
-            throw new BadRequestException('Сумма должна быть от 1 до 50 000 ₸');
+            throw new I18nBadRequest('wallet.amountInvalid');
         }
 
         const todayStart = new Date();
@@ -77,9 +82,9 @@ export class WalletService {
             });
             const usedToday = Number(todayTopUps._sum.amount ?? 0);
             if (usedToday + amount > 100_000) {
-                throw new BadRequestException(
-                    `Превышен дневной лимит пополнения 100 000 ₸ (использовано ${usedToday.toLocaleString()} ₸)`,
-                );
+                throw new I18nBadRequest('wallet.dailyLimit', {
+                    used: usedToday.toLocaleString(),
+                });
             }
 
             await tx.user.update({
@@ -109,22 +114,20 @@ export class WalletService {
             include: { listing: true },
         });
 
-        if (!request) throw new NotFoundException('Заявка не найдена');
-        if (request.renter_id !== renterId) throw new ForbiddenException('Нет доступа');
+        if (!request) throw new I18nNotFound('wallet.requestNotFound');
+        if (request.renter_id !== renterId) throw new I18nForbidden('common.forbidden');
         if (request.status !== 'APPROVED') {
-            throw new BadRequestException('Оплата доступна только для одобренных заявок');
+            throw new I18nBadRequest('wallet.notApproved');
         }
         if (request.payment_status === 'PAID') {
-            throw new BadRequestException('Заявка уже оплачена');
+            throw new I18nBadRequest('wallet.alreadyPaid');
         }
 
         // Нельзя оплачивать аренду с истёкшими датами
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (new Date(request.end_date) < today) {
-            throw new BadRequestException(
-                'Нельзя оплатить аренду с истёкшими датами',
-            );
+            throw new I18nBadRequest('wallet.expiredDates');
         }
 
         const rentalAmount = Number(request.total_price);
@@ -151,9 +154,11 @@ export class WalletService {
                   AND balance >= ${totalCharge}
             `;
             if (decremented === 0) {
-                throw new BadRequestException(
-                    `Недостаточно средств. Требуется ${totalCharge.toLocaleString()} ₸ (аренда ${rentalAmount.toLocaleString()} ₸ + депозит ${deposit.toLocaleString()} ₸)`,
-                );
+                throw new I18nBadRequest('wallet.insufficient', {
+                    amount: totalCharge.toLocaleString(),
+                    rental: rentalAmount.toLocaleString(),
+                    deposit: deposit.toLocaleString(),
+                });
             }
 
             // Idempotency guard: flip to PAID only if still UNPAID.
@@ -164,7 +169,7 @@ export class WalletService {
                   AND payment_status = 'UNPAID'
             `;
             if (markedPaid === 0) {
-                throw new BadRequestException('Заявка уже оплачена');
+                throw new I18nBadRequest('wallet.alreadyPaid');
             }
 
             // Owner receives rental minus platform fee
@@ -250,9 +255,9 @@ export class WalletService {
             where: { id: listingId },
             select: { id: true, owner_id: true, title: true },
         });
-        if (!listing) throw new NotFoundException('Объявление не найдено');
+        if (!listing) throw new I18nNotFound('listing.notFound');
         if (listing.owner_id !== userId) {
-            throw new ForbiddenException('Нет доступа');
+            throw new I18nForbidden('common.forbidden');
         }
 
         // Extend from current promoted_until if still active, else start today
@@ -264,9 +269,9 @@ export class WalletService {
                   AND balance >= ${PROMOTION_PRICE}
             `;
             if (decremented === 0) {
-                throw new BadRequestException(
-                    `Недостаточно средств. Требуется ${PROMOTION_PRICE.toLocaleString()} ₸`,
-                );
+                throw new I18nBadRequest('wallet.insufficientSimple', {
+                    amount: PROMOTION_PRICE.toLocaleString(),
+                });
             }
 
             const fresh = await tx.listing.findUnique({
@@ -317,9 +322,9 @@ export class WalletService {
                   AND balance >= ${PREMIUM_PRICE}
             `;
             if (decremented === 0) {
-                throw new BadRequestException(
-                    `Недостаточно средств. Требуется ${PREMIUM_PRICE.toLocaleString()} ₸`,
-                );
+                throw new I18nBadRequest('wallet.insufficientSimple', {
+                    amount: PREMIUM_PRICE.toLocaleString(),
+                });
             }
 
             const fresh = await tx.user.findUnique({
@@ -377,7 +382,7 @@ export class WalletService {
                   AND deposit_balance >= ${deposit}
             `;
             if (decremented === 0) {
-                throw new BadRequestException('Недостаточно средств на депозитном счёте');
+                throw new I18nBadRequest('wallet.depositInsufficient');
             }
 
             await tx.user.update({

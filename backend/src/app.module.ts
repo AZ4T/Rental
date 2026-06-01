@@ -18,6 +18,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { CallsModule } from './modules/calls/calls.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { DisputesModule } from './modules/disputes/disputes.module';
+import { I18nModule } from './i18n/i18n.module';
 
 @Module({
     imports: [
@@ -25,6 +26,7 @@ import { DisputesModule } from './modules/disputes/disputes.module';
         ThrottlerModule.forRoot([
             { name: 'default', ttl: 60_000, limit: 100 },
         ]),
+        I18nModule,
         PrismaModule,
         UsersModule,
         AuthModule,

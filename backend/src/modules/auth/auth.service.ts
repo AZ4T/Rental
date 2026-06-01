@@ -4,6 +4,7 @@ import {
     Logger,
     UnauthorizedException,
 } from '@nestjs/common';
+import { I18nBadRequest, I18nUnauthorized } from '../../i18n/i18n.exception';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
@@ -75,13 +76,13 @@ export class AuthService {
         const user = await this.usersService.findByEmail(email);
         if (!user) {
             this.logger.warn(`login failed (unknown email) | email=${maskEmail(email)} ip=${ip}`);
-            throw new UnauthorizedException('Неверный email или пароль');
+            throw new I18nUnauthorized('auth.invalidCredentials');
         }
 
         const isValid = await bcrypt.compare(dto.password, user.password_hash);
         if (!isValid) {
             this.logger.warn(`login failed (wrong password) | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
-            throw new UnauthorizedException('Неверный email или пароль');
+            throw new I18nUnauthorized('auth.invalidCredentials');
         }
 
         this.logger.log(`login success | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
@@ -272,7 +273,7 @@ export class AuthService {
 
         if (!record || record.used || record.expires_at < new Date()) {
             this.logger.warn(`reset-password failed (invalid/expired token) | ip=${ip}`);
-            throw new BadRequestException('Ссылка недействительна или истекла');
+            throw new I18nBadRequest('auth.tokenInvalid');
         }
 
         // Mark token used before changing password (prevent reuse even if hash collision)
@@ -316,7 +317,7 @@ export class AuthService {
         const isValid = await bcrypt.compare(dto.current_password, user.password_hash);
         if (!isValid) {
             this.logger.warn(`change-password failed (wrong current password) | userId=${userId} ip=${ip}`);
-            throw new BadRequestException('Текущий пароль неверен');
+            throw new I18nBadRequest('auth.passwordMismatch');
         }
 
         const password_hash = await bcrypt.hash(dto.new_password, 10);
