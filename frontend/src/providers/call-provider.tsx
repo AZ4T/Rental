@@ -11,11 +11,42 @@ import {
 } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAuthStore } from "@/store/auth.store";
+import api from "@/services/api";
 
-const ICE_SERVERS = [
+interface IceServer {
+    urls: string | string[];
+    username?: string;
+    credential?: string;
+}
+
+const FALLBACK_ICE_SERVERS: IceServer[] = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
 ];
+
+// Cache fetched servers and re-fetch when their HMAC creds are close to expiry
+let cachedIce: { servers: IceServer[]; expiresAt: number } | null = null;
+
+async function getIceServers(): Promise<IceServer[]> {
+    const now = Date.now();
+    // Re-fetch a minute before expiry to avoid races with mid-call rotations
+    if (cachedIce && cachedIce.expiresAt - 60_000 > now) {
+        return cachedIce.servers;
+    }
+    try {
+        const { data } = await api.get<{ iceServers: IceServer[]; ttl: number }>(
+            "/calls/ice-servers",
+        );
+        cachedIce = {
+            servers: data.iceServers,
+            expiresAt: now + data.ttl * 1000,
+        };
+        return data.iceServers;
+    } catch {
+        // Don't block the call — degrade to public STUN
+        return FALLBACK_ICE_SERVERS;
+    }
+}
 
 type CallStatus = "idle" | "outgoing" | "incoming" | "active";
 
@@ -100,8 +131,9 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const createPC = useCallback(
-        (peerId: string): RTCPeerConnection => {
-            const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+        async (peerId: string): Promise<RTCPeerConnection> => {
+            const iceServers = await getIceServers();
+            const pc = new RTCPeerConnection({ iceServers });
 
             pc.onicecandidate = ({ candidate }) => {
                 if (candidate) {
@@ -151,7 +183,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             localStreamRef.current = stream;
 
-            const pc = createPC(calleeId);
+            const pc = await createPC(calleeId);
             stream.getTracks().forEach((t) => pc.addTrack(t, stream));
             pcRef.current = pc;
 
@@ -191,7 +223,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
                 localVideoRef.current.srcObject = stream;
             }
 
-            const pc = createPC(calleeId);
+            const pc = await createPC(calleeId);
             stream.getTracks().forEach((t) => pc.addTrack(t, stream));
             pcRef.current = pc;
 
@@ -233,7 +265,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
             localVideoRef.current.srcObject = stream;
         }
 
-        const pc = createPC(incoming.callerId);
+        const pc = await createPC(incoming.callerId);
         stream.getTracks().forEach((t) => pc.addTrack(t, stream));
         pcRef.current = pc;
 

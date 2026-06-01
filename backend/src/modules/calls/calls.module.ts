@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { CallsGateway } from './calls.gateway';
+import { IceServersController } from './ice-servers.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
@@ -15,5 +16,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
         }),
     ],
     providers: [CallsGateway],
+    controllers: [IceServersController],
 })
 export class CallsModule {}

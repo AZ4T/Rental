@@ -57,6 +57,13 @@ services:
             RESEND_API_KEY: ${RESEND_API_KEY}
             APP_URL: https://rental.bolatbekov.com
             FRONTEND_URL: https://rental.bolatbekov.com
+            # TURN/STUN — coturn lives on the host (not in compose)
+            TURN_HOST: turn.rental.bolatbekov.com
+            TURN_PORT: "3478"
+            TURN_TLS_PORT: "5349"
+            TURN_SHARED_SECRET: ${TURN_SHARED_SECRET}
+            TURN_TTL_SECONDS: "3600"
+            PLATFORM_FEE_RATE: ${PLATFORM_FEE_RATE:-0.05}
 
     frontend:
         build: ./frontend
