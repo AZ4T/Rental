@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { RentalRequest } from "@/types";
+import { PLATFORM_FEE_RATE } from "@/lib/platform";
 
 export default function IncomingRentalsPage() {
     const { data: rentals, isLoading } = useIncomingRentals();
@@ -97,12 +98,18 @@ export default function IncomingRentalsPage() {
                                             rental.end_date,
                                         ).toLocaleDateString("ru-RU")}
                                     </div>
-                                    <span className="font-semibold text-blue-600 text-sm">
-                                        {Number(
-                                            rental.total_price,
-                                        ).toLocaleString()}{" "}
-                                        ₸
-                                    </span>
+                                    <div className="text-sm">
+                                        <span className="font-semibold text-blue-600">
+                                            {Number(rental.total_price).toLocaleString()} ₸
+                                        </span>
+                                        <span className="text-xs text-muted-foreground ml-2">
+                                            (вам после комиссии:{" "}
+                                            {Math.round(
+                                                Number(rental.total_price) * (1 - PLATFORM_FEE_RATE),
+                                            ).toLocaleString()}{" "}
+                                            ₸)
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 

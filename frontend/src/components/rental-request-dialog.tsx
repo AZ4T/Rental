@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import api from "@/services/api";
 import { toast } from "sonner";
-import { Clock, X } from "lucide-react";
+import { Clock, X, Info } from "lucide-react";
+import { PLATFORM_FEE_RATE } from "@/lib/platform";
 
 const AGREEMENT_TEXT = `ДОГОВОР АРЕНДЫ — УСЛОВИЯ ИСПОЛЬЗОВАНИЯ ПЛАТФОРМЫ
 
@@ -229,6 +230,12 @@ export function RentalRequestDialog({
                             <div className="border-t pt-1.5 flex justify-between font-bold">
                                 <span>Итого</span>
                                 <span className="text-blue-600">{totalPrice.toLocaleString()} ₸</span>
+                            </div>
+                            <div className="border-t pt-2 text-xs text-muted-foreground flex items-start gap-1.5">
+                                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                <span>
+                                    Платформа удерживает {(PLATFORM_FEE_RATE * 100).toFixed(0)}% комиссии с владельца за обслуживание сделки. На вашу оплату это не влияет.
+                                </span>
                             </div>
                         </div>
                     )}

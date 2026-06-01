@@ -16,7 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 import Image from "next/image";
-import { X, Upload, Loader2 } from "lucide-react";
+import { X, Upload, Loader2, Info } from "lucide-react";
+import { PLATFORM_FEE_RATE } from "@/lib/platform";
 import { CityInput } from "@/components/city-input";
 
 const schema = z.object({
@@ -299,6 +300,17 @@ export default function CreateListingPage() {
                         />
 
                         {/* Цена и залог */}
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-900 p-3 text-xs text-blue-900 dark:text-blue-200 flex items-start gap-2">
+                            <Info className="h-4 w-4 mt-0.5 shrink-0" />
+                            <div>
+                                <p className="font-medium">
+                                    Платформа удерживает {(PLATFORM_FEE_RATE * 100).toFixed(0)}% с каждой оплаченной аренды
+                                </p>
+                                <p className="opacity-80 mt-0.5">
+                                    Например, при цене 2 500 ₸/день вы получите {Math.round(2500 * (1 - PLATFORM_FEE_RATE)).toLocaleString()} ₸. Premium-подписка отменяет комиссию.
+                                </p>
+                            </div>
+                        </div>
                         <div className="grid grid-cols-2 gap-4">
                             <Controller
                                 name="price"
