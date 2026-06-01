@@ -37,16 +37,14 @@ export default function AboutPage() {
     const { isAuthenticated } = useAuthStore();
 
     const { data: stats } = useQuery({
-        queryKey: ["stats"],
-        queryFn: async () => {
-            const [listings, users] = await Promise.all([
-                api
-                    .get<{ meta: { total: number } }>("/listings?limit=1")
-                    .then((r) => r.data.meta.total),
-                api.get<{ length: number }>("/admin/users").then((r) => r.data),
-            ]);
-            return { listings, users: Array.isArray(users) ? users.length : 0 };
-        },
+        queryKey: ["public-stats"],
+        queryFn: () =>
+            api
+                .get<{ totalListings: number; totalUsers: number }>("/public-stats")
+                .then((r) => ({
+                    listings: r.data.totalListings,
+                    users: r.data.totalUsers,
+                })),
     });
 
     const { data: categories } = useQuery({
