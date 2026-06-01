@@ -1,4 +1,4 @@
-import { Heart, MapPin, Star, Eye, GitCompareArrows } from "lucide-react";
+import { Heart, MapPin, Star, Eye, GitCompareArrows, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import {
     useMyFavorites,
@@ -70,9 +70,19 @@ export function ListingCard({ listing }: ListingCardProps) {
                     >
                         Нет фото
                     </div>
-                    <Badge className="absolute top-2 left-2 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-                        {listing.category.name}
-                    </Badge>
+                    <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
+                        <Badge className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+                            {listing.category.name}
+                        </Badge>
+                        {listing.promoted_until &&
+                            new Date(listing.promoted_until).getTime() >
+                                Date.now() && (
+                                <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-md gap-1">
+                                    <Sparkles className="h-3 w-3" />
+                                    Featured
+                                </Badge>
+                            )}
+                    </div>
 
                     {/* Кнопки действий */}
                     <div className="absolute top-2 right-2 flex flex-col gap-1">

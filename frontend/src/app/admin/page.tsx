@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Trash2, Plus, Loader2, Users, LayoutList, Tag, BarChart2, TrendingUp, Flag, CheckCircle, Clock, MessageSquare, ShieldAlert } from "lucide-react";
+import { Trash2, Plus, Loader2, Users, LayoutList, Tag, BarChart2, TrendingUp, Flag, CheckCircle, Clock, MessageSquare, ShieldAlert, Coins } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import {
@@ -170,12 +170,20 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <h1 className="text-2xl font-bold">Админ панель</h1>
-                <Button asChild variant="outline" size="sm">
-                    <Link href="/admin/disputes">
-                        <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
-                        Споры
-                    </Link>
-                </Button>
+                <div className="flex gap-2 flex-wrap">
+                    <Button asChild variant="outline" size="sm">
+                        <Link href="/admin/finance">
+                            <Coins className="h-4 w-4 mr-2 text-blue-600" />
+                            Финансы
+                        </Link>
+                    </Button>
+                    <Button asChild variant="outline" size="sm">
+                        <Link href="/admin/disputes">
+                            <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
+                            Споры
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             <Tabs defaultValue="stats">

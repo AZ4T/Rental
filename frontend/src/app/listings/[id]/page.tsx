@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Star, Calendar, Shield, Loader2, Heart, Eye, QrCode, X, GitCompareArrows, Flag } from "lucide-react";
+import { MapPin, Star, Calendar, Shield, Loader2, Heart, Eye, QrCode, X, GitCompareArrows, Flag, Crown } from "lucide-react";
 import Link from "next/link";
 import { RentalRequestDialog } from "@/components/rental-request-dialog";
 import {
@@ -309,12 +309,23 @@ export default function ListingPage({ params }: Props) {
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <Link
-                                    href={`/profile/${listing.owner.id}`}
-                                    className="font-semibold hover:underline"
-                                >
-                                    {listing.owner.name}
-                                </Link>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <Link
+                                        href={`/profile/${listing.owner.id}`}
+                                        className="font-semibold hover:underline"
+                                    >
+                                        {listing.owner.name}
+                                    </Link>
+                                    {listing.owner.premium_until &&
+                                        new Date(
+                                            listing.owner.premium_until,
+                                        ).getTime() > Date.now() && (
+                                            <span className="inline-flex items-center gap-1 text-xs bg-gradient-to-r from-amber-400 to-orange-500 text-white px-1.5 py-0.5 rounded-full">
+                                                <Crown className="h-3 w-3" />
+                                                Premium
+                                            </span>
+                                        )}
+                                </div>
                                 {listing.owner.rating_avg && (
                                     <div className="flex items-center gap-1 text-sm text-gray-500">
                                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />

@@ -8,7 +8,32 @@ export type RentalRequestStatus =
     | "COMPLETED";
 
 export type PaymentStatus = "UNPAID" | "PAID";
-export type TransactionType = "DEPOSIT" | "PAYMENT" | "INCOME" | "REFUND";
+export type TransactionType =
+    | "DEPOSIT"
+    | "PAYMENT"
+    | "INCOME"
+    | "REFUND"
+    | "PLATFORM_FEE"
+    | "PROMOTION"
+    | "PREMIUM";
+
+export type PlatformIncomeSource = "COMMISSION" | "PROMOTION" | "PREMIUM";
+
+export interface PlatformFinance {
+    total: number;
+    totals: Record<PlatformIncomeSource, number>;
+    counts: Record<PlatformIncomeSource, number>;
+    activePremium: number;
+    activePromoted: number;
+    byDay: { date: string; total: number }[];
+    recent: {
+        id: string;
+        amount: number;
+        source: PlatformIncomeSource;
+        description: string | null;
+        created_at: string;
+    }[];
+}
 
 export interface Transaction {
     id: string;
@@ -28,6 +53,8 @@ export interface User {
     role: Role;
     rating_avg: string | null;
     reviews_count: number;
+    premium_until?: string | null;
+    is_premium?: boolean;
     created_at: string;
 }
 
@@ -58,11 +85,14 @@ export interface Listing {
     reviews_count: number;
     is_hidden?: boolean;
     hidden_at?: string | null;
+    promoted_until?: string | null;
     created_at: string;
     updated_at: string;
     images: ListingImage[];
     category: Category;
-    owner: Pick<User, "id" | "name" | "avatar_url" | "rating_avg">;
+    owner: Pick<User, "id" | "name" | "avatar_url" | "rating_avg"> & {
+        premium_until?: string | null;
+    };
 }
 
 export interface Review {

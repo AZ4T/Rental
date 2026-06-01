@@ -2,10 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/services/api";
 import { Transaction } from "@/types";
 import { useAuthStore } from "@/store/auth.store";
+import { toast } from "sonner";
 
 interface WalletData {
     balance: number;
     deposit_balance: number;
+    premium_until: string | null;
+    is_premium: boolean;
     transactions: Transaction[];
 }
 
@@ -38,5 +41,42 @@ export function usePayRental() {
             qc.invalidateQueries({ queryKey: ["wallet"] });
             qc.invalidateQueries({ queryKey: ["rentals"] });
         },
+    });
+}
+
+export function usePromoteListing() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (listingId: string) =>
+            api
+                .post<{ promoted_until: string; price: number }>(
+                    `/wallet/promote/${listingId}`,
+                )
+                .then((r) => r.data),
+        onSuccess: () => {
+            toast.success("Объявление продвинуто на 7 дней");
+            qc.invalidateQueries({ queryKey: ["wallet"] });
+            qc.invalidateQueries({ queryKey: ["listings"] });
+        },
+        onError: (e: Error) =>
+            toast.error(e.message ?? "Не удалось продвинуть"),
+    });
+}
+
+export function useSubscribePremium() {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: () =>
+            api
+                .post<{ premium_until: string; price: number }>("/wallet/premium")
+                .then((r) => r.data),
+        onSuccess: () => {
+            toast.success("Premium активирован на 30 дней");
+            qc.invalidateQueries({ queryKey: ["wallet"] });
+            qc.invalidateQueries({ queryKey: ["user", "me"] });
+            qc.invalidateQueries({ queryKey: ["users", "me"] });
+        },
+        onError: (e: Error) =>
+            toast.error(e.message ?? "Не удалось активировать Premium"),
     });
 }

@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Loader2, Plus, Pencil, Trash2, MapPin, Eye, EyeOff, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, MapPin, Eye, EyeOff, BarChart2, ChevronDown, ChevronUp, Sparkles, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useListingAnalytics, useSetListingVisibility } from "@/hooks/use-listings";
+import { usePromoteListing } from "@/hooks/use-wallet";
 
 function AnalyticsPanel({ listingId }: { listingId: string }) {
     const { data, isLoading } = useListingAnalytics(listingId);
@@ -74,6 +75,8 @@ export default function MyListingsPage() {
     const { mutate: setVisibility, isPending: isToggling } =
         useSetListingVisibility();
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const { mutate: promoteListing, isPending: isPromoting } = usePromoteListing();
+    const [promoteId, setPromoteId] = useState<string | null>(null);
 
     if (isLoading) {
         return (
@@ -136,7 +139,7 @@ export default function MyListingsPage() {
                                         >
                                             {listing.title}
                                         </Link>
-                                        <div className="flex items-center gap-1.5 shrink-0">
+                                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                                             {listing.is_hidden && (
                                                 <Badge
                                                     variant="outline"
@@ -145,6 +148,14 @@ export default function MyListingsPage() {
                                                     Скрыто
                                                 </Badge>
                                             )}
+                                            {listing.promoted_until &&
+                                                new Date(listing.promoted_until).getTime() >
+                                                    Date.now() && (
+                                                    <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 gap-1">
+                                                        <Sparkles className="h-3 w-3" />
+                                                        Featured
+                                                    </Badge>
+                                                )}
                                             <Badge variant="secondary">
                                                 {listing.category.name}
                                             </Badge>
@@ -167,7 +178,16 @@ export default function MyListingsPage() {
                                             ).toLocaleString()}{" "}
                                             ₸/день
                                         </span>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-2 flex-wrap justify-end">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-amber-400 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                                title="Продвинуть на 7 дней"
+                                                onClick={() => setPromoteId(listing.id)}
+                                            >
+                                                <Rocket className="h-4 w-4" />
+                                            </Button>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -277,6 +297,23 @@ export default function MyListingsPage() {
                     if (deleteId) deleteListing(deleteId);
                 }}
                 onCancel={() => setDeleteId(null)}
+            />
+
+            <ConfirmDialog
+                open={!!promoteId}
+                title="Продвинуть объявление?"
+                description="С баланса спишется 500 ₸. Объявление будет показываться в топе каталога 7 дней."
+                confirmLabel="Продвинуть за 500 ₸"
+                pendingLabel="Продвижение..."
+                variant="default"
+                isPending={isPromoting}
+                onConfirm={() => {
+                    if (promoteId)
+                        promoteListing(promoteId, {
+                            onSuccess: () => setPromoteId(null),
+                        });
+                }}
+                onCancel={() => setPromoteId(null)}
             />
         </div>
     );

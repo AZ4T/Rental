@@ -37,4 +37,17 @@ export class WalletController {
     ) {
         return this.walletService.pay(rentalRequestId, req.user.userId);
     }
+
+    @Post('promote/:listingId')
+    promote(
+        @Param('listingId', ParseUUIDPipe) listingId: string,
+        @Request() req: { user: { userId: string } },
+    ) {
+        return this.walletService.promoteListing(listingId, req.user.userId);
+    }
+
+    @Post('premium')
+    subscribePremium(@Request() req: { user: { userId: string } }) {
+        return this.walletService.subscribePremium(req.user.userId);
+    }
 }

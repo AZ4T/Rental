@@ -14,6 +14,7 @@ interface Props {
     description?: string;
     confirmLabel?: string;
     pendingLabel?: string;
+    variant?: "destructive" | "default";
     onConfirm: () => void;
     onCancel: () => void;
     isPending?: boolean;
@@ -25,6 +26,7 @@ export function ConfirmDialog({
     description = "Это действие нельзя отменить.",
     confirmLabel = "Удалить",
     pendingLabel = "Удаляем...",
+    variant = "destructive",
     onConfirm,
     onCancel,
     isPending,
@@ -41,7 +43,7 @@ export function ConfirmDialog({
                         Отмена
                     </Button>
                     <Button
-                        variant="destructive"
+                        variant={variant}
                         onClick={onConfirm}
                         disabled={isPending}
                     >

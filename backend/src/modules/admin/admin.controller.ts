@@ -53,4 +53,9 @@ export class AdminController {
     getStats() {
         return this.adminService.getStats();
     }
+
+    @Get('finance')
+    getFinance() {
+        return this.adminService.getPlatformFinance();
+    }
 }

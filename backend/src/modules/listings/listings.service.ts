@@ -56,6 +56,18 @@ export class ListingsService {
             sortOrder === 'asc' ? 'asc' : 'desc'
         ) as Prisma.SortOrder;
 
+        // Promoted listings float to the top of every catalog query —
+        // sort by promoted_until DESC (nulls last) then by whatever the
+        // user picked.
+        const secondaryOrder: Prisma.ListingOrderByWithRelationInput =
+            sortBy === 'rating_avg'
+                ? { owner: { rating_avg: order } }
+                : sortBy === 'price'
+                  ? { price: order }
+                  : sortBy === 'views_count'
+                    ? { views_count: order }
+                    : { created_at: order };
+
         const [data, total] = await this.prisma.$transaction([
             this.prisma.listing.findMany({
                 where,
@@ -68,17 +80,14 @@ export class ListingsService {
                             name: true,
                             avatar_url: true,
                             rating_avg: true,
+                            premium_until: true,
                         },
                     },
                 },
-                orderBy:
-                    sortBy === 'rating_avg'
-                        ? { owner: { rating_avg: order } }
-                        : sortBy === 'price'
-                          ? { price: order }
-                          : sortBy === 'views_count'
-                            ? { views_count: order }
-                            : { created_at: order },
+                orderBy: [
+                    { promoted_until: { sort: 'desc', nulls: 'last' } },
+                    secondaryOrder,
+                ],
                 skip: (page - 1) * limit,
                 take: limit,
             }),

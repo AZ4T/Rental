@@ -183,4 +183,85 @@ export class AdminService {
             usersByDay: fillWeek(usersRaw),
         };
     }
+
+    async getPlatformFinance() {
+        const monthAgo = new Date();
+        monthAgo.setDate(monthAgo.getDate() - 29);
+        monthAgo.setHours(0, 0, 0, 0);
+
+        const [bySource, recent, byDayRaw, activePremium, activePromoted] =
+            await Promise.all([
+                this.prisma.platformIncome.groupBy({
+                    by: ['source'],
+                    _sum: { amount: true },
+                    _count: { _all: true },
+                }),
+                this.prisma.platformIncome.findMany({
+                    orderBy: { created_at: 'desc' },
+                    take: 30,
+                }),
+                this.prisma.$queryRaw<
+                    { day: Date; source: string; total: number }[]
+                >`
+                    SELECT
+                        date_trunc('day', created_at) AS day,
+                        source::text AS source,
+                        SUM(amount)::float AS total
+                    FROM "PlatformIncome"
+                    WHERE created_at >= ${monthAgo}
+                    GROUP BY day, source
+                    ORDER BY day ASC
+                `,
+                this.prisma.user.count({
+                    where: { premium_until: { gt: new Date() } },
+                }),
+                this.prisma.listing.count({
+                    where: { promoted_until: { gt: new Date() } },
+                }),
+            ]);
+
+        const totalAll = bySource.reduce(
+            (sum, row) => sum + Number(row._sum.amount ?? 0),
+            0,
+        );
+
+        const totals = {
+            COMMISSION: 0,
+            PROMOTION: 0,
+            PREMIUM: 0,
+        } as Record<string, number>;
+        const counts = { COMMISSION: 0, PROMOTION: 0, PREMIUM: 0 } as Record<
+            string,
+            number
+        >;
+        for (const row of bySource) {
+            totals[row.source] = Number(row._sum.amount ?? 0);
+            counts[row.source] = row._count._all;
+        }
+
+        // Aggregate per day across all sources
+        const dayMap = new Map<string, number>();
+        for (const row of byDayRaw) {
+            const key = row.day.toISOString().slice(0, 10);
+            dayMap.set(key, (dayMap.get(key) ?? 0) + Number(row.total));
+        }
+        const byDay: { date: string; total: number }[] = [];
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            d.setHours(0, 0, 0, 0);
+            const key = d.toISOString().slice(0, 10);
+            byDay.push({ date: key, total: dayMap.get(key) ?? 0 });
+        }
+
+        return {
+            total: totalAll,
+            totals,
+            counts,
+            activePremium,
+            activePromoted,
+            byDay,
+            recent,
+        };
+    }
 }

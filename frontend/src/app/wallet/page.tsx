@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet, useTopUp } from "@/hooks/use-wallet";
+import { useWallet, useTopUp, useSubscribePremium } from "@/hooks/use-wallet";
 import { Transaction } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, ArrowDownLeft, ArrowUpRight, Smartphone, Loader2, Download, Lock, QrCode, CheckCircle2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Wallet, ArrowDownLeft, ArrowUpRight, Smartphone, Loader2, Download, Lock, QrCode, CheckCircle2, Sparkles, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -89,8 +90,11 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 export default function WalletPage() {
     const { data, isLoading, refetch } = useWallet();
     const { mutate: topUp, isPending: isTopUpPending } = useTopUp();
+    const { mutate: subscribePremium, isPending: isSubscribing } =
+        useSubscribePremium();
     const [qrAmount, setQrAmount] = useState<number | null>(null);
     const [customAmt, setCustomAmt] = useState("");
+    const [premiumOpen, setPremiumOpen] = useState(false);
 
     const openQr = (amount: number) => {
         if (amount <= 0 || amount > 1_000_000) {
@@ -159,6 +163,43 @@ export default function WalletPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Premium */}
+            <Card
+                className={
+                    data?.is_premium
+                        ? "border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30"
+                        : "border-2 border-dashed"
+                }
+            >
+                <CardContent className="p-5 flex items-center justify-between gap-3 flex-wrap">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className="rounded-full p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 text-white shrink-0">
+                            <Crown className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold">Premium</h3>
+                                {data?.is_premium && data.premium_until && (
+                                    <span className="text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
+                                        До {new Date(data.premium_until).toLocaleDateString("ru-RU")}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                                Без комиссии платформы, расширенная статистика, бейдж и неограниченные объявления.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0"
+                        onClick={() => setPremiumOpen(true)}
+                    >
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        {data?.is_premium ? "Продлить (2 000 ₸)" : "Активировать (2 000 ₸)"}
+                    </Button>
+                </CardContent>
+            </Card>
 
             {/* Top-up via QR */}
             <Card>
@@ -273,6 +314,21 @@ export default function WalletPage() {
                 </CardContent>
             </Card>
 
+            <ConfirmDialog
+                open={premiumOpen}
+                title={data?.is_premium ? "Продлить Premium?" : "Активировать Premium?"}
+                description="С баланса спишется 2 000 ₸ за 30 дней Premium. Если подписка ещё активна — срок продлится на 30 дней."
+                confirmLabel={data?.is_premium ? "Продлить" : "Активировать"}
+                pendingLabel="Активация..."
+                variant="default"
+                isPending={isSubscribing}
+                onConfirm={() =>
+                    subscribePremium(undefined, {
+                        onSuccess: () => setPremiumOpen(false),
+                    })
+                }
+                onCancel={() => setPremiumOpen(false)}
+            />
         </div>
     );
 }

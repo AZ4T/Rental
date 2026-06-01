@@ -36,6 +36,15 @@ enum TransactionType {
   PAYMENT
   INCOME
   REFUND
+  PLATFORM_FEE
+  PROMOTION
+  PREMIUM
+}
+
+enum PlatformIncomeSource {
+  COMMISSION
+  PROMOTION
+  PREMIUM
 }
 
 model User {
@@ -51,6 +60,7 @@ model User {
   deposit_balance  Decimal  @default(0) @db.Decimal(10, 2)
   token_version    Int      @default(0)
   last_seen_incoming_at DateTime?
+  premium_until    DateTime?
   created_at     DateTime @default(now())
 
   listings        Listing[]
@@ -147,6 +157,7 @@ model Listing {
   reviews_count Int      @default(0)
   is_hidden     Boolean  @default(false)
   hidden_at     DateTime?
+  promoted_until DateTime?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -159,6 +170,7 @@ model Listing {
   @@index([owner_id])
   @@index([category_id])
   @@index([is_hidden])
+  @@index([promoted_until])
 }
 
 model ListingImage {
@@ -265,6 +277,20 @@ model Transaction {
   rentalRequest RentalRequest? @relation(fields: [rental_request_id], references: [id])
 
   @@index([user_id])
+}
+
+model PlatformIncome {
+  id                String               @id @default(uuid()) @db.Uuid
+  amount            Decimal              @db.Decimal(10, 2)
+  source            PlatformIncomeSource
+  user_id           String?              @db.Uuid
+  rental_request_id String?              @db.Uuid
+  listing_id        String?              @db.Uuid
+  description       String?
+  created_at        DateTime             @default(now())
+
+  @@index([source])
+  @@index([created_at])
 }
 
 model Review {

@@ -44,11 +44,14 @@ export class UsersService {
                 role: true,
                 rating_avg: true,
                 reviews_count: true,
+                premium_until: true,
                 created_at: true,
             },
         });
         if (!user) throw new NotFoundException('Пользователь не найден');
-        return user;
+        const isPremium =
+            !!user.premium_until && user.premium_until.getTime() > Date.now();
+        return { ...user, is_premium: isPremium };
     }
 
     async updateProfile(id: string, dto: UpdateProfileDto) {
