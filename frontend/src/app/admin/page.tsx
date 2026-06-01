@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Trash2, Plus, Loader2, Users, LayoutList, Tag, BarChart2, TrendingUp, Flag, CheckCircle, Clock, MessageSquare } from "lucide-react";
+import { Trash2, Plus, Loader2, Users, LayoutList, Tag, BarChart2, TrendingUp, Flag, CheckCircle, Clock, MessageSquare, ShieldAlert } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useOrCreateChat } from "@/hooks/use-chats";
 import {
@@ -168,7 +168,15 @@ export default function AdminPage() {
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Админ панель</h1>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <h1 className="text-2xl font-bold">Админ панель</h1>
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/admin/disputes">
+                        <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
+                        Споры
+                    </Link>
+                </Button>
+            </div>
 
             <Tabs defaultValue="stats">
                 <TabsList className="grid grid-cols-5 w-full">

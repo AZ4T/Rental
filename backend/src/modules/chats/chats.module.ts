@@ -4,9 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { ChatsService } from './chats.service';
 import { ChatsController } from './chats.controller';
 import { ChatsGateway } from './chats.gateway';
+import { UsersModule } from '../users/users.module';
 
 @Module({
     imports: [
+        UsersModule,
         JwtModule.registerAsync({
             inject: [ConfigService],
             useFactory: (config: ConfigService) => ({

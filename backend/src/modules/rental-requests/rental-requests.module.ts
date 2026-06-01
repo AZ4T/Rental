@@ -5,9 +5,10 @@ import { RentalScanController } from './rental-scan.controller';
 import { ChatsModule } from '../chats/chats.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [ChatsModule, NotificationsModule, WalletModule],
+    imports: [ChatsModule, NotificationsModule, WalletModule, UsersModule],
     providers: [RentalRequestsService],
     controllers: [RentalRequestsController, RentalScanController],
 })

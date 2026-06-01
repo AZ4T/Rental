@@ -1,15 +1,22 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class ChatsService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private usersService: UsersService,
+    ) {}
 
     async getChatById(chatId: string) {
         return this.prisma.chat.findUnique({ where: { id: chatId } });
     }
 
     async findOrCreate(userAId: string, userBId: string) {
+        if (await this.usersService.isBlockedEitherWay(userAId, userBId)) {
+            throw new ForbiddenException('Невозможно начать чат: один из пользователей заблокирован');
+        }
         const [p1, p2] = [userAId, userBId].sort();
 
         const existing = await this.prisma.chat.findUnique({

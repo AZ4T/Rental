@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { Loader2, Plus, Pencil, Trash2, MapPin, Eye, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, MapPin, Eye, EyeOff, BarChart2, ChevronDown, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useListingAnalytics } from "@/hooks/use-listings";
+import { useListingAnalytics, useSetListingVisibility } from "@/hooks/use-listings";
 
 function AnalyticsPanel({ listingId }: { listingId: string }) {
     const { data, isLoading } = useListingAnalytics(listingId);
@@ -70,6 +70,10 @@ export default function MyListingsPage() {
         },
         onError: () => toast.error("Ошибка удаления"),
     });
+
+    const { mutate: setVisibility, isPending: isToggling } =
+        useSetListingVisibility();
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     if (isLoading) {
         return (
@@ -132,9 +136,19 @@ export default function MyListingsPage() {
                                         >
                                             {listing.title}
                                         </Link>
-                                        <Badge variant="secondary">
-                                            {listing.category.name}
-                                        </Badge>
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            {listing.is_hidden && (
+                                                <Badge
+                                                    variant="outline"
+                                                    className="border-amber-400 text-amber-700 dark:text-amber-300"
+                                                >
+                                                    Скрыто
+                                                </Badge>
+                                            )}
+                                            <Badge variant="secondary">
+                                                {listing.category.name}
+                                            </Badge>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
                                         <div className="flex items-center gap-1">
@@ -170,6 +184,55 @@ export default function MyListingsPage() {
                                                     <ChevronUp className="h-3 w-3" />
                                                 ) : (
                                                     <ChevronDown className="h-3 w-3" />
+                                                )}
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                title={
+                                                    listing.is_hidden
+                                                        ? "Показать в каталоге"
+                                                        : "Скрыть из каталога"
+                                                }
+                                                disabled={
+                                                    isToggling &&
+                                                    togglingId === listing.id
+                                                }
+                                                onClick={() => {
+                                                    setTogglingId(listing.id);
+                                                    setVisibility(
+                                                        {
+                                                            id: listing.id,
+                                                            hidden: !listing.is_hidden,
+                                                        },
+                                                        {
+                                                            onSuccess: () => {
+                                                                toast.success(
+                                                                    listing.is_hidden
+                                                                        ? "Объявление снова в каталоге"
+                                                                        : "Объявление скрыто",
+                                                                );
+                                                                setTogglingId(null);
+                                                            },
+                                                            onError: (e) => {
+                                                                toast.error(
+                                                                    (e as Error)
+                                                                        .message ??
+                                                                        "Ошибка",
+                                                                );
+                                                                setTogglingId(null);
+                                                            },
+                                                        },
+                                                    );
+                                                }}
+                                            >
+                                                {isToggling &&
+                                                togglingId === listing.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : listing.is_hidden ? (
+                                                    <EyeOff className="h-4 w-4" />
+                                                ) : (
+                                                    <Eye className="h-4 w-4" />
                                                 )}
                                             </Button>
                                             <Button

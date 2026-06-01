@@ -8,6 +8,7 @@ import { useOrCreateChat } from "@/hooks/use-chats";
 import { usePayRental } from "@/hooks/use-wallet";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
+import { DisputeDialog } from "@/components/dispute-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -22,6 +23,8 @@ import {
     ImageIcon,
     QrCode,
     CreditCard,
+    AlertTriangle,
+    ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -297,6 +300,7 @@ export default function MyRentalsPage() {
     const { user } = useAuthStore();
     const router = useRouter();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
+    const [disputeRental, setDisputeRental] = useState<RentalRequest | null>(null);
     const [expandedTimeline, setExpandedTimeline] = useState<Set<string>>(new Set());
     const [payingId, setPayingId] = useState<string | null>(null);
 
@@ -400,6 +404,34 @@ export default function MyRentalsPage() {
                                                     >
                                                         <MessageSquare className="h-4 w-4 mr-1" />
                                                         Написать владельцу
+                                                    </Button>
+                                                )}
+                                                {rental.status === "APPROVED" &&
+                                                    rental.payment_status === "PAID" &&
+                                                    !rental.dispute && (
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                                            onClick={() => setDisputeRental(rental)}
+                                                        >
+                                                            <AlertTriangle className="h-4 w-4 mr-1" />
+                                                            Открыть спор
+                                                        </Button>
+                                                    )}
+                                                {rental.dispute && (
+                                                    <Button
+                                                        asChild
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="border-amber-300 text-amber-700"
+                                                    >
+                                                        <Link href="/disputes">
+                                                            <ShieldAlert className="h-4 w-4 mr-1" />
+                                                            {rental.dispute.status === "OPEN"
+                                                                ? "Спор открыт"
+                                                                : "Спор закрыт"}
+                                                        </Link>
                                                     </Button>
                                                 )}
                                                 {rental.status === "PENDING" && (
@@ -524,6 +556,14 @@ export default function MyRentalsPage() {
                     rental={reviewRental}
                     showListingRating
                     onClose={() => setReviewRental(null)}
+                />
+            )}
+
+            {disputeRental && (
+                <DisputeDialog
+                    rental={disputeRental}
+                    open={!!disputeRental}
+                    onClose={() => setDisputeRental(null)}
                 />
             )}
         </div>

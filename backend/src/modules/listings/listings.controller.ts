@@ -97,4 +97,14 @@ export class ListingsController {
     ) {
         return this.listingsService.delete(id, req.user.userId);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch(':id/visibility')
+    setVisibility(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() body: { hidden: boolean },
+        @Req() req: Request & { user: { userId: string } },
+    ) {
+        return this.listingsService.setVisibility(id, !!body.hidden, req.user.userId);
+    }
 }

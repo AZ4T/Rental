@@ -12,6 +12,8 @@ interface Props {
     open: boolean;
     title?: string;
     description?: string;
+    confirmLabel?: string;
+    pendingLabel?: string;
     onConfirm: () => void;
     onCancel: () => void;
     isPending?: boolean;
@@ -21,6 +23,8 @@ export function ConfirmDialog({
     open,
     title = "Вы уверены?",
     description = "Это действие нельзя отменить.",
+    confirmLabel = "Удалить",
+    pendingLabel = "Удаляем...",
     onConfirm,
     onCancel,
     isPending,
@@ -41,7 +45,7 @@ export function ConfirmDialog({
                         onClick={onConfirm}
                         disabled={isPending}
                     >
-                        {isPending ? "Удаляем..." : "Удалить"}
+                        {isPending ? pendingLabel : confirmLabel}
                     </Button>
                 </DialogFooter>
             </DialogContent>

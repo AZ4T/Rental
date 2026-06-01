@@ -11,6 +11,7 @@ import { UpdateStatusDto } from './dto/update-rental-request.dto';
 import { ChatsService } from '../chats/chats.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { WalletService } from '../wallet/wallet.service';
+import { UsersService } from '../users/users.service';
 import { v4 as uuidv4 } from 'uuid';
 
 const VALID_TRANSITIONS: Partial<Record<string, string[]>> = {
@@ -25,6 +26,7 @@ export class RentalRequestsService {
         private chatsService: ChatsService,
         private notificationsGateway: NotificationsGateway,
         private walletService: WalletService,
+        private usersService: UsersService,
         private config: ConfigService,
     ) {}
 
@@ -49,6 +51,10 @@ export class RentalRequestsService {
 
         if (listing.owner_id === renterId) {
             throw new BadRequestException('Нельзя арендовать свое объявление');
+        }
+
+        if (await this.usersService.isBlockedEitherWay(renterId, listing.owner_id)) {
+            throw new ForbiddenException('Нельзя арендовать у заблокированного пользователя (или который заблокировал вас)');
         }
 
         const start = new Date(dto.start_date);
@@ -143,6 +149,7 @@ export class RentalRequestsService {
                     include: { images: true },
                 },
                 reviews: true,
+                dispute: { select: { id: true, status: true } },
             },
             orderBy: { created_at: 'desc' },
         });
@@ -188,6 +195,7 @@ export class RentalRequestsService {
                         rating_avg: true,
                     },
                 },
+                dispute: { select: { id: true, status: true } },
             },
             orderBy: { created_at: 'desc' },
         });

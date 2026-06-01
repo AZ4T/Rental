@@ -25,6 +25,8 @@ import {
     ClipboardList,
     Wallet,
     ShieldCheck,
+    ShieldAlert,
+    Ban,
     User as UserIcon,
     Info,
     Search,
@@ -174,6 +176,18 @@ export function Navbar() {
                                             <Link href="/wallet" className="cursor-pointer">
                                                 <Wallet className="h-4 w-4 mr-2" />
                                                 Кошелёк
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/disputes" className="cursor-pointer">
+                                                <ShieldAlert className="h-4 w-4 mr-2" />
+                                                Мои споры
+                                            </Link>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/profile/me/blocked" className="cursor-pointer">
+                                                <Ban className="h-4 w-4 mr-2" />
+                                                Заблокированные
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />

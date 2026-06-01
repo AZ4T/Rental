@@ -5,12 +5,13 @@ import { useIncomingRentals, useUpdateRentalStatus, useMarkIncomingSeen } from "
 import { useOrCreateChat } from "@/hooks/use-chats";
 import { RentalStatusBadge } from "@/components/rental-status-badge";
 import { ReviewDialog } from "@/components/review-dialog";
+import { DisputeDialog } from "@/components/dispute-dialog";
 import { QrModal } from "@/components/qr-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Calendar, MessageCircle, CheckCircle, Clock, Star, QrCode } from "lucide-react";
+import { Loader2, Calendar, MessageCircle, CheckCircle, Clock, Star, QrCode, AlertTriangle, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export default function IncomingRentalsPage() {
     const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
     const { mutate: markSeen } = useMarkIncomingSeen();
     const [reviewRental, setReviewRental] = useState<RentalRequest | null>(null);
+    const [disputeRental, setDisputeRental] = useState<RentalRequest | null>(null);
     const [qrRentalId, setQrRentalId] = useState<string | null>(null);
     const router = useRouter();
 
@@ -213,7 +215,8 @@ export default function IncomingRentalsPage() {
                                                 disabled={
                                                     isPending ||
                                                     rental.payment_status !== "PAID" ||
-                                                    !rental.return_images?.length
+                                                    !rental.return_images?.length ||
+                                                    !!rental.dispute
                                                 }
                                             >
                                                 Завершить аренду
@@ -225,6 +228,29 @@ export default function IncomingRentalsPage() {
                                             )}
                                         </div>
                                     </div>
+                                    {rental.payment_status === "PAID" &&
+                                        !rental.dispute && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full border-amber-300 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                                                onClick={() => setDisputeRental(rental)}
+                                            >
+                                                <AlertTriangle className="h-4 w-4 mr-1" />
+                                                Открыть спор
+                                            </Button>
+                                        )}
+                                    {rental.dispute && (
+                                        <Link
+                                            href="/disputes"
+                                            className="inline-flex items-center justify-center gap-1 text-sm text-amber-700 hover:underline"
+                                        >
+                                            <ShieldAlert className="h-4 w-4" />
+                                            {rental.dispute.status === "OPEN"
+                                                ? "Спор открыт — ожидает решения админа"
+                                                : "Спор закрыт"}
+                                        </Link>
+                                    )}
                                 </div>
                             )}
                             {rental.status === "COMPLETED" && rental.renter && (() => {
@@ -267,6 +293,14 @@ export default function IncomingRentalsPage() {
                     rentalId={qrRentalId}
                     open={!!qrRentalId}
                     onClose={() => setQrRentalId(null)}
+                />
+            )}
+
+            {disputeRental && (
+                <DisputeDialog
+                    rental={disputeRental}
+                    open={!!disputeRental}
+                    onClose={() => setDisputeRental(null)}
                 />
             )}
         </div>

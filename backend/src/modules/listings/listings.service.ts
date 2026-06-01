@@ -32,6 +32,8 @@ export class ListingsService {
         } = query;
 
         const where: Prisma.ListingWhereInput = {
+            // Public catalog hides paused listings — owner still sees them in /listings/my
+            is_hidden: false,
             ...(search && {
                 title: { contains: search, mode: 'insensitive' },
             }),
@@ -336,5 +338,20 @@ export class ListingsService {
             ),
         );
         return this.prisma.listing.delete({ where: { id } });
+    }
+
+    async setVisibility(id: string, hidden: boolean, userId: string) {
+        const listing = await this.prisma.listing.findUnique({ where: { id } });
+        if (!listing) throw new NotFoundException('Объявление не найдено');
+        if (listing.owner_id !== userId) {
+            throw new ForbiddenException('Нет доступа');
+        }
+        return this.prisma.listing.update({
+            where: { id },
+            data: {
+                is_hidden: hidden,
+                hidden_at: hidden ? new Date() : null,
+            },
+        });
     }
 }

@@ -17,6 +17,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CallsModule } from './modules/calls/calls.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { DisputesModule } from './modules/disputes/disputes.module';
 
 @Module({
     imports: [
@@ -39,6 +40,7 @@ import { ReportsModule } from './modules/reports/reports.module';
         NotificationsModule,
         CallsModule,
         ReportsModule,
+        DisputesModule,
     ],
     providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

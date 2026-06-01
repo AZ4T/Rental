@@ -118,3 +118,16 @@ export function useListingAnalytics(id: string) {
         enabled: !!id,
     });
 }
+
+export function useSetListingVisibility() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, hidden }: { id: string; hidden: boolean }) =>
+            api
+                .patch(`/listings/${id}/visibility`, { hidden })
+                .then((r) => r.data),
+        onSuccess: () => {
+            void queryClient.invalidateQueries({ queryKey: ["listings"] });
+        },
+    });
+}

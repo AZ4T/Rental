@@ -7,12 +7,18 @@ import api from "@/services/api";
 import { Review } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star, Loader2, Flag } from "lucide-react";
+import { Star, Loader2, Flag, Ban, ShieldOff } from "lucide-react";
 import Link from "next/link";
 import { useUserListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
 import { useAuthStore } from "@/store/auth.store";
 import { ReportModal } from "@/components/report-modal";
+import {
+    useBlockUser,
+    useUnblockUser,
+    useBlockedUsers,
+} from "@/hooks/use-blocks";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -24,6 +30,11 @@ export default function UserProfilePage({ params }: Props) {
     const { data: userListings } = useUserListings(id);
     const { user: me } = useAuthStore();
     const [reportOpen, setReportOpen] = useState(false);
+    const [confirmBlock, setConfirmBlock] = useState(false);
+    const { data: blockedList } = useBlockedUsers();
+    const { mutate: blockUser, isPending: isBlocking } = useBlockUser();
+    const { mutate: unblockUser, isPending: isUnblocking } = useUnblockUser();
+    const isBlocked = !!blockedList?.some((b) => b.blocked_id === id);
 
     const { data: reviews } = useQuery({
         queryKey: ["reviews", id],
@@ -73,22 +84,72 @@ export default function UserProfilePage({ params }: Props) {
                         </p>
                     </div>
                     {me && me.id !== id && (
-                        <button
-                            onClick={() => setReportOpen(true)}
-                            className="shrink-0 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
-                        >
-                            <Flag className="h-3.5 w-3.5" />
-                            Пожаловаться
-                        </button>
+                        <div className="shrink-0 flex flex-col gap-1.5 items-stretch sm:items-end">
+                            <button
+                                onClick={() => setReportOpen(true)}
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
+                            >
+                                <Flag className="h-3.5 w-3.5" />
+                                Пожаловаться
+                            </button>
+                            {isBlocked ? (
+                                <button
+                                    onClick={() => unblockUser(id)}
+                                    disabled={isUnblocking}
+                                    className="flex items-center gap-1.5 text-xs text-amber-700 hover:text-amber-900 transition-colors px-2 py-1 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/20 disabled:opacity-60"
+                                >
+                                    {isUnblocking ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <ShieldOff className="h-3.5 w-3.5" />
+                                    )}
+                                    Разблокировать
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setConfirmBlock(true)}
+                                    disabled={isBlocking}
+                                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 disabled:opacity-60"
+                                >
+                                    {isBlocking ? (
+                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    ) : (
+                                        <Ban className="h-3.5 w-3.5" />
+                                    )}
+                                    Заблокировать
+                                </button>
+                            )}
+                        </div>
                     )}
                 </CardContent>
             </Card>
+
+            {isBlocked && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-3 text-sm text-amber-800 dark:text-amber-200">
+                    Вы заблокировали этого пользователя. Вы не сможете писать,
+                    звонить или арендовать у него, пока не разблокируете.
+                </div>
+            )}
 
             <ReportModal
                 open={reportOpen}
                 onClose={() => setReportOpen(false)}
                 type="USER"
                 targetId={id}
+            />
+
+            <ConfirmDialog
+                open={confirmBlock}
+                title="Заблокировать пользователя?"
+                description="Вы не сможете писать, звонить или арендовать у этого пользователя, а он — у вас. Это можно отменить в любой момент."
+                isPending={isBlocking}
+                confirmLabel="Заблокировать"
+                onConfirm={() => {
+                    blockUser(id, {
+                        onSuccess: () => setConfirmBlock(false),
+                    });
+                }}
+                onCancel={() => setConfirmBlock(false)}
             />
 
             {/* Объявления пользователя */}

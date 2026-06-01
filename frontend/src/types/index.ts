@@ -56,6 +56,8 @@ export interface Listing {
     views_count: number;
     rating_avg: string | null;
     reviews_count: number;
+    is_hidden?: boolean;
+    hidden_at?: string | null;
     created_at: string;
     updated_at: string;
     images: ListingImage[];
@@ -124,4 +126,38 @@ export interface RentalRequest {
     reviews?: Review[];
     qr_token?: string;
     return_images: string[];
+    dispute?: Pick<Dispute, "id" | "status"> | null;
+}
+
+export type DisputeStatus =
+    | "OPEN"
+    | "RESOLVED_FOR_RENTER"
+    | "RESOLVED_FOR_OWNER"
+    | "RESOLVED_SPLIT"
+    | "REJECTED";
+
+export interface Dispute {
+    id: string;
+    rental_request_id: string;
+    opened_by_id: string;
+    reason: string;
+    description: string | null;
+    renter_evidence: string[];
+    owner_evidence: string[];
+    status: DisputeStatus;
+    admin_note: string | null;
+    deposit_to_renter: number | null;
+    resolved_at: string | null;
+    created_at: string;
+    updated_at: string;
+    rentalRequest?: RentalRequest;
+    openedBy?: Pick<User, "id" | "name" | "avatar_url">;
+}
+
+export interface BlockedUser {
+    id: string;
+    blocker_id: string;
+    blocked_id: string;
+    created_at: string;
+    blocked: Pick<User, "id" | "name" | "avatar_url">;
 }

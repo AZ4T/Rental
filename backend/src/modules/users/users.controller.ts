@@ -1,10 +1,12 @@
 import {
     Controller,
+    Delete,
     Get,
     Patch,
     Param,
     ParseUUIDPipe,
     Body,
+    Post,
     UseGuards,
     Req,
 } from '@nestjs/common';
@@ -31,6 +33,24 @@ export class UsersController {
     @Patch('me')
     updateMe(@Req() req: AuthRequest, @Body() dto: UpdateProfileDto) {
         return this.usersService.updateProfile(req.user.userId, dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me/blocked')
+    getBlocked(@Req() req: AuthRequest) {
+        return this.usersService.getBlockedUsers(req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':id/block')
+    block(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
+        return this.usersService.blockUser(req.user.userId, id);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':id/block')
+    unblock(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
+        return this.usersService.unblockUser(req.user.userId, id);
     }
 
     @Get(':id')

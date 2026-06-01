@@ -68,6 +68,9 @@ model User {
   reports        Report[]
   refresh_tokens       RefreshToken[]
   password_reset_tokens PasswordResetToken[]
+  disputes_opened       Dispute[]    @relation("DisputeOpener")
+  blocks_made           UserBlock[]  @relation("Blocker")
+  blocked_by            UserBlock[]  @relation("Blocked")
 }
 
 model RefreshToken {
@@ -142,6 +145,8 @@ model Listing {
   views_count   Int      @default(0)
   rating_avg    Decimal? @db.Decimal(3, 2)
   reviews_count Int      @default(0)
+  is_hidden     Boolean  @default(false)
+  hidden_at     DateTime?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -153,6 +158,7 @@ model Listing {
 
   @@index([owner_id])
   @@index([category_id])
+  @@index([is_hidden])
 }
 
 model ListingImage {
@@ -197,9 +203,53 @@ model RentalRequest {
 
   reviews      Review[]
   transactions Transaction[]
+  dispute      Dispute?
 
   @@index([listing_id])
   @@index([renter_id])
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED_FOR_RENTER   // full deposit returned to renter
+  RESOLVED_FOR_OWNER    // full deposit kept by owner
+  RESOLVED_SPLIT        // partial split
+  REJECTED              // admin found no grounds
+}
+
+model Dispute {
+  id                String        @id @default(uuid()) @db.Uuid
+  rental_request_id String        @unique @db.Uuid
+  opened_by_id      String        @db.Uuid
+  reason            String        @db.VarChar(255)
+  description       String?
+  renter_evidence   String[]      @default([])
+  owner_evidence    String[]      @default([])
+  status            DisputeStatus @default(OPEN)
+  admin_note        String?
+  deposit_to_renter Decimal?      @db.Decimal(10, 2)
+  resolved_at       DateTime?
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+
+  rentalRequest RentalRequest @relation(fields: [rental_request_id], references: [id], onDelete: Cascade)
+  openedBy      User          @relation("DisputeOpener", fields: [opened_by_id], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model UserBlock {
+  id         String   @id @default(uuid()) @db.Uuid
+  blocker_id String   @db.Uuid
+  blocked_id String   @db.Uuid
+  created_at DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blocker_id], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blocked_id], references: [id], onDelete: Cascade)
+
+  @@unique([blocker_id, blocked_id])
+  @@index([blocker_id])
+  @@index([blocked_id])
 }
 
 model Transaction {

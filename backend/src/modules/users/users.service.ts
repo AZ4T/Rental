@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -76,5 +76,68 @@ export class UsersService {
                 created_at: true,
             },
         });
+    }
+
+    async blockUser(blockerId: string, blockedId: string) {
+        if (blockerId === blockedId) {
+            throw new BadRequestException('Нельзя заблокировать самого себя');
+        }
+        const target = await this.prisma.user.findUnique({ where: { id: blockedId } });
+        if (!target) throw new NotFoundException('Пользователь не найден');
+
+        try {
+            await this.prisma.userBlock.create({
+                data: { blocker_id: blockerId, blocked_id: blockedId },
+            });
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                throw new ConflictException('Уже заблокирован');
+            }
+            throw e;
+        }
+        return { ok: true };
+    }
+
+    async unblockUser(blockerId: string, blockedId: string) {
+        const block = await this.prisma.userBlock.findUnique({
+            where: { blocker_id_blocked_id: { blocker_id: blockerId, blocked_id: blockedId } },
+        });
+        if (!block) throw new NotFoundException('Пользователь не заблокирован');
+
+        await this.prisma.userBlock.delete({
+            where: { blocker_id_blocked_id: { blocker_id: blockerId, blocked_id: blockedId } },
+        });
+        return { ok: true };
+    }
+
+    async getBlockedUsers(userId: string) {
+        return this.prisma.userBlock.findMany({
+            where: { blocker_id: userId },
+            include: {
+                blocked: {
+                    select: { id: true, name: true, avatar_url: true, email: true },
+                },
+            },
+            orderBy: { created_at: 'desc' },
+        });
+    }
+
+    /**
+     * Returns true when EITHER side has blocked the other — used to gate
+     * interactions (chat, calls, rentals). Symmetric: if A blocks B, B also
+     * can't initiate with A.
+     */
+    async isBlockedEitherWay(userAId: string, userBId: string): Promise<boolean> {
+        if (userAId === userBId) return false;
+        const block = await this.prisma.userBlock.findFirst({
+            where: {
+                OR: [
+                    { blocker_id: userAId, blocked_id: userBId },
+                    { blocker_id: userBId, blocked_id: userAId },
+                ],
+            },
+            select: { id: true },
+        });
+        return !!block;
     }
 }
