@@ -36,8 +36,13 @@ import {
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { NavBadge } from "@/components/nav-badge";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { useTranslations } from "next-intl";
 
 export function Navbar() {
+    const t = useTranslations("Nav");
+    const tCommon = useTranslations("Common");
+    const tAuth = useTranslations("Auth");
     const { user, isAuthenticated } = useAuthStore();
     const { mutate: logout } = useLogout();
     const { data: incomingCount } = useIncomingRentalsCount();
@@ -76,7 +81,7 @@ export function Navbar() {
                         <input
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Поиск..."
+                            placeholder={`${tCommon("search")}...`}
                             className="pl-9 pr-4 py-1.5 text-sm rounded-full border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring w-48 focus:w-64 transition-all"
                         />
                     </form>
@@ -87,7 +92,7 @@ export function Navbar() {
                             href="/listings"
                             className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
-                            Объявления
+                            {t("listings")}
                         </Link>
                         {isAuthenticated && (
                             <>
@@ -96,7 +101,7 @@ export function Navbar() {
                                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors relative inline-flex items-center gap-1.5"
                                 >
                                     <Inbox className="h-4 w-4" />
-                                    Заявки
+                                    {t("rentals")}
                                     <NavBadge count={incomingCount ?? 0} color="red" className="ml-0.5" />
                                 </Link>
                                 <Link
@@ -104,7 +109,7 @@ export function Navbar() {
                                     className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors relative inline-flex items-center gap-1.5"
                                 >
                                     <MessageCircle className="h-4 w-4" />
-                                    Сообщения
+                                    {t("messages")}
                                     <NavBadge count={unreadCount ?? 0} color="blue" className="ml-0.5" />
                                 </Link>
                             </>
@@ -113,6 +118,7 @@ export function Navbar() {
 
                     {/* Правая часть */}
                     <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                        <LocaleSwitcher />
                         {isAuthenticated && user ? (
                             <>
                                 {/* Prominent "Разместить" — больше, ярче, всегда заметно */}
@@ -123,7 +129,7 @@ export function Navbar() {
                                 >
                                     <Link href="/listings/create">
                                         <Plus className="h-4 w-4" />
-                                        Разместить
+                                        {t("post")}
                                     </Link>
                                 </Button>
                                 <DropdownMenu>
@@ -151,43 +157,43 @@ export function Navbar() {
                                         <DropdownMenuItem asChild>
                                             <Link href="/profile/me" className="cursor-pointer">
                                                 <UserIcon className="h-4 w-4 mr-2" />
-                                                Мой профиль
+                                                {t("profile")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/profile/my-listings" className="cursor-pointer">
                                                 <ClipboardList className="h-4 w-4 mr-2" />
-                                                Мои объявления
+                                                {t("myListings")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/rentals/my" className="cursor-pointer">
                                                 <ClipboardList className="h-4 w-4 mr-2" />
-                                                Мои заявки
+                                                {t("myRentals")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/favorites" className="cursor-pointer">
                                                 <Heart className="h-4 w-4 mr-2" />
-                                                Избранное
+                                                {t("favorites")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/wallet" className="cursor-pointer">
                                                 <Wallet className="h-4 w-4 mr-2" />
-                                                Кошелёк
+                                                {t("wallet")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/disputes" className="cursor-pointer">
                                                 <ShieldAlert className="h-4 w-4 mr-2" />
-                                                Мои споры
+                                                {t("disputes")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/profile/me/blocked" className="cursor-pointer">
                                                 <Ban className="h-4 w-4 mr-2" />
-                                                Заблокированные
+                                                {t("blocked")}
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
@@ -202,26 +208,26 @@ export function Navbar() {
                                             {theme === "dark" ? (
                                                 <>
                                                     <Sun className="h-4 w-4 mr-2" />
-                                                    Светлая тема
+                                                    {t("themeLight")}
                                                 </>
                                             ) : (
                                                 <>
                                                     <Moon className="h-4 w-4 mr-2" />
-                                                    Тёмная тема
+                                                    {t("themeDark")}
                                                 </>
                                             )}
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
                                             <Link href="/about" className="cursor-pointer">
                                                 <Info className="h-4 w-4 mr-2" />
-                                                О платформе
+                                                {t("about")}
                                             </Link>
                                         </DropdownMenuItem>
                                         {user.role === "ADMIN" && (
                                             <DropdownMenuItem asChild>
                                                 <Link href="/admin" className="cursor-pointer">
                                                     <ShieldCheck className="h-4 w-4 mr-2" />
-                                                    Админ панель
+                                                    {t("admin")}
                                                 </Link>
                                             </DropdownMenuItem>
                                         )}
@@ -237,7 +243,7 @@ export function Navbar() {
                                                 setTimeout(() => logout(), 0);
                                             }}
                                         >
-                                            Выйти
+                                            {t("logout")}
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -254,11 +260,11 @@ export function Navbar() {
                                     <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                                 </Button>
                                 <Button variant="ghost" asChild size="sm">
-                                    <Link href="/auth/login">Войти</Link>
+                                    <Link href="/auth/login">{tAuth("login")}</Link>
                                 </Button>
                                 <Button asChild size="sm">
                                     <Link href="/auth/register">
-                                        Регистрация
+                                        {tAuth("register")}
                                     </Link>
                                 </Button>
                             </div>
@@ -292,7 +298,7 @@ export function Navbar() {
                                 <input
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Поиск..."
+                                    placeholder={`${tCommon("search")}...`}
                                     className="w-full pl-9 pr-4 py-2 text-sm rounded-full border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
                                 />
                             </div>
@@ -304,7 +310,7 @@ export function Navbar() {
                                 onClick={() => setMobileOpen(false)}
                                 className="py-2 text-sm text-gray-600 dark:text-gray-300"
                             >
-                                Объявления
+                                {t("listings")}
                             </Link>
                             {isAuthenticated && (
                                 <>
@@ -313,14 +319,14 @@ export function Navbar() {
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
-                                        Мои заявки
+                                        {t("myRentals")}
                                     </Link>
                                     <Link
                                         href="/rentals/incoming"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
                                     >
-                                        Входящие заявки
+                                        {t("incomingRentals")}
                                         <NavBadge count={incomingCount ?? 0} color="red" />
                                     </Link>
                                     <Link
@@ -328,7 +334,7 @@ export function Navbar() {
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300 flex items-center gap-2"
                                     >
-                                        Сообщения
+                                        {t("messages")}
                                         <NavBadge count={unreadCount ?? 0} color="blue" />
                                     </Link>
                                     <Link
@@ -336,28 +342,28 @@ export function Navbar() {
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
-                                        Избранное
+                                        {t("favorites")}
                                     </Link>
                                     <Link
                                         href="/wallet"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
-                                        Кошелёк
+                                        {t("wallet")}
                                     </Link>
                                     <Link
                                         href="/listings/create"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm font-semibold text-blue-600"
                                     >
-                                        + Разместить объявление
+                                        + {t("post")}
                                     </Link>
                                     <Link
                                         href="/about"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm text-gray-600 dark:text-gray-300"
                                     >
-                                        О платформе
+                                        {t("about")}
                                     </Link>
                                 </>
                             )}
@@ -368,14 +374,14 @@ export function Navbar() {
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm"
                                     >
-                                        Войти
+                                        {tAuth("login")}
                                     </Link>
                                     <Link
                                         href="/auth/register"
                                         onClick={() => setMobileOpen(false)}
                                         className="py-2 text-sm"
                                     >
-                                        Регистрация
+                                        {tAuth("register")}
                                     </Link>
                                 </>
                             )}
@@ -386,12 +392,12 @@ export function Navbar() {
                                 {theme === "dark" ? (
                                     <>
                                         <Sun className="h-4 w-4" />
-                                        Светлая тема
+                                        {t("themeLight")}
                                     </>
                                 ) : (
                                     <>
                                         <Moon className="h-4 w-4" />
-                                        Тёмная тема
+                                        {t("themeDark")}
                                     </>
                                 )}
                             </button>

@@ -11,6 +11,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { useTranslations } from "next-intl";
 
 const loginSchema = z.object({
     email: z.string().email("Введите корректный email"),
@@ -20,6 +21,8 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 function LoginForm() {
+    const t = useTranslations("Auth");
+    const tHome = useTranslations("Home");
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get("redirect");
     const { mutate: login, isPending } = useLogin(redirectTo);
@@ -49,9 +52,7 @@ function LoginForm() {
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
                     <h1 className="text-4xl font-bold mb-3">Rental</h1>
-                    <p className="text-lg text-white/80">
-                        Арендуй что угодно, когда угодно
-                    </p>
+                    <p className="text-lg text-white/80">{tHome("title")}</p>
                 </div>
             </div>
 
@@ -67,15 +68,15 @@ function LoginForm() {
 
                     <div>
                         <h2 className="text-3xl font-bold text-foreground">
-                            Вход
+                            {t("login")}
                         </h2>
                         <p className="text-muted-foreground mt-2">
-                            Нет аккаунта?{" "}
+                            {t("noAccount")}{" "}
                             <Link
                                 href="/auth/register"
                                 className="text-blue-600 hover:underline font-medium"
                             >
-                                Зарегистрироваться
+                                {t("registerLong")}
                             </Link>
                         </p>
                     </div>
@@ -105,7 +106,7 @@ function LoginForm() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Пароль</FieldLabel>
+                                    <FieldLabel>{t("password")}</FieldLabel>
                                     <Input
                                         {...field}
                                         type="password"
@@ -121,7 +122,7 @@ function LoginForm() {
                                 href="/auth/forgot-password"
                                 className="text-sm text-blue-600 hover:underline"
                             >
-                                Забыли пароль?
+                                {t("forgotPassword")}
                             </Link>
                         </div>
                         <Button
@@ -129,7 +130,7 @@ function LoginForm() {
                             className="w-full h-11"
                             disabled={isPending}
                         >
-                            {isPending ? "Входим..." : "Войти"}
+                            {isPending ? t("loginPending") : t("loginAction")}
                         </Button>
                     </form>
                 </div>
