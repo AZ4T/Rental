@@ -407,6 +407,11 @@
     "Chat": {
         "title": "Messages",
         "noChats": "No chats yet",
+        "noMessages": "No messages",
+        "noMessagesHint": "Chats appear after a rental request is approved",
+        "callPreviewCompleted": "📞 Call {duration}",
+        "callPreviewRejected": "📵 Call rejected",
+        "callPreviewMissed": "📵 Missed call",
         "typeMessage": "Type a message...",
         "send": "Send",
         "newMessages": "New messages",

@@ -407,6 +407,11 @@
     "Chat": {
         "title": "Сообщения",
         "noChats": "Чатов пока нет",
+        "noMessages": "Нет сообщений",
+        "noMessagesHint": "Чаты появятся после одобрения заявки на аренду",
+        "callPreviewCompleted": "📞 Звонок {duration}",
+        "callPreviewRejected": "📵 Звонок отклонён",
+        "callPreviewMissed": "📵 Пропущенный звонок",
         "typeMessage": "Введите сообщение...",
         "send": "Отправить",
         "newMessages": "Новые сообщения",

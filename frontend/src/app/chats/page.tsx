@@ -8,25 +8,30 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useTranslations } from "next-intl";
 
 function getOtherParticipant(chat: Chat, userId: string) {
     return chat.participant1_id === userId ? chat.participant2 : chat.participant1;
 }
 
-function formatMessagePreview(msg: { content: string; type?: string }) {
+function formatMessagePreview(
+    msg: { content: string; type?: string },
+    t: (key: string, params?: Record<string, string | number>) => string,
+) {
     if (msg.type !== "call") return msg.content;
     try {
         const d = JSON.parse(msg.content) as { outcome: string; duration?: number };
         const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-        if (d.outcome === "completed") return `📞 Звонок ${fmt(d.duration ?? 0)}`;
-        if (d.outcome === "rejected") return "📵 Звонок отклонён";
-        return "📵 Пропущенный звонок";
+        if (d.outcome === "completed") return t("callPreviewCompleted", { duration: fmt(d.duration ?? 0) });
+        if (d.outcome === "rejected") return t("callPreviewRejected");
+        return t("callPreviewMissed");
     } catch {
         return msg.content;
     }
 }
 
 export default function ChatsPage() {
+    const t = useTranslations("Chat");
     const { user } = useAuthStore();
     const { data: chats, isLoading } = useMyChats(!!user);
 
@@ -44,15 +49,15 @@ export default function ChatsPage() {
         return (
             <div className="flex flex-col items-center justify-center py-32 text-center text-gray-400">
                 <MessageCircle className="h-12 w-12 mb-4 opacity-30" />
-                <p className="text-lg font-medium">Нет сообщений</p>
-                <p className="text-sm mt-1">Чаты появятся после одобрения заявки на аренду</p>
+                <p className="text-lg font-medium">{t("noMessages")}</p>
+                <p className="text-sm mt-1">{t("noMessagesHint")}</p>
             </div>
         );
     }
 
     return (
         <div className="max-w-2xl mx-auto space-y-2">
-            <h1 className="text-2xl font-bold mb-6">Сообщения</h1>
+            <h1 className="text-2xl font-bold mb-6">{t("title")}</h1>
             {chats.map((chat) => {
                 const other = getOtherParticipant(chat, user!.id);
                 const lastMessage = chat.messages[0];
@@ -82,7 +87,7 @@ export default function ChatsPage() {
                                     )}
                                 </div>
                                 <p className={`text-sm truncate mt-0.5 ${unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                                    {lastMessage ? formatMessagePreview(lastMessage) : "Нет сообщений"}
+                                    {lastMessage ? formatMessagePreview(lastMessage, t) : t("noMessages")}
                                 </p>
                             </div>
                             {unread > 0 && (

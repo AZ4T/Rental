@@ -407,6 +407,11 @@
     "Chat": {
         "title": "Хабарлар",
         "noChats": "Әзірге чаттар жоқ",
+        "noMessages": "Хабарламалар жоқ",
+        "noMessagesHint": "Жалдау өтінімі мақұлданғаннан кейін чаттар пайда болады",
+        "callPreviewCompleted": "📞 Қоңырау {duration}",
+        "callPreviewRejected": "📵 Қоңырау қабылданбаған",
+        "callPreviewMissed": "📵 Өтіп кеткен қоңырау",
         "typeMessage": "Хабарламаны енгізіңіз...",
         "send": "Жіберу",
         "newMessages": "Жаңа хабарламалар",
