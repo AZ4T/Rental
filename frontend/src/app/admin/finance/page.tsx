@@ -26,12 +26,7 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
-
-const SOURCE_LABEL: Record<PlatformIncomeSource, string> = {
-    COMMISSION: "Комиссия",
-    PROMOTION: "Продвижение",
-    PREMIUM: "Premium",
-};
+import { useTranslations } from "next-intl";
 
 const SOURCE_COLOR: Record<PlatformIncomeSource, string> = {
     COMMISSION: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
@@ -40,6 +35,12 @@ const SOURCE_COLOR: Record<PlatformIncomeSource, string> = {
 };
 
 export default function AdminFinancePage() {
+    const t = useTranslations("Admin");
+    const SOURCE_LABEL: Record<PlatformIncomeSource, string> = {
+        COMMISSION: t("incomeCommission"),
+        PROMOTION: t("incomePromotion"),
+        PREMIUM: t("incomePremium"),
+    };
     const { user } = useAuthStore();
     const router = useRouter();
 
@@ -79,14 +80,14 @@ export default function AdminFinancePage() {
                     </Link>
                 </Button>
                 <Coins className="h-6 w-6 text-blue-600" />
-                <h1 className="text-2xl font-bold">Финансы платформы</h1>
+                <h1 className="text-2xl font-bold">{t("financeTitle")}</h1>
             </div>
 
             {/* Total */}
             <Card className="bg-gradient-to-br from-blue-600 to-blue-800 text-white border-0">
                 <CardContent className="p-6 flex items-center justify-between">
                     <div>
-                        <p className="text-sm opacity-80">Всего за всё время</p>
+                        <p className="text-sm opacity-80">{t("totalIncome")}</p>
                         <p className="text-4xl font-bold tracking-tight mt-1">
                             {Number(data.total).toLocaleString()} ₸
                         </p>
@@ -119,7 +120,7 @@ export default function AdminFinancePage() {
                                     {Number(data.totals[s] ?? 0).toLocaleString()} ₸
                                 </p>
                                 <p className="text-xs text-muted-foreground mt-1">
-                                    {data.counts[s] ?? 0} операций
+                                    {t("operationsCount", { count: data.counts[s] ?? 0 })}
                                 </p>
                             </CardContent>
                         </Card>
@@ -134,7 +135,7 @@ export default function AdminFinancePage() {
                         <Crown className="h-8 w-8 text-purple-500" />
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Активных Premium
+                                {t("activePremium")}
                             </p>
                             <p className="text-2xl font-bold">
                                 {data.activePremium}
@@ -147,7 +148,7 @@ export default function AdminFinancePage() {
                         <Rocket className="h-8 w-8 text-amber-500" />
                         <div>
                             <p className="text-sm text-muted-foreground">
-                                Продвинутых объявлений
+                                {t("activePromoted")}
                             </p>
                             <p className="text-2xl font-bold">
                                 {data.activePromoted}
@@ -161,7 +162,7 @@ export default function AdminFinancePage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-base">
-                        Доход за последние 30 дней
+                        {t("incomeByDay")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -199,12 +200,12 @@ export default function AdminFinancePage() {
             {/* Recent transactions */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">Последние операции</CardTitle>
+                    <CardTitle className="text-base">{t("recentOperations")}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     {data.recent.length === 0 ? (
                         <p className="text-center text-muted-foreground py-6 text-sm">
-                            Пока пусто
+                            {t("emptyState")}
                         </p>
                     ) : (
                         <div className="divide-y">

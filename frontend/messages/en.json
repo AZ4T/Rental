@@ -402,7 +402,13 @@
         "addEvidence": "Add evidence",
         "resolutionTitle": "Admin decision",
         "refundToRenter": "Refunded to renter: {amount} ₸",
-        "emptyState": "No disputes yet"
+        "emptyState": "No disputes yet",
+        "openedOn": "Opened {date}",
+        "depositInfo": "Deposit: {amount} ₸",
+        "yourEvidence": "Your evidence ({count})",
+        "ownerEvidence": "Owner's evidence ({count})",
+        "renterEvidence": "Renter's evidence ({count})",
+        "depositRefundedAmount": "Refunded to renter: {amount} ₸"
     },
     "Chat": {
         "title": "Messages",
@@ -517,6 +523,7 @@
         "incomeByDay": "Income over the last 30 days",
         "recentOperations": "Recent operations",
         "operationsCount": "{count} operations",
+        "emptyState": "Empty for now",
         "categoryNamePlaceholder": "Category name",
         "categoryDelete": "Delete category?",
         "userDelete": "Delete user?",

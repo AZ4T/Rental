@@ -402,7 +402,13 @@
         "addEvidence": "Дәлел қосу",
         "resolutionTitle": "Әкімшіліктің шешімі",
         "refundToRenter": "Жалдаушыға қайтарылды: {amount} ₸",
-        "emptyState": "Әзірге даулар жоқ"
+        "emptyState": "Әзірге даулар жоқ",
+        "openedOn": "Ашылды {date}",
+        "depositInfo": "Кепілдік: {amount} ₸",
+        "yourEvidence": "Сіздің дәлелдер ({count})",
+        "ownerEvidence": "Иесінің дәлелдері ({count})",
+        "renterEvidence": "Жалдаушының дәлелдері ({count})",
+        "depositRefundedAmount": "Жалдаушыға қайтарылды: {amount} ₸"
     },
     "Chat": {
         "title": "Хабарлар",
@@ -517,6 +523,7 @@
         "incomeByDay": "Соңғы 30 күндегі кіріс",
         "recentOperations": "Соңғы операциялар",
         "operationsCount": "{count} операция",
+        "emptyState": "Әзірге бос",
         "categoryNamePlaceholder": "Санат атауы",
         "categoryDelete": "Санатты жою керек пе?",
         "userDelete": "Пайдаланушыны жою керек пе?",

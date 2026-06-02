@@ -19,38 +19,42 @@ import {
 import Link from "next/link";
 import { Dispute, DisputeStatus } from "@/types";
 import { toast } from "sonner";
-
-const STATUS_LABEL: Record<DisputeStatus, string> = {
-    OPEN: "На рассмотрении",
-    RESOLVED_FOR_RENTER: "Решено в пользу арендатора",
-    RESOLVED_FOR_OWNER: "Решено в пользу владельца",
-    RESOLVED_SPLIT: "Решено частично",
-    REJECTED: "Спор отклонён",
-};
+import { useTranslations } from "next-intl";
 
 function StatusBadge({ status }: { status: DisputeStatus }) {
+    const t = useTranslations("Dispute");
+    const labels: Record<DisputeStatus, string> = {
+        OPEN: t("statusOpen"),
+        RESOLVED_FOR_RENTER: t("statusForRenter"),
+        RESOLVED_FOR_OWNER: t("statusForOwner"),
+        RESOLVED_SPLIT: t("statusSplit"),
+        REJECTED: t("statusRejected"),
+    };
+
     if (status === "OPEN") {
         return (
             <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
-                <Clock className="h-3 w-3" /> {STATUS_LABEL.OPEN}
+                <Clock className="h-3 w-3" /> {labels.OPEN}
             </Badge>
         );
     }
     if (status === "REJECTED") {
         return (
             <Badge variant="outline" className="gap-1">
-                <XCircle className="h-3 w-3" /> {STATUS_LABEL.REJECTED}
+                <XCircle className="h-3 w-3" /> {labels.REJECTED}
             </Badge>
         );
     }
     return (
         <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 gap-1">
-            <CheckCircle className="h-3 w-3" /> {STATUS_LABEL[status]}
+            <CheckCircle className="h-3 w-3" /> {labels[status]}
         </Badge>
     );
 }
 
 function EvidenceUploader({ dispute, role }: { dispute: Dispute; role: "renter" | "owner" }) {
+    const t = useTranslations("Dispute");
+    const tRental = useTranslations("Rental");
     const ref = useRef<HTMLInputElement>(null);
     const { mutateAsync: uploadImage, isPending: isUploading } = useUploadImage();
     const { mutate: addEvidence, isPending: isAdding } = useAddDisputeEvidence();
@@ -60,7 +64,7 @@ function EvidenceUploader({ dispute, role }: { dispute: Dispute; role: "renter" 
         const files = Array.from(e.target.files ?? []);
         if (!files.length) return;
         if (current.length + files.length > 10) {
-            toast.error("Максимум 10 фото");
+            toast.error(tRental("returnPhotoMax"));
             if (ref.current) ref.current.value = "";
             return;
         }
@@ -98,13 +102,14 @@ function EvidenceUploader({ dispute, role }: { dispute: Dispute; role: "renter" 
                 ) : (
                     <Upload className="h-4 w-4 mr-2" />
                 )}
-                Добавить доказательства
+                {t("addEvidence")}
             </Button>
         </div>
     );
 }
 
 export default function MyDisputesPage() {
+    const t = useTranslations("Dispute");
     const { data, isLoading } = useMyDisputes();
     const { user } = useAuthStore();
     const [lightbox, setLightbox] = useState<string | null>(null);
@@ -121,13 +126,13 @@ export default function MyDisputesPage() {
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center gap-2">
                 <ShieldAlert className="h-6 w-6 text-amber-500" />
-                <h1 className="text-2xl font-bold">Мои споры</h1>
+                <h1 className="text-2xl font-bold">{t("title")}</h1>
             </div>
 
             {(!data || data.length === 0) && (
                 <div className="text-center py-20 text-gray-500">
                     <AlertTriangle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Споров пока нет</p>
+                    <p>{t("emptyState")}</p>
                 </div>
             )}
 
@@ -168,10 +173,9 @@ export default function MyDisputesPage() {
                                                 {dispute.reason}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Открыт{" "}
-                                                {new Date(dispute.created_at).toLocaleDateString("ru-RU")}
+                                                {t("openedOn", { date: new Date(dispute.created_at).toLocaleDateString() })}
                                                 {" • "}
-                                                Залог: {Number(rental.listing.deposit).toLocaleString()} ₸
+                                                {t("depositInfo", { amount: Number(rental.listing.deposit).toLocaleString() })}
                                             </p>
                                         </div>
                                     </div>
@@ -187,7 +191,7 @@ export default function MyDisputesPage() {
                                 <div className="grid sm:grid-cols-2 gap-3">
                                     <div>
                                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                                            Ваши доказательства ({myEvidence.length})
+                                            {t("yourEvidence", { count: myEvidence.length })}
                                         </p>
                                         {myEvidence.length > 0 ? (
                                             <div className="flex flex-wrap gap-1.5">
@@ -208,14 +212,16 @@ export default function MyDisputesPage() {
                                             </div>
                                         ) : (
                                             <p className="text-xs text-muted-foreground italic">
-                                                Нет фото
+                                                {t("noPhotos")}
                                             </p>
                                         )}
                                         <EvidenceUploader dispute={dispute} role={role} />
                                     </div>
                                     <div>
                                         <p className="text-xs font-medium text-muted-foreground mb-1">
-                                            Доказательства {iAmRenter ? "владельца" : "арендатора"} ({theirEvidence.length})
+                                            {iAmRenter
+                                                ? t("ownerEvidence", { count: theirEvidence.length })
+                                                : t("renterEvidence", { count: theirEvidence.length })}
                                         </p>
                                         {theirEvidence.length > 0 ? (
                                             <div className="flex flex-wrap gap-1.5">
@@ -236,7 +242,7 @@ export default function MyDisputesPage() {
                                             </div>
                                         ) : (
                                             <p className="text-xs text-muted-foreground italic">
-                                                Нет фото
+                                                {t("noPhotos")}
                                             </p>
                                         )}
                                     </div>
@@ -245,11 +251,11 @@ export default function MyDisputesPage() {
                                 {dispute.status !== "OPEN" && (
                                     <div className="text-sm bg-blue-50 dark:bg-blue-950/30 rounded p-2 border border-blue-100 dark:border-blue-900">
                                         <p className="font-medium text-blue-900 dark:text-blue-200">
-                                            Решение администрации
+                                            {t("resolutionTitle")}
                                         </p>
                                         {dispute.deposit_to_renter !== null && (
                                             <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                                Арендатору возвращено: {Number(dispute.deposit_to_renter).toLocaleString()} ₸
+                                                {t("depositRefundedAmount", { amount: Number(dispute.deposit_to_renter).toLocaleString() })}
                                             </p>
                                         )}
                                         {dispute.admin_note && (

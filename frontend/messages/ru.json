@@ -402,7 +402,13 @@
         "addEvidence": "Добавить доказательства",
         "resolutionTitle": "Решение администрации",
         "refundToRenter": "Арендатору возвращено: {amount} ₸",
-        "emptyState": "Споров пока нет"
+        "emptyState": "Споров пока нет",
+        "openedOn": "Открыт {date}",
+        "depositInfo": "Залог: {amount} ₸",
+        "yourEvidence": "Ваши доказательства ({count})",
+        "ownerEvidence": "Доказательства владельца ({count})",
+        "renterEvidence": "Доказательства арендатора ({count})",
+        "depositRefundedAmount": "Арендатору возвращено: {amount} ₸"
     },
     "Chat": {
         "title": "Сообщения",
@@ -517,6 +523,7 @@
         "incomeByDay": "Доход за последние 30 дней",
         "recentOperations": "Последние операции",
         "operationsCount": "{count} операций",
+        "emptyState": "Пока пусто",
         "categoryNamePlaceholder": "Название категории",
         "categoryDelete": "Удалить категорию?",
         "userDelete": "Удалить пользователя?",
