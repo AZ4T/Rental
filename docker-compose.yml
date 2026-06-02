@@ -76,7 +76,10 @@ services:
             - "3000:3000"
 
     mobile:
-        build: ../diplom-rental-mobile
+        build:
+            context: ../diplom-rental-mobile
+            args:
+                EXPO_PUBLIC_API_HOST: rental.bolatbekov.com
         container_name: rental_mobile
         restart: unless-stopped
         depends_on:
