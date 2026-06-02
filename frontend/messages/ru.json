@@ -240,7 +240,15 @@
         "errPriceRequired": "Укажите цену",
         "errDepositRequired": "Укажите залог",
         "errCityRequired": "Укажите город",
-        "errCategoryRequired": "Выберите категорию"
+        "errCategoryRequired": "Выберите категорию",
+        "blockTitle": "Заблокировать даты",
+        "blockHint": "Например, на время отпуска или ремонта. Никто не сможет арендовать в эти даты.",
+        "blockPickRange": "Выберите диапазон дат",
+        "blockReasonPlaceholder": "Причина (необязательно): отпуск, ремонт…",
+        "blockBtn": "Заблокировать",
+        "blockOk": "Даты заблокированы",
+        "blockError": "Не удалось заблокировать даты",
+        "blockedListTitle": "Заблокированные периоды"
     },
     "Rental": {
         "title": "Мои заявки",
@@ -528,6 +536,11 @@
         "callLabelCompleted": "Звонок {duration}",
         "callLabelRejected": "Звонок отклонён",
         "callLabelMissed": "Пропущенный звонок",
+        "templates": "Шаблоны ответов",
+        "templatesManage": "Управление шаблонами",
+        "templatesEmpty": "Шаблонов пока нет",
+        "templatesNewPlaceholder": "Новый шаблон",
+        "templatesDone": "Готово",
         "typeMessage": "Введите сообщение...",
         "send": "Отправить",
         "newMessages": "Новые сообщения",

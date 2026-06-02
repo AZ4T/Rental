@@ -240,7 +240,15 @@
         "errPriceRequired": "Бағаны көрсетіңіз",
         "errDepositRequired": "Кепілдікті көрсетіңіз",
         "errCityRequired": "Қаланы көрсетіңіз",
-        "errCategoryRequired": "Санатты таңдаңыз"
+        "errCategoryRequired": "Санатты таңдаңыз",
+        "blockTitle": "Күндерді бұғаттау",
+        "blockHint": "Мысалы, демалыс немесе жөндеу кезінде. Ешкім бұл күндерді жалдай алмайды.",
+        "blockPickRange": "Күндер аралығын таңдаңыз",
+        "blockReasonPlaceholder": "Себебі (міндетті емес): демалыс, жөндеу…",
+        "blockBtn": "Бұғаттау",
+        "blockOk": "Күндер бұғатталды",
+        "blockError": "Күндерді бұғаттау мүмкін болмады",
+        "blockedListTitle": "Бұғатталған кезеңдер"
     },
     "Rental": {
         "title": "Менің өтінімдерім",
@@ -528,6 +536,11 @@
         "callLabelCompleted": "Қоңырау {duration}",
         "callLabelRejected": "Қоңырау қабылданбады",
         "callLabelMissed": "Өтіп кеткен қоңырау",
+        "templates": "Жауап үлгілері",
+        "templatesManage": "Үлгілерді басқару",
+        "templatesEmpty": "Үлгілер әзірге жоқ",
+        "templatesNewPlaceholder": "Жаңа үлгі",
+        "templatesDone": "Дайын",
         "typeMessage": "Хабарламаны енгізіңіз...",
         "send": "Жіберу",
         "newMessages": "Жаңа хабарламалар",

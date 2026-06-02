@@ -82,9 +82,21 @@ export function useSimilarListings(id: string, categoryId: string) {
     });
 }
 
-export interface ListingAvailability {
+export interface BookedRange {
     start_date: string;
     end_date: string;
+}
+
+export interface BlockedDate {
+    id: string;
+    start_date: string;
+    end_date: string;
+    reason: string | null;
+}
+
+export interface ListingAvailability {
+    requests: BookedRange[];
+    blocked: BlockedDate[];
 }
 
 export function useListingAvailability(id: string) {
@@ -92,9 +104,35 @@ export function useListingAvailability(id: string) {
         queryKey: ["listing", id, "availability"],
         queryFn: () =>
             api
-                .get<ListingAvailability[]>(`/listings/${id}/availability`)
+                .get<ListingAvailability>(`/listings/${id}/availability`)
                 .then((r) => r.data),
         enabled: !!id,
+    });
+}
+
+export function useBlockDates(listingId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: { start_date: string; end_date: string; reason?: string }) =>
+            api
+                .post<BlockedDate>(`/listings/${listingId}/blocked-dates`, data)
+                .then((r) => r.data),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ["listing", listingId, "availability"] });
+        },
+    });
+}
+
+export function useUnblockDates(listingId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (blockId: string) =>
+            api
+                .delete(`/listings/${listingId}/blocked-dates/${blockId}`)
+                .then((r) => r.data),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ["listing", listingId, "availability"] });
+        },
     });
 }
 

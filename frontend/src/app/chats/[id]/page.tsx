@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import api from "@/services/api";
 import { useCall } from "@/providers/call-provider";
 import { useTranslations } from "next-intl";
+import { ChatTemplatesPopover } from "@/components/chat-templates-popover";
 
 function getOtherParticipant(chat: Chat, userId: string) {
     return chat.participant1_id === userId ? chat.participant2 : chat.participant1;
@@ -153,6 +154,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
             {/* Input */}
             <div className="flex items-center gap-2 pt-4 border-t mt-4">
+                <ChatTemplatesPopover onPick={(text) => setInput((cur) => cur ? `${cur} ${text}` : text)} />
                 <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}

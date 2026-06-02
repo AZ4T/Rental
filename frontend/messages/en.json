@@ -240,7 +240,15 @@
         "errPriceRequired": "Specify price",
         "errDepositRequired": "Specify deposit",
         "errCityRequired": "Specify city",
-        "errCategoryRequired": "Choose category"
+        "errCategoryRequired": "Choose category",
+        "blockTitle": "Block dates",
+        "blockHint": "E.g. for vacation or repairs. No one will be able to rent on these dates.",
+        "blockPickRange": "Pick a date range",
+        "blockReasonPlaceholder": "Reason (optional): vacation, repairs…",
+        "blockBtn": "Block",
+        "blockOk": "Dates blocked",
+        "blockError": "Failed to block dates",
+        "blockedListTitle": "Blocked periods"
     },
     "Rental": {
         "title": "My requests",
@@ -528,6 +536,11 @@
         "callLabelCompleted": "Call {duration}",
         "callLabelRejected": "Call rejected",
         "callLabelMissed": "Missed call",
+        "templates": "Quick replies",
+        "templatesManage": "Manage templates",
+        "templatesEmpty": "No templates yet",
+        "templatesNewPlaceholder": "New template",
+        "templatesDone": "Done",
         "typeMessage": "Type a message...",
         "send": "Send",
         "newMessages": "New messages",

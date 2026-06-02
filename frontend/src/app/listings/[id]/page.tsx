@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useRef } from "react";
-import { useListing, useListingAvailability } from "@/hooks/use-listings";
+import { useListing, useListingAvailability, useBlockDates, useUnblockDates } from "@/hooks/use-listings";
 import { saveRecentlyViewed } from "@/lib/recently-viewed";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import QRCode from "qrcode";
 import { useCompareStore } from "@/store/compare.store";
 import { toast } from "sonner";
 import { ReportModal } from "@/components/report-modal";
+import { BlockedDatesManager } from "@/components/blocked-dates-manager";
 import { useTranslations } from "next-intl";
 
 interface Props {
@@ -128,11 +129,16 @@ export default function ListingPage({ params }: Props) {
         if (listing) saveRecentlyViewed(listing);
     }, [listing]);
 
-    const bookedRanges =
-        availability?.map((r) => ({
+    const bookedRanges = [
+        ...(availability?.requests ?? []).map((r) => ({
             from: new Date(r.start_date),
             to: new Date(r.end_date),
-        })) ?? [];
+        })),
+        ...(availability?.blocked ?? []).map((b) => ({
+            from: new Date(b.start_date),
+            to: new Date(b.end_date),
+        })),
+    ];
 
     if (isLoading) {
         return (
@@ -484,6 +490,13 @@ export default function ListingPage({ params }: Props) {
                     )}
                 </CardContent>
             </Card>
+
+            {isOwner && (
+                <BlockedDatesManager
+                    listingId={listing.id}
+                    blocked={availability?.blocked ?? []}
+                />
+            )}
 
             <Card className="bg-blue-50 border-blue-100">
                 <CardContent className="p-4 flex items-start gap-3">
