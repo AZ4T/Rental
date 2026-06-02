@@ -19,19 +19,27 @@ import Image from "next/image";
 import { X, Upload, Loader2, Info } from "lucide-react";
 import { PLATFORM_FEE_RATE } from "@/lib/platform";
 import { CityInput } from "@/components/city-input";
+import { useTranslations } from "next-intl";
 
-const schema = z.object({
-    title: z.string().min(3, "Минимум 3 символа"),
-    description: z.string().min(10, "Минимум 10 символов"),
-    price: z.string().min(1, "Укажите цену"),
-    deposit: z.string().min(1, "Укажите залог"),
-    city: z.string().min(2, "Укажите город"),
-    category_id: z.string().min(1, "Выберите категорию"),
-});
-
-type CreateForm = z.infer<typeof schema>;
+type CreateForm = {
+    title: string;
+    description: string;
+    price: string;
+    deposit: string;
+    city: string;
+    category_id: string;
+};
 
 export default function CreateListingPage() {
+    const t = useTranslations("Listing");
+    const schema = z.object({
+        title: z.string().min(3, t("errMinTitle")),
+        description: z.string().min(10, t("errMinDesc")),
+        price: z.string().min(1, t("errPriceRequired")),
+        deposit: z.string().min(1, t("errDepositRequired")),
+        city: z.string().min(2, t("errCityRequired")),
+        category_id: z.string().min(1, t("errCategoryRequired")),
+    });
     const router = useRouter();
     const queryClient = useQueryClient();
     const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -67,12 +75,12 @@ export default function CreateListingPage() {
                 })
                 .then((r) => r.data),
         onSuccess: (data) => {
-            toast.success("Объявление создано!");
+            toast.success(t("createOk"));
             void queryClient.invalidateQueries({ queryKey: ["listings"] });
             router.push(`/listings/${data.id}`);
         },
         onError: (error: Error) => {
-            toast.error(error.message ?? "Ошибка создания");
+            toast.error(error.message ?? t("createError"));
         },
     });
 
@@ -84,7 +92,7 @@ export default function CreateListingPage() {
         // Проверка размера
         const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
         if (oversized.length > 0) {
-            toast.error("Файл слишком большой. Максимум 10 МБ");
+            toast.error(t("errFileTooBig"));
             return;
         }
 
@@ -92,12 +100,12 @@ export default function CreateListingPage() {
         const allowed = ["image/jpeg", "image/png", "image/webp"];
         const invalid = files.filter((f) => !allowed.includes(f.type));
         if (invalid.length > 0) {
-            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            toast.error(t("errFileType"));
             return;
         }
 
         if (imageUrls.length + files.length > 5) {
-            toast.error("Максимум 5 фотографий");
+            toast.error(t("errMaxPhotos"));
             return;
         }
 
@@ -119,19 +127,19 @@ export default function CreateListingPage() {
 
         const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
         if (oversized.length > 0) {
-            toast.error("Файл слишком большой. Максимум 10 МБ");
+            toast.error(t("errFileTooBig"));
             return;
         }
 
         const allowed = ["image/jpeg", "image/png", "image/webp"];
         const invalid = files.filter((f) => !allowed.includes(f.type));
         if (invalid.length > 0) {
-            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            toast.error(t("errFileType"));
             return;
         }
 
         if (imageUrls.length + files.length > 5) {
-            toast.error("Максимум 5 фотографий");
+            toast.error(t("errMaxPhotos"));
             return;
         }
 
@@ -171,7 +179,7 @@ export default function CreateListingPage() {
         <div className="max-w-2xl mx-auto">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-2xl">Новое объявление</CardTitle>
+                    <CardTitle className="text-2xl">{t("createNew")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <form
@@ -180,7 +188,7 @@ export default function CreateListingPage() {
                     >
                         {/* Фото */}
                         <div className="space-y-2">
-                            <Label>Фотографии</Label>
+                            <Label>{t("photos")}</Label>
                             {imageUrls.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
                                     {imageUrls.map((url) => (
@@ -235,10 +243,10 @@ export default function CreateListingPage() {
                                             <span
                                                 className={`text-sm font-medium ${isDragging ? "text-blue-600" : "text-gray-500"}`}
                                             >
-                                                Перетащи фото сюда
+                                                {t("uploadDrag")}
                                             </span>
                                             <span className="text-xs text-gray-400">
-                                                или нажми для выбора
+                                                {t("uploadClick")}
                                             </span>
                                         </>
                                     )}
@@ -260,8 +268,7 @@ export default function CreateListingPage() {
                             )}
                             {/* Текст СНАРУЖИ label */}
                             <p className="text-xs text-gray-400">
-                                Форматы: JPEG, PNG, WEBP · Максимум 10 МБ · До 5
-                                фото
+                                {t("uploadHelp")}
                             </p>
                         </div>
 
@@ -271,10 +278,10 @@ export default function CreateListingPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Название</FieldLabel>
+                                    <FieldLabel>{t("title")}</FieldLabel>
                                     <Input
                                         {...field}
-                                        placeholder="Велосипед горный Trek"
+                                        placeholder={t("titlePlaceholder")}
                                     />
                                     <FieldError errors={[fieldState.error]} />
                                 </Field>
@@ -287,11 +294,11 @@ export default function CreateListingPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Описание</FieldLabel>
+                                    <FieldLabel>{t("description")}</FieldLabel>
                                     <textarea
                                         {...field}
                                         rows={4}
-                                        placeholder="Опишите состояние и особенности вещи..."
+                                        placeholder={t("descPlaceholder")}
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     />
                                     <FieldError errors={[fieldState.error]} />
@@ -304,10 +311,10 @@ export default function CreateListingPage() {
                             <Info className="h-4 w-4 mt-0.5 shrink-0" />
                             <div>
                                 <p className="font-medium">
-                                    Платформа удерживает {(PLATFORM_FEE_RATE * 100).toFixed(0)}% с каждой оплаченной аренды
+                                    {t("feeBannerTitle", { percent: (PLATFORM_FEE_RATE * 100).toFixed(0) })}
                                 </p>
                                 <p className="opacity-80 mt-0.5">
-                                    Например, при цене 2 500 ₸/день вы получите {Math.round(2500 * (1 - PLATFORM_FEE_RATE)).toLocaleString()} ₸. Premium-подписка отменяет комиссию.
+                                    {t("feeBannerBody", { net: Math.round(2500 * (1 - PLATFORM_FEE_RATE)).toLocaleString() })}
                                 </p>
                             </div>
                         </div>
@@ -318,7 +325,7 @@ export default function CreateListingPage() {
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel>
-                                            Цена за день (₸)
+                                            {t("price")}
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -336,7 +343,7 @@ export default function CreateListingPage() {
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel>Залог (₸)</FieldLabel>
+                                        <FieldLabel>{t("deposit")}</FieldLabel>
                                         <Input
                                             {...field}
                                             type="number"
@@ -356,7 +363,7 @@ export default function CreateListingPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Город</FieldLabel>
+                                    <FieldLabel>{t("city")}</FieldLabel>
                                     <CityInput
                                         value={field.value}
                                         onChange={field.onChange}
@@ -372,13 +379,13 @@ export default function CreateListingPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Категория</FieldLabel>
+                                    <FieldLabel>{t("category")}</FieldLabel>
                                     <select
                                         {...field}
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     >
                                         <option value="">
-                                            Выберите категорию
+                                            {t("selectCategory")}
                                         </option>
                                         {categories?.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
@@ -398,14 +405,14 @@ export default function CreateListingPage() {
                                 className="flex-1"
                                 onClick={() => router.back()}
                             >
-                                Отмена
+                                {t("cancelBtn")}
                             </Button>
                             <Button
                                 type="submit"
                                 className="flex-1"
                                 disabled={isPending}
                             >
-                                {isPending ? "Создаём..." : "Опубликовать"}
+                                {isPending ? t("publishing") : t("publishBtn")}
                             </Button>
                         </div>
                     </form>

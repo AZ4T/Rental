@@ -19,23 +19,31 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { toast } from "sonner";
 import { X, Upload, Loader2 } from "lucide-react";
 import { CityInput } from "@/components/city-input";
+import { useTranslations } from "next-intl";
 
-const schema = z.object({
-    title: z.string().min(3, "Минимум 3 символа"),
-    description: z.string().min(10, "Минимум 10 символов"),
-    price: z.string().min(1, "Укажите цену"),
-    deposit: z.string().min(1, "Укажите залог"),
-    city: z.string().min(2, "Укажите город"),
-    category_id: z.string().min(1, "Выберите категорию"),
-});
-
-type EditForm = z.infer<typeof schema>;
+type EditForm = {
+    title: string;
+    description: string;
+    price: string;
+    deposit: string;
+    city: string;
+    category_id: string;
+};
 
 interface Props {
     params: Promise<{ id: string }>;
 }
 
 export default function EditListingPage({ params }: Props) {
+    const t = useTranslations("Listing");
+    const schema = z.object({
+        title: z.string().min(3, t("errMinTitle")),
+        description: z.string().min(10, t("errMinDesc")),
+        price: z.string().min(1, t("errPriceRequired")),
+        deposit: z.string().min(1, t("errDepositRequired")),
+        city: z.string().min(2, t("errCityRequired")),
+        category_id: z.string().min(1, t("errCategoryRequired")),
+    });
     const { id } = use(params);
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -98,13 +106,13 @@ export default function EditListingPage({ params }: Props) {
                 })
                 .then((r) => r.data),
         onSuccess: () => {
-            toast.success("Объявление обновлено!");
+            toast.success(t("updateOk"));
             void queryClient.invalidateQueries({ queryKey: ["listing", id] });
             void queryClient.invalidateQueries({ queryKey: ["listings"] });
             router.push(`/listings/${id}`);
         },
         onError: (error: Error) => {
-            toast.error(error.message ?? "Ошибка обновления");
+            toast.error(error.message ?? t("updateError"));
         },
     });
 
@@ -115,19 +123,19 @@ export default function EditListingPage({ params }: Props) {
 
         const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
         if (oversized.length > 0) {
-            toast.error("Файл слишком большой. Максимум 10 МБ");
+            toast.error(t("errFileTooBig"));
             return;
         }
 
         const allowed = ["image/jpeg", "image/png", "image/webp"];
         const invalid = files.filter((f) => !allowed.includes(f.type));
         if (invalid.length > 0) {
-            toast.error("Неверный формат. Только JPEG, PNG, WEBP");
+            toast.error(t("errFileType"));
             return;
         }
 
         if (imageUrls.length + files.length > 5) {
-            toast.error("Максимум 5 фотографий");
+            toast.error(t("errMaxPhotos"));
             return;
         }
 
@@ -156,7 +164,7 @@ export default function EditListingPage({ params }: Props) {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">
-                        Редактировать объявление
+                        {t("editTitle")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -166,7 +174,7 @@ export default function EditListingPage({ params }: Props) {
                     >
                         {/* Фото */}
                         <div className="space-y-2">
-                            <Label>Фотографии (до 5)</Label>
+                            <Label>{t("photos")}</Label>
                             <div className="flex flex-wrap gap-2">
                                 {imageUrls.map((url) => (
                                     <div
@@ -195,7 +203,7 @@ export default function EditListingPage({ params }: Props) {
                                             <>
                                                 <Upload className="h-5 w-5 text-gray-400" />
                                                 <span className="text-xs text-gray-400 mt-1">
-                                                    Добавить
+                                                    {t("addPhoto")}
                                                 </span>
                                             </>
                                         )}
@@ -217,8 +225,7 @@ export default function EditListingPage({ params }: Props) {
                                 )}
                             </div>
                             <p className="text-xs text-gray-400">
-                                Форматы: JPEG, PNG, WEBP · Максимум 10 МБ · До 5
-                                фото
+                                {t("uploadHelp")}
                             </p>
                         </div>
 
@@ -227,10 +234,10 @@ export default function EditListingPage({ params }: Props) {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Название</FieldLabel>
+                                    <FieldLabel>{t("title")}</FieldLabel>
                                     <Input
                                         {...field}
-                                        placeholder="Велосипед горный Trek"
+                                        placeholder={t("titlePlaceholder")}
                                     />
                                     <FieldError errors={[fieldState.error]} />
                                 </Field>
@@ -242,11 +249,11 @@ export default function EditListingPage({ params }: Props) {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Описание</FieldLabel>
+                                    <FieldLabel>{t("description")}</FieldLabel>
                                     <textarea
                                         {...field}
                                         rows={4}
-                                        placeholder="Опишите состояние и особенности вещи..."
+                                        placeholder={t("descPlaceholder")}
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     />
                                     <FieldError errors={[fieldState.error]} />
@@ -261,7 +268,7 @@ export default function EditListingPage({ params }: Props) {
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
                                         <FieldLabel>
-                                            Цена за день (₸)
+                                            {t("price")}
                                         </FieldLabel>
                                         <Input
                                             {...field}
@@ -279,7 +286,7 @@ export default function EditListingPage({ params }: Props) {
                                 control={control}
                                 render={({ field, fieldState }) => (
                                     <Field data-invalid={fieldState.invalid}>
-                                        <FieldLabel>Залог (₸)</FieldLabel>
+                                        <FieldLabel>{t("deposit")}</FieldLabel>
                                         <Input
                                             {...field}
                                             inputMode="numeric"
@@ -298,7 +305,7 @@ export default function EditListingPage({ params }: Props) {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Город</FieldLabel>
+                                    <FieldLabel>{t("city")}</FieldLabel>
                                     <CityInput
                                         value={field.value}
                                         onChange={field.onChange}
@@ -313,13 +320,13 @@ export default function EditListingPage({ params }: Props) {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Категория</FieldLabel>
+                                    <FieldLabel>{t("category")}</FieldLabel>
                                     <select
                                         {...field}
                                         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     >
                                         <option value="">
-                                            Выберите категорию
+                                            {t("selectCategory")}
                                         </option>
                                         {categories?.map((cat) => (
                                             <option key={cat.id} value={cat.id}>
@@ -339,14 +346,14 @@ export default function EditListingPage({ params }: Props) {
                                 className="flex-1"
                                 onClick={() => router.back()}
                             >
-                                Отмена
+                                {t("cancelBtn")}
                             </Button>
                             <Button
                                 type="submit"
                                 className="flex-1"
                                 disabled={isPending}
                             >
-                                {isPending ? "Сохраняем..." : "Сохранить"}
+                                {isPending ? t("saving") : t("saveBtn")}
                             </Button>
                         </div>
                     </form>
