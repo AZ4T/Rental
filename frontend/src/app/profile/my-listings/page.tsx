@@ -13,8 +13,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useListingAnalytics, useSetListingVisibility } from "@/hooks/use-listings";
 import { usePromoteListing } from "@/hooks/use-wallet";
+import { useTranslations } from "next-intl";
 
 function AnalyticsPanel({ listingId }: { listingId: string }) {
+    const t = useTranslations("Profile");
     const { data, isLoading } = useListingAnalytics(listingId);
 
     if (isLoading) {
@@ -30,19 +32,19 @@ function AnalyticsPanel({ listingId }: { listingId: string }) {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 mt-3 border-t">
             <div className="text-center">
-                <p className="text-xs text-muted-foreground">Просмотры</p>
+                <p className="text-xs text-muted-foreground">{t("analyticsViews")}</p>
                 <p className="font-bold text-lg">{data.views_count}</p>
             </div>
             <div className="text-center">
-                <p className="text-xs text-muted-foreground">Заявки</p>
+                <p className="text-xs text-muted-foreground">{t("analyticsRequests")}</p>
                 <p className="font-bold text-lg">{data.total_requests}</p>
             </div>
             <div className="text-center">
-                <p className="text-xs text-muted-foreground">Завершено</p>
+                <p className="text-xs text-muted-foreground">{t("analyticsCompleted")}</p>
                 <p className="font-bold text-lg text-green-600">{data.completed}</p>
             </div>
             <div className="text-center">
-                <p className="text-xs text-muted-foreground">Доход</p>
+                <p className="text-xs text-muted-foreground">{t("analyticsRevenue")}</p>
                 <p className="font-bold text-lg text-blue-600">{Number(data.revenue).toLocaleString()} ₸</p>
             </div>
         </div>
@@ -50,6 +52,8 @@ function AnalyticsPanel({ listingId }: { listingId: string }) {
 }
 
 export default function MyListingsPage() {
+    const t = useTranslations("Profile");
+    const tListing = useTranslations("Listing");
     const queryClient = useQueryClient();
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -65,11 +69,11 @@ export default function MyListingsPage() {
     const { mutate: deleteListing, isPending: isDeleting } = useMutation({
         mutationFn: (id: string) => api.delete(`/listings/${id}`),
         onSuccess: () => {
-            toast.success("Объявление удалено");
+            toast.success(t("listingDeleted"));
             setDeleteId(null);
             void queryClient.invalidateQueries({ queryKey: ["listings"] });
         },
-        onError: () => toast.error("Ошибка удаления"),
+        onError: () => toast.error(t("deleteError")),
     });
 
     const { mutate: setVisibility, isPending: isToggling } =
@@ -89,20 +93,20 @@ export default function MyListingsPage() {
     return (
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">Мои объявления</h1>
+                <h1 className="text-2xl font-bold">{t("myListingsTitle")}</h1>
                 <Button asChild size="sm">
                     <Link href="/listings/create">
                         <Plus className="h-4 w-4 mr-2" />
-                        Разместить
+                        {tListing("post")}
                     </Link>
                 </Button>
             </div>
 
             {data?.data.length === 0 && (
                 <div className="text-center py-20 text-gray-500">
-                    <p>У вас нет объявлений</p>
+                    <p>{t("noListings")}</p>
                     <Button asChild className="mt-4">
-                        <Link href="/listings/create">Создать первое</Link>
+                        <Link href="/listings/create">{t("createFirst")}</Link>
                     </Button>
                 </div>
             )}
@@ -125,7 +129,7 @@ export default function MyListingsPage() {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                            Нет фото
+                                            {t("noPhoto")}
                                         </div>
                                     )}
                                 </Link>
@@ -145,7 +149,7 @@ export default function MyListingsPage() {
                                                     variant="outline"
                                                     className="border-amber-400 text-amber-700 dark:text-amber-300"
                                                 >
-                                                    Скрыто
+                                                    {t("hiddenBadge")}
                                                 </Badge>
                                             )}
                                             {listing.promoted_until &&
@@ -183,7 +187,7 @@ export default function MyListingsPage() {
                                                 variant="outline"
                                                 size="sm"
                                                 className="border-amber-400 text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                                                title="Продвинуть на 7 дней"
+                                                title={t("promote7DaysTitle")}
                                                 onClick={() => setPromoteId(listing.id)}
                                             >
                                                 <Rocket className="h-4 w-4" />
@@ -211,8 +215,8 @@ export default function MyListingsPage() {
                                                 size="sm"
                                                 title={
                                                     listing.is_hidden
-                                                        ? "Показать в каталоге"
-                                                        : "Скрыть из каталога"
+                                                        ? t("showInCatalogTitle")
+                                                        : t("hideFromCatalogTitle")
                                                 }
                                                 disabled={
                                                     isToggling &&
@@ -229,8 +233,8 @@ export default function MyListingsPage() {
                                                             onSuccess: () => {
                                                                 toast.success(
                                                                     listing.is_hidden
-                                                                        ? "Объявление снова в каталоге"
-                                                                        : "Объявление скрыто",
+                                                                        ? t("listingShownAgain")
+                                                                        : t("listingHidden"),
                                                                 );
                                                                 setTogglingId(null);
                                                             },
@@ -238,7 +242,7 @@ export default function MyListingsPage() {
                                                                 toast.error(
                                                                     (e as Error)
                                                                         .message ??
-                                                                        "Ошибка",
+                                                                        t("deleteError"),
                                                                 );
                                                                 setTogglingId(null);
                                                             },
@@ -290,8 +294,8 @@ export default function MyListingsPage() {
 
             <ConfirmDialog
                 open={!!deleteId}
-                title="Удалить объявление?"
-                description="Объявление и все его фото будут удалены навсегда."
+                title={t("deleteListingTitle")}
+                description={t("deleteListingDesc")}
                 isPending={isDeleting}
                 onConfirm={() => {
                     if (deleteId) deleteListing(deleteId);
@@ -301,10 +305,10 @@ export default function MyListingsPage() {
 
             <ConfirmDialog
                 open={!!promoteId}
-                title="Продвинуть объявление?"
-                description="С баланса спишется 500 ₸. Объявление будет показываться в топе каталога 7 дней."
-                confirmLabel="Продвинуть за 500 ₸"
-                pendingLabel="Продвижение..."
+                title={t("promoteTitle")}
+                description={t("promoteDesc")}
+                confirmLabel={t("promoteConfirm")}
+                pendingLabel={t("promotePending")}
                 variant="default"
                 isPending={isPromoting}
                 onConfirm={() => {

@@ -15,8 +15,10 @@ import { useAuthStore } from "@/store/auth.store";
 import api from "@/services/api";
 import { Review } from "@/types";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function MyProfilePage() {
+    const t = useTranslations("Profile");
     const { data: user, isLoading } = useMe();
     const { mutate: updateProfile, isPending } = useUpdateProfile();
     const { mutateAsync: uploadImage, isPending: isUploading } =
@@ -70,7 +72,7 @@ export default function MyProfilePage() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Мой профиль</h1>
+            <h1 className="text-2xl font-bold">{t("myProfileTitle")}</h1>
 
             <Card>
                 <CardContent className="p-6">
@@ -124,7 +126,7 @@ export default function MyProfilePage() {
                     {/* Редактирование */}
                     <div className="space-y-4">
                         <div className="space-y-1">
-                            <Label>Имя</Label>
+                            <Label>{t("name")}</Label>
                             <Input
                                 defaultValue={user.name}
                                 onChange={(e) => setName(e.target.value)}
@@ -135,7 +137,7 @@ export default function MyProfilePage() {
                             onClick={handleSave}
                             disabled={isPending || !name.trim()}
                         >
-                            {isPending ? "Сохраняем..." : "Сохранить"}
+                            {isPending ? t("saving") : t("save")}
                         </Button>
                     </div>
                 </CardContent>
@@ -144,11 +146,11 @@ export default function MyProfilePage() {
             {/* Смена пароля */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-lg">Сменить пароль</CardTitle>
+                    <CardTitle className="text-lg">{t("changePasswordTitle")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-1">
-                        <Label>Текущий пароль</Label>
+                        <Label>{t("currentPassword")}</Label>
                         <Input
                             type="password"
                             value={currentPassword}
@@ -157,17 +159,17 @@ export default function MyProfilePage() {
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label>Новый пароль</Label>
+                        <Label>{t("newPassword")}</Label>
                         <Input
                             type="password"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Минимум 8 символов"
+                            placeholder={t("passwordMin8")}
                             minLength={8}
                         />
                     </div>
                     <div className="space-y-1">
-                        <Label>Повторите новый пароль</Label>
+                        <Label>{t("confirmNewPassword")}</Label>
                         <Input
                             type="password"
                             value={confirmPassword}
@@ -176,15 +178,15 @@ export default function MyProfilePage() {
                         />
                     </div>
                     {newPassword && confirmPassword && newPassword !== confirmPassword && (
-                        <p className="text-sm text-red-500">Пароли не совпадают</p>
+                        <p className="text-sm text-red-500">{t("passwordsDontMatch")}</p>
                     )}
                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                        После смены пароля вас выкинет — войдите заново с новым паролем.
+                        {t("changePasswordWarning")}
                     </p>
                     <Button
                         onClick={() => {
                             if (!currentPassword || newPassword !== confirmPassword || newPassword.length < 8) return;
-                            if (!confirm("После смены пароля все ваши сессии будут завершены. Продолжить?")) return;
+                            if (!confirm(t("changePasswordConfirm"))) return;
                             changePassword({ current_password: currentPassword, new_password: newPassword });
                         }}
                         disabled={
@@ -195,7 +197,7 @@ export default function MyProfilePage() {
                         }
                         variant="outline"
                     >
-                        {isChangingPassword ? "Сохраняем..." : "Сменить пароль"}
+                        {isChangingPassword ? t("saving") : t("changePassword")}
                     </Button>
                 </CardContent>
             </Card>
@@ -203,10 +205,10 @@ export default function MyProfilePage() {
             {/* Отзывы */}
             <div>
                 <h2 className="text-xl font-semibold mb-4">
-                    Отзывы ({reviews?.length ?? 0})
+                    {t("reviewsTitleCount", { count: reviews?.length ?? 0 })}
                 </h2>
                 {reviews?.length === 0 && (
-                    <p className="text-gray-500">Отзывов пока нет</p>
+                    <p className="text-gray-500">{t("noReviews")}</p>
                 )}
                 <div className="space-y-3">
                     {reviews?.map((review) => (

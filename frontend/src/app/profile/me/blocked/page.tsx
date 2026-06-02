@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBlockedUsers, useUnblockUser } from "@/hooks/use-blocks";
 import { Ban, Loader2, ShieldOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function BlockedUsersPage() {
+    const t = useTranslations("Profile");
     const { data, isLoading } = useBlockedUsers();
     const { mutate: unblock, isPending } = useUnblockUser();
 
@@ -23,12 +25,12 @@ export default function BlockedUsersPage() {
         <div className="max-w-2xl mx-auto space-y-6">
             <div className="flex items-center gap-2">
                 <Ban className="h-6 w-6 text-red-500" />
-                <h1 className="text-2xl font-bold">Заблокированные</h1>
+                <h1 className="text-2xl font-bold">{t("blockedListTitle")}</h1>
             </div>
 
             {(!data || data.length === 0) && (
                 <div className="text-center py-20 text-muted-foreground">
-                    <p>Список пуст</p>
+                    <p>{t("blockedListEmpty")}</p>
                 </div>
             )}
 
@@ -53,10 +55,9 @@ export default function BlockedUsersPage() {
                                         {b.blocked.name}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        Заблокирован{" "}
-                                        {new Date(b.created_at).toLocaleDateString(
-                                            "ru-RU",
-                                        )}
+                                        {t("blockedSince", {
+                                            date: new Date(b.created_at).toLocaleDateString(),
+                                        })}
                                     </p>
                                 </div>
                             </Link>
@@ -67,7 +68,7 @@ export default function BlockedUsersPage() {
                                 onClick={() => unblock(b.blocked.id)}
                             >
                                 <ShieldOff className="h-4 w-4 mr-1" />
-                                Разблокировать
+                                {t("unblock")}
                             </Button>
                         </CardContent>
                     </Card>
