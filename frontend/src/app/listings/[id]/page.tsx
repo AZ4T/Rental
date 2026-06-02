@@ -85,7 +85,7 @@ export default function ListingPage({ params }: Props) {
         listing?.category_id ?? "",
     );
 
-    const { add: addCompare, remove: removeCompare, has: inCompareStore, validate: validateCompare } = useCompareStore();
+    const { add: addCompare, remove: removeCompare, has: inCompareStore } = useCompareStore();
     const isFavorited = favorites?.some((f) => f.listing_id === id);
     const isOwner = user?.id === listing?.owner_id;
     const [heartAnimating, setHeartAnimating] = useState(false);
@@ -355,10 +355,16 @@ export default function ListingPage({ params }: Props) {
                                         toast.success(t("compareToastRemoved"));
                                         return;
                                     }
-                                    const error = validateCompare(listing);
-                                    if (error) { toast.error(error); return; }
-                                    addCompare(listing);
-                                    toast.success(t("compareToast"));
+                                    const result = addCompare(listing);
+                                    if (!result.ok) {
+                                        toast.error("Можно сравнивать не более 3 объявлений");
+                                        return;
+                                    }
+                                    if (result.reason === "category_switched") {
+                                        toast.info(`Сравнение сброшено — новая категория «${listing.category.name}»`);
+                                    } else {
+                                        toast.success(t("compareToast"));
+                                    }
                                 }}
                                 title={inCompare ? t("compareTooltipRemove") : t("compareTooltipAdd")}
                                 className={`flex items-center gap-1.5 text-sm transition-colors ${inCompare ? "text-blue-600" : "text-muted-foreground hover:text-foreground"}`}

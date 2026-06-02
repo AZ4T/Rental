@@ -25,15 +25,20 @@ export function ListingCard({ listing }: ListingCardProps) {
     const { mutate: addFavorite } = useAddFavorite();
     const { mutate: removeFavorite } = useRemoveFavorite();
     const [heartAnimating, setHeartAnimating] = useState(false);
-    const { add, remove, has, validate } = useCompareStore();
+    const { add, remove, has } = useCompareStore();
     const inCompare = has(listing.id);
 
     const handleCompare = (e: React.MouseEvent) => {
         e.preventDefault();
         if (inCompare) { remove(listing.id); return; }
-        const error = validate(listing);
-        if (error) { toast.error(error); return; }
-        add(listing);
+        const result = add(listing);
+        if (!result.ok) {
+            toast.error("Можно сравнивать не более 3 объявлений");
+            return;
+        }
+        if (result.reason === "category_switched") {
+            toast.info(`Сравнение сброшено — новый список в категории «${listing.category.name}»`);
+        }
     };
 
     const isFavorited = favorites?.some((f) => f.listing_id === listing.id);
