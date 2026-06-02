@@ -29,16 +29,17 @@ import {
     XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const STATUS_LABEL: Record<DisputeStatus, string> = {
-    OPEN: "Открыт",
-    RESOLVED_FOR_RENTER: "В пользу арендатора",
-    RESOLVED_FOR_OWNER: "В пользу владельца",
-    RESOLVED_SPLIT: "Разделён",
-    REJECTED: "Отклонён",
-};
+import { useTranslations } from "next-intl";
 
 function StatusBadge({ status }: { status: DisputeStatus }) {
+    const t = useTranslations("Dispute");
+    const STATUS_LABEL: Record<DisputeStatus, string> = {
+        OPEN: t("adminStatusOpen"),
+        RESOLVED_FOR_RENTER: t("adminStatusForRenter"),
+        RESOLVED_FOR_OWNER: t("adminStatusForOwner"),
+        RESOLVED_SPLIT: t("adminStatusSplit"),
+        REJECTED: t("adminStatusRejected"),
+    };
     if (status === "OPEN") {
         return (
             <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
@@ -61,6 +62,7 @@ function StatusBadge({ status }: { status: DisputeStatus }) {
 }
 
 function ResolveForm({ dispute }: { dispute: Dispute }) {
+    const t = useTranslations("Dispute");
     const deposit = Number(dispute.rentalRequest?.listing?.deposit ?? 0);
     const [outcome, setOutcome] = useState<DisputeStatus>("RESOLVED_FOR_RENTER");
     const [split, setSplit] = useState(Math.round(deposit / 2));
@@ -70,7 +72,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
     const handle = () => {
         if (outcome === "RESOLVED_SPLIT") {
             if (split < 0 || split > deposit) {
-                toast.error(`Сумма от 0 до ${deposit}`);
+                toast.error(t("adminAmountError", { max: deposit }));
                 return;
             }
         }
@@ -86,14 +88,14 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
     return (
         <div className="border-t pt-3 space-y-3">
             <div>
-                <Label className="mb-2 block">Решение</Label>
+                <Label className="mb-2 block">{t("adminDecisionLabel")}</Label>
                 <div className="grid grid-cols-2 gap-2">
                     {(
                         [
-                            ["RESOLVED_FOR_RENTER", "Вернуть залог арендатору"],
-                            ["RESOLVED_FOR_OWNER", "Залог остаётся владельцу"],
-                            ["RESOLVED_SPLIT", "Разделить"],
-                            ["REJECTED", "Отклонить спор"],
+                            ["RESOLVED_FOR_RENTER", t("adminDecisionForRenter")],
+                            ["RESOLVED_FOR_OWNER", t("adminDecisionForOwner")],
+                            ["RESOLVED_SPLIT", t("adminDecisionSplit")],
+                            ["REJECTED", t("adminDecisionReject")],
                         ] as [DisputeStatus, string][]
                     ).map(([value, label]) => (
                         <button
@@ -115,7 +117,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
             {outcome === "RESOLVED_SPLIT" && (
                 <div className="bg-gray-50 dark:bg-gray-900/40 rounded p-3 space-y-2">
                     <Label className="block">
-                        Возврат арендатору, ₸ (макс {deposit.toLocaleString()})
+                        {t("adminRefundRenterMax", { amount: deposit.toLocaleString() })}
                     </Label>
                     <Input
                         type="number"
@@ -125,14 +127,14 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
                         onChange={(e) => setSplit(Number(e.target.value))}
                     />
                     <p className="text-xs text-muted-foreground">
-                        Владельцу: {(deposit - split).toLocaleString()} ₸
+                        {t("adminToOwner", { amount: (deposit - split).toLocaleString() })}
                     </p>
                 </div>
             )}
 
             <div>
                 <Label htmlFor={`note-${dispute.id}`} className="mb-2 block">
-                    Заметка (необязательно)
+                    {t("adminNoteLabel")}
                 </Label>
                 <textarea
                     id={`note-${dispute.id}`}
@@ -141,7 +143,7 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
                     maxLength={1000}
                     rows={2}
                     className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
-                    placeholder="Что увидели на фото, обоснование решения…"
+                    placeholder={t("adminNotePlaceholder")}
                 />
             </div>
 
@@ -151,15 +153,16 @@ function ResolveForm({ dispute }: { dispute: Dispute }) {
                 onClick={handle}
             >
                 {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Применить решение
+                {t("adminApply")}
             </Button>
         </div>
     );
 }
 
 function Gallery({ urls, onPick }: { urls: string[]; onPick: (u: string) => void }) {
+    const t = useTranslations("Dispute");
     if (!urls.length) {
-        return <p className="text-xs text-muted-foreground italic">Нет фото</p>;
+        return <p className="text-xs text-muted-foreground italic">{t("noPhotos")}</p>;
     }
     return (
         <div className="flex flex-wrap gap-1.5">
@@ -182,6 +185,7 @@ function Gallery({ urls, onPick }: { urls: string[]; onPick: (u: string) => void
 }
 
 export default function AdminDisputesPage() {
+    const t = useTranslations("Dispute");
     const { user } = useAuthStore();
     const router = useRouter();
     const [tab, setTab] = useState<"open" | "all">("open");
@@ -214,13 +218,13 @@ export default function AdminDisputesPage() {
                     </Link>
                 </Button>
                 <ShieldAlert className="h-6 w-6 text-amber-500" />
-                <h1 className="text-2xl font-bold">Споры</h1>
+                <h1 className="text-2xl font-bold">{t("adminTitle")}</h1>
             </div>
 
             <Tabs value={tab} onValueChange={(v) => setTab(v as "open" | "all")}>
                 <TabsList>
-                    <TabsTrigger value="open">Открытые</TabsTrigger>
-                    <TabsTrigger value="all">Все</TabsTrigger>
+                    <TabsTrigger value="open">{t("adminTabOpen")}</TabsTrigger>
+                    <TabsTrigger value="all">{t("adminTabAll")}</TabsTrigger>
                 </TabsList>
                 <TabsContent value={tab} className="mt-4">
                     {isLoading ? (
@@ -229,7 +233,7 @@ export default function AdminDisputesPage() {
                         </div>
                     ) : !data || data.length === 0 ? (
                         <div className="text-center py-20 text-muted-foreground">
-                            Споров нет
+                            {t("adminEmpty")}
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -247,7 +251,7 @@ export default function AdminDisputesPage() {
                                                         {r.listing.title}
                                                     </Link>
                                                     <p className="text-sm text-muted-foreground">
-                                                        Открыл:{" "}
+                                                        {t("adminOpenedBy")}:{" "}
                                                         <Link
                                                             className="hover:underline"
                                                             href={`/profile/${d.openedBy?.id}`}
@@ -255,14 +259,14 @@ export default function AdminDisputesPage() {
                                                             {d.openedBy?.name}
                                                         </Link>
                                                         {" • "}
-                                                        Залог:{" "}
+                                                        {t("adminDepositLabel")}:{" "}
                                                         {Number(
                                                             r.listing.deposit,
                                                         ).toLocaleString()}{" "}
                                                         ₸
                                                     </p>
                                                     <p className="text-xs text-muted-foreground">
-                                                        Арендатор:{" "}
+                                                        {t("adminRenter")}:{" "}
                                                         <Link
                                                             className="hover:underline"
                                                             href={`/profile/${r.renter?.id}`}
@@ -270,7 +274,7 @@ export default function AdminDisputesPage() {
                                                             {r.renter?.name}
                                                         </Link>
                                                         {" • "}
-                                                        {new Date(d.created_at).toLocaleString("ru-RU")}
+                                                        {new Date(d.created_at).toLocaleString()}
                                                     </p>
                                                 </div>
                                                 <StatusBadge status={d.status} />
@@ -288,8 +292,7 @@ export default function AdminDisputesPage() {
                                             <div className="grid sm:grid-cols-2 gap-3">
                                                 <div>
                                                     <p className="text-xs font-medium text-muted-foreground mb-1">
-                                                        Доказательства арендатора (
-                                                        {d.renter_evidence.length})
+                                                        {t("adminRenterEvidenceCount", { count: d.renter_evidence.length })}
                                                     </p>
                                                     <Gallery
                                                         urls={d.renter_evidence}
@@ -298,8 +301,7 @@ export default function AdminDisputesPage() {
                                                 </div>
                                                 <div>
                                                     <p className="text-xs font-medium text-muted-foreground mb-1">
-                                                        Доказательства владельца (
-                                                        {d.owner_evidence.length})
+                                                        {t("adminOwnerEvidenceCount", { count: d.owner_evidence.length })}
                                                     </p>
                                                     <Gallery
                                                         urls={d.owner_evidence}
@@ -311,7 +313,7 @@ export default function AdminDisputesPage() {
                                             {r.return_images?.length > 0 && (
                                                 <div>
                                                     <p className="text-xs font-medium text-muted-foreground mb-1">
-                                                        Фото возврата ({r.return_images.length})
+                                                        {t("adminReturnPhotos", { count: r.return_images.length })}
                                                     </p>
                                                     <Gallery
                                                         urls={r.return_images}
@@ -326,11 +328,11 @@ export default function AdminDisputesPage() {
                                                 <div className="border-t pt-3 text-sm space-y-1">
                                                     {d.deposit_to_renter !== null && (
                                                         <p>
-                                                            Арендатору:{" "}
+                                                            {t("adminToRenterLabel")}:{" "}
                                                             <span className="font-medium">
                                                                 {Number(d.deposit_to_renter).toLocaleString()} ₸
                                                             </span>
-                                                            {", владельцу: "}
+                                                            {", "}{t("adminToOwnerLabel")}:{" "}
                                                             <span className="font-medium">
                                                                 {(Number(r.listing.deposit) -
                                                                     Number(d.deposit_to_renter)

@@ -27,6 +27,7 @@ import {
     LineChart,
     Line,
 } from "recharts";
+import { useTranslations } from "next-intl";
 
 const LIMIT = 10;
 
@@ -46,6 +47,7 @@ interface AdminStats {
 }
 
 export default function AdminPage() {
+    const t = useTranslations("Admin");
     const { user } = useAuthStore();
     const router = useRouter();
     const queryClient = useQueryClient();
@@ -110,52 +112,52 @@ export default function AdminPage() {
         mutationFn: ({ id, status }: { id: string; status: string }) =>
             api.patch(`/reports/${id}/status`, { status }).then((r) => r.data),
         onSuccess: () => {
-            toast.success("Статус обновлён");
+            toast.success(t("statusUpdated"));
             void queryClient.invalidateQueries({ queryKey: ["admin", "reports"] });
         },
-        onError: () => toast.error("Ошибка"),
+        onError: () => toast.error(t("errorGeneric")),
     });
 
     const { mutate: deleteUser, isPending: isDeletingUser } = useMutation({
         mutationFn: (id: string) => api.delete(`/admin/users/${id}`),
         onSuccess: () => {
-            toast.success("Пользователь удалён");
+            toast.success(t("userDeleted"));
             setDeleteUserDialog(null);
             void queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
         },
-        onError: () => toast.error("Ошибка удаления"),
+        onError: () => toast.error(t("errorDelete")),
     });
 
     const { mutate: deleteListing, isPending: isDeletingListing } = useMutation({
         mutationFn: (id: string) => api.delete(`/admin/listings/${id}`),
         onSuccess: () => {
-            toast.success("Объявление удалено");
+            toast.success(t("listingDeleted"));
             setDeleteListingDialog(null);
             void queryClient.invalidateQueries({ queryKey: ["admin", "listings"] });
             void queryClient.invalidateQueries({ queryKey: ["listings"] });
         },
-        onError: () => toast.error("Ошибка удаления"),
+        onError: () => toast.error(t("errorDelete")),
     });
 
     const { mutate: createCategory, isPending: isCreating } = useMutation({
         mutationFn: (name: string) =>
             api.post("/admin/categories", { name }).then((r) => r.data),
         onSuccess: () => {
-            toast.success("Категория создана");
+            toast.success(t("categoryCreated"));
             setNewCategory("");
             void queryClient.invalidateQueries({ queryKey: ["categories"] });
         },
-        onError: () => toast.error("Ошибка создания"),
+        onError: () => toast.error(t("errorCreate")),
     });
 
     const { mutate: deleteCategory, isPending: isDeletingCategory } = useMutation({
         mutationFn: (id: string) => api.delete(`/admin/categories/${id}`),
         onSuccess: () => {
-            toast.success("Категория удалена");
+            toast.success(t("categoryDeleted"));
             setDeleteCategoryDialog(null);
             void queryClient.invalidateQueries({ queryKey: ["categories"] });
         },
-        onError: () => toast.error("Ошибка удаления"),
+        onError: () => toast.error(t("errorDelete")),
     });
 
     if (!user || user.role !== "ADMIN") {
@@ -169,18 +171,18 @@ export default function AdminPage() {
     return (
         <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-2">
-                <h1 className="text-2xl font-bold">Админ панель</h1>
+                <h1 className="text-2xl font-bold">{t("title")}</h1>
                 <div className="flex gap-2 flex-wrap">
                     <Button asChild variant="outline" size="sm">
                         <Link href="/admin/finance">
                             <Coins className="h-4 w-4 mr-2 text-blue-600" />
-                            Финансы
+                            {t("finance")}
                         </Link>
                     </Button>
                     <Button asChild variant="outline" size="sm">
                         <Link href="/admin/disputes">
                             <ShieldAlert className="h-4 w-4 mr-2 text-amber-500" />
-                            Споры
+                            {t("disputes")}
                         </Link>
                     </Button>
                 </div>
@@ -190,23 +192,23 @@ export default function AdminPage() {
                 <TabsList className="grid grid-cols-5 w-full">
                     <TabsTrigger value="stats" className="flex items-center gap-1.5">
                         <BarChart2 className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Статистика</span>
+                        <span className="hidden sm:inline">{t("tabs.stats")}</span>
                     </TabsTrigger>
                     <TabsTrigger value="users" className="flex items-center gap-1.5">
                         <Users className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Пользователи</span>
+                        <span className="hidden sm:inline">{t("tabs.users")}</span>
                     </TabsTrigger>
                     <TabsTrigger value="listings" className="flex items-center gap-1.5">
                         <LayoutList className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Объявления</span>
+                        <span className="hidden sm:inline">{t("tabs.listings")}</span>
                     </TabsTrigger>
                     <TabsTrigger value="categories" className="flex items-center gap-1.5">
                         <Tag className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Категории</span>
+                        <span className="hidden sm:inline">{t("tabs.categories")}</span>
                     </TabsTrigger>
                     <TabsTrigger value="reports" className="flex items-center gap-1.5 relative">
                         <Flag className="h-4 w-4 flex-shrink-0" />
-                        <span className="hidden sm:inline">Жалобы</span>
+                        <span className="hidden sm:inline">{t("tabs.reports")}</span>
                         {reports && reports.filter(r => r.status === "PENDING").length > 0 && (
                             <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                                 {reports.filter(r => r.status === "PENDING").length}
@@ -227,25 +229,25 @@ export default function AdminPage() {
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <Card>
                                     <CardContent className="p-4">
-                                        <p className="text-sm text-muted-foreground">Пользователи</p>
+                                        <p className="text-sm text-muted-foreground">{t("stats.totalUsers")}</p>
                                         <p className="text-3xl font-bold mt-1">{stats.totalUsers}</p>
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardContent className="p-4">
-                                        <p className="text-sm text-muted-foreground">Объявления</p>
+                                        <p className="text-sm text-muted-foreground">{t("stats.totalListings")}</p>
                                         <p className="text-3xl font-bold mt-1">{stats.totalListings}</p>
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardContent className="p-4">
-                                        <p className="text-sm text-muted-foreground">Заявки</p>
+                                        <p className="text-sm text-muted-foreground">{t("stats.totalRequests")}</p>
                                         <p className="text-3xl font-bold mt-1">{stats.totalRequests}</p>
                                     </CardContent>
                                 </Card>
                                 <Card>
                                     <CardContent className="p-4">
-                                        <p className="text-sm text-muted-foreground">Доход</p>
+                                        <p className="text-sm text-muted-foreground">{t("stats.totalRevenue")}</p>
                                         <p className="text-3xl font-bold mt-1 text-blue-600">
                                             {Number(stats.totalRevenue).toLocaleString()} ₸
                                         </p>
@@ -258,7 +260,7 @@ export default function AdminPage() {
                                 <CardHeader>
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <TrendingUp className="h-4 w-4" />
-                                        Заявки за 7 дней
+                                        {t("statsRequestsByDay")}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -267,7 +269,7 @@ export default function AdminPage() {
                                             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                                             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                                             <Tooltip />
-                                            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Заявки" />
+                                            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} name={t("statsRequestsLabel")} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -278,7 +280,7 @@ export default function AdminPage() {
                                 <CardHeader>
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <Users className="h-4 w-4" />
-                                        Новые пользователи за 7 дней
+                                        {t("statsUsersByDay")}
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
@@ -287,7 +289,7 @@ export default function AdminPage() {
                                             <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                                             <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                                             <Tooltip />
-                                            <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name="Пользователи" />
+                                            <Line type="monotone" dataKey="count" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name={t("statsUsersLabel")} />
                                         </LineChart>
                                     </ResponsiveContainer>
                                 </CardContent>
@@ -296,7 +298,7 @@ export default function AdminPage() {
                             {/* Топ объявления */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle className="text-base">Топ объявлений по заявкам</CardTitle>
+                                    <CardTitle className="text-base">{t("statsTopListings")}</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-3">
                                     {stats.topListings.map((l, i) => (
@@ -307,14 +309,14 @@ export default function AdminPage() {
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-medium truncate">{l.title}</p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {l._count.rentalRequests} заявок · {l.views_count} просмотров
+                                                    {t("rentalsCount", { count: l._count.rentalRequests })} · {t("viewsCount", { count: l.views_count })}
                                                 </p>
                                             </div>
                                         </div>
                                     ))}
                                     {stats.topListings.length === 0 && (
                                         <p className="text-sm text-muted-foreground text-center py-4">
-                                            Нет данных
+                                            {t("statsNoData")}
                                         </p>
                                     )}
                                 </CardContent>
@@ -348,7 +350,7 @@ export default function AdminPage() {
                                         {u.role}
                                     </Badge>
                                     <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                        {u._count.listings} объявл.
+                                        {t("listingsCount", { count: u._count.listings })}
                                     </span>
                                 </div>
                                 {u.id !== user.id && (
@@ -381,7 +383,7 @@ export default function AdminPage() {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs text-center px-1">
-                                            Нет фото
+                                            {t("noImage")}
                                         </div>
                                     )}
                                 </div>
@@ -390,7 +392,7 @@ export default function AdminPage() {
                                         <p className="font-medium truncate">{listing.title}</p>
                                         <p className="text-sm text-gray-500 mt-0.5">
                                             {listing.city} · {listing.category.name} ·{" "}
-                                            <span className="text-blue-600 font-medium">{Number(listing.price).toLocaleString()} ₸/день</span>
+                                            <span className="text-blue-600 font-medium">{Number(listing.price).toLocaleString()} ₸{t("perDay")}</span>
                                         </p>
                                         <Link
                                             href={`/profile/${listing.owner.id}`}
@@ -426,7 +428,7 @@ export default function AdminPage() {
                                 disabled={listingsPage === 1}
                                 onClick={() => setListingsPage((p) => p - 1)}
                             >
-                                Назад
+                                {t("prevBtn")}
                             </Button>
                             <span className="flex items-center px-3 text-sm text-gray-600 dark:text-gray-400">
                                 {listingsPage} / {listingsData.meta.total_pages}
@@ -437,7 +439,7 @@ export default function AdminPage() {
                                 disabled={listingsPage === listingsData.meta.total_pages}
                                 onClick={() => setListingsPage((p) => p + 1)}
                             >
-                                Вперёд
+                                {t("nextBtn")}
                             </Button>
                         </div>
                     )}
@@ -452,7 +454,7 @@ export default function AdminPage() {
                                 onClick={() => setReportsFilter(f)}
                                 className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${reportsFilter === f ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary hover:text-primary"}`}
                             >
-                                {f === "all" ? "Все" : f === "PENDING" ? "Открытые" : "Закрытые"}
+                                {f === "all" ? t("reports.all") : f === "PENDING" ? t("reports.open") : t("reports.closed")}
                                 {f !== "all" && reports && (
                                     <span className="ml-1.5 opacity-70">
                                         {reports.filter(r => r.status === f).length}
@@ -482,18 +484,18 @@ export default function AdminPage() {
                                                 {report.reporter.name}
                                             </Link>
                                             <Badge variant="outline" className="text-xs">
-                                                {report.type === "USER" ? "Пользователь" : report.type === "LISTING" ? "Объявление" : "Аренда"}
+                                                {report.type === "USER" ? t("reports.typeUser") : report.type === "LISTING" ? t("reports.typeListing") : t("reports.typeRental")}
                                             </Badge>
                                             <Badge variant={report.status === "PENDING" ? "destructive" : "secondary"} className="text-xs">
                                                 {report.status === "PENDING" ? (
-                                                    <><Clock className="h-3 w-3 mr-1" />Открыта</>
+                                                    <><Clock className="h-3 w-3 mr-1" />{t("reports.openLabel")}</>
                                                 ) : (
-                                                    <><CheckCircle className="h-3 w-3 mr-1" />Закрыта</>
+                                                    <><CheckCircle className="h-3 w-3 mr-1" />{t("reports.closedLabel")}</>
                                                 )}
                                             </Badge>
                                         </div>
                                         <p className="text-sm font-semibold mt-1">
-                                            {report.reason === "SPAM" ? "Спам" : report.reason === "FRAUD" ? "Мошенничество" : report.reason === "INAPPROPRIATE" ? "Неприемлемый контент" : report.reason === "DAMAGE" ? "Повреждение" : "Другое"}
+                                            {report.reason === "SPAM" ? t("reports.reasonSpam") : report.reason === "FRAUD" ? t("reports.reasonFraud") : report.reason === "INAPPROPRIATE" ? t("reports.reasonInappropriate") : report.reason === "DAMAGE" ? t("reports.reasonDamage") : t("reports.reasonOther")}
                                         </p>
                                         {report.description && (
                                             <p className="text-sm text-muted-foreground mt-0.5">{report.description}</p>
@@ -511,7 +513,7 @@ export default function AdminPage() {
                                                 onClick={() => updateReportStatus({ id: report.id, status: "CLOSED" })}
                                             >
                                                 <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                                Закрыть
+                                                {t("reports.closeBtn")}
                                             </Button>
                                         ) : (
                                             <Button
@@ -520,7 +522,7 @@ export default function AdminPage() {
                                                 onClick={() => updateReportStatus({ id: report.id, status: "PENDING" })}
                                             >
                                                 <Clock className="h-3.5 w-3.5 mr-1" />
-                                                Открыть
+                                                {t("reports.openBtn")}
                                             </Button>
                                         )}
                                         <Button
@@ -531,12 +533,12 @@ export default function AdminPage() {
                                             onClick={() =>
                                                 openChat(report.reporter.id, {
                                                     onSuccess: (chat) => router.push(`/chats/${chat.id}`),
-                                                    onError: () => toast.error("Не удалось открыть чат"),
+                                                    onError: () => toast.error(t("errorOpenChat")),
                                                 })
                                             }
                                         >
                                             <MessageSquare className="h-3.5 w-3.5 mr-1" />
-                                            Ответить
+                                            {t("reports.replyBtn")}
                                         </Button>
                                     </div>
                                 </div>
@@ -545,7 +547,7 @@ export default function AdminPage() {
                     ))}
                     {reports && reports.filter(r => reportsFilter === "all" || r.status === reportsFilter).length === 0 && (
                         <p className="text-center text-muted-foreground py-10 text-sm">
-                            {reportsFilter === "CLOSED" ? "Нет закрытых жалоб" : "Нет жалоб"}
+                            {reportsFilter === "CLOSED" ? t("reports.noClosedReports") : t("reports.noReports")}
                         </p>
                     )}
                 </TabsContent>
@@ -554,11 +556,11 @@ export default function AdminPage() {
                 <TabsContent value="categories" className="space-y-4 mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-base">Добавить категорию</CardTitle>
+                            <CardTitle className="text-base">{t("categoryAdd")}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex gap-2">
                             <Input
-                                placeholder="Название категории"
+                                placeholder={t("categoryNamePlaceholder")}
                                 value={newCategory}
                                 onChange={(e) => setNewCategory(e.target.value)}
                                 onKeyDown={(e) => {
@@ -572,7 +574,7 @@ export default function AdminPage() {
                                 disabled={isCreating || !newCategory.trim()}
                             >
                                 <Plus className="h-4 w-4 mr-1" />
-                                Добавить
+                                {t("addBtn")}
                             </Button>
                         </CardContent>
                     </Card>
@@ -597,8 +599,8 @@ export default function AdminPage() {
 
             <ConfirmDialog
                 open={!!deleteUserDialog}
-                title="Удалить пользователя?"
-                description="Пользователь будет удалён навсегда вместе со всеми его объявлениями, заявками, отзывами и сообщениями. Это действие необратимо."
+                title={t("userDelete")}
+                description={t("userDeleteDesc")}
                 isPending={isDeletingUser}
                 onConfirm={() => {
                     if (deleteUserDialog) deleteUser(deleteUserDialog);
@@ -607,8 +609,8 @@ export default function AdminPage() {
             />
             <ConfirmDialog
                 open={!!deleteListingDialog}
-                title="Удалить объявление?"
-                description="Объявление и все его фото будут удалены навсегда."
+                title={t("listingDelete")}
+                description={t("listingDeleteDesc")}
                 isPending={isDeletingListing}
                 onConfirm={() => {
                     if (deleteListingDialog) deleteListing(deleteListingDialog);
@@ -617,8 +619,8 @@ export default function AdminPage() {
             />
             <ConfirmDialog
                 open={!!deleteCategoryDialog}
-                title="Удалить категорию?"
-                description="Категория будет удалена навсегда."
+                title={t("categoryDelete")}
+                description={t("categoryDeleteDesc")}
                 isPending={isDeletingCategory}
                 onConfirm={() => {
                     if (deleteCategoryDialog) deleteCategory(deleteCategoryDialog);
