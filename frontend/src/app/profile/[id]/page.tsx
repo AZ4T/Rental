@@ -19,12 +19,14 @@ import {
     useBlockedUsers,
 } from "@/hooks/use-blocks";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { useTranslations } from "next-intl";
 
 interface Props {
     params: Promise<{ id: string }>;
 }
 
 export default function UserProfilePage({ params }: Props) {
+    const t = useTranslations("Profile");
     const { id } = use(params);
     const { data: user, isLoading } = useUser(id);
     const { data: userListings } = useUserListings(id);
@@ -52,7 +54,7 @@ export default function UserProfilePage({ params }: Props) {
     }
 
     if (!user)
-        return <div className="text-center py-20">Пользователь не найден</div>;
+        return <div className="text-center py-20">{t("userNotFound")}</div>;
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
@@ -74,13 +76,12 @@ export default function UserProfilePage({ params }: Props) {
                                     {Number(user.rating_avg).toFixed(1)}
                                 </span>
                                 <span className="text-gray-500">
-                                    — {user.reviews_count} отзывов
+                                    — {t("reviewsCount", { count: user.reviews_count })}
                                 </span>
                             </div>
                         )}
                         <p className="text-sm text-gray-500 mt-1">
-                            На платформе с{" "}
-                            {new Date(user.created_at).toLocaleDateString("ru-RU")}
+                            {t("joined", { date: new Date(user.created_at).toLocaleDateString() })}
                         </p>
                     </div>
                     {me && me.id !== id && (
@@ -90,7 +91,7 @@ export default function UserProfilePage({ params }: Props) {
                                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20"
                             >
                                 <Flag className="h-3.5 w-3.5" />
-                                Пожаловаться
+                                {t("report")}
                             </button>
                             {isBlocked ? (
                                 <button
@@ -103,7 +104,7 @@ export default function UserProfilePage({ params }: Props) {
                                     ) : (
                                         <ShieldOff className="h-3.5 w-3.5" />
                                     )}
-                                    Разблокировать
+                                    {t("unblock")}
                                 </button>
                             ) : (
                                 <button
@@ -116,7 +117,7 @@ export default function UserProfilePage({ params }: Props) {
                                     ) : (
                                         <Ban className="h-3.5 w-3.5" />
                                     )}
-                                    Заблокировать
+                                    {t("block")}
                                 </button>
                             )}
                         </div>
@@ -126,8 +127,7 @@ export default function UserProfilePage({ params }: Props) {
 
             {isBlocked && (
                 <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-3 text-sm text-amber-800 dark:text-amber-200">
-                    Вы заблокировали этого пользователя. Вы не сможете писать,
-                    звонить или арендовать у него, пока не разблокируете.
+                    {t("blockedNotice")}
                 </div>
             )}
 
@@ -140,10 +140,10 @@ export default function UserProfilePage({ params }: Props) {
 
             <ConfirmDialog
                 open={confirmBlock}
-                title="Заблокировать пользователя?"
-                description="Вы не сможете писать, звонить или арендовать у этого пользователя, а он — у вас. Это можно отменить в любой момент."
+                title={t("blockUserTitle")}
+                description={t("blockUserDesc")}
                 isPending={isBlocking}
-                confirmLabel="Заблокировать"
+                confirmLabel={t("blockConfirmAction")}
                 onConfirm={() => {
                     blockUser(id, {
                         onSuccess: () => setConfirmBlock(false),
@@ -156,7 +156,7 @@ export default function UserProfilePage({ params }: Props) {
             {userListings && userListings.length > 0 && (
                 <div>
                     <h2 className="text-xl font-semibold mb-4">
-                        Объявления ({userListings.length})
+                        {t("listingsByUser", { count: userListings.length })}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {userListings.map((listing) => (
@@ -169,10 +169,10 @@ export default function UserProfilePage({ params }: Props) {
             {/* Отзывы */}
             <div>
                 <h2 className="text-xl font-semibold mb-4">
-                    Отзывы ({reviews?.length ?? 0})
+                    {t("reviewsTitleCount", { count: reviews?.length ?? 0 })}
                 </h2>
                 {reviews?.length === 0 && (
-                    <p className="text-gray-500">Отзывов пока нет</p>
+                    <p className="text-gray-500">{t("noReviews")}</p>
                 )}
                 <div className="space-y-3">
                     {reviews?.map((review) => (
