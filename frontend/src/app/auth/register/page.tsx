@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 const registerSchema = z.object({
     name: z.string().min(2, "Минимум 2 символа"),
@@ -18,6 +19,8 @@ const registerSchema = z.object({
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
+    const t = useTranslations("Auth");
+    const tHome = useTranslations("Home");
     const { mutate: register, isPending } = useRegister();
 
     const { control, handleSubmit } = useForm<RegisterForm>({
@@ -37,9 +40,7 @@ export default function RegisterPage() {
                 <div className="absolute inset-0 bg-black/30" />
                 <div className="absolute inset-0 flex flex-col justify-end p-12 text-white">
                     <h1 className="text-4xl font-bold mb-3">Rental</h1>
-                    <p className="text-lg text-white/80">
-                        Арендуй что угодно, когда угодно
-                    </p>
+                    <p className="text-lg text-white/80">{tHome("title")}</p>
                 </div>
             </div>
 
@@ -54,15 +55,15 @@ export default function RegisterPage() {
 
                     <div>
                         <h2 className="text-3xl font-bold text-foreground">
-                            Регистрация
+                            {t("register")}
                         </h2>
                         <p className="text-muted-foreground mt-2">
-                            Уже есть аккаунт?{" "}
+                            {t("haveAccount")}{" "}
                             <Link
                                 href="/auth/login"
                                 className="text-blue-600 hover:underline font-medium"
                             >
-                                Войти
+                                {t("login")}
                             </Link>
                         </p>
                     </div>
@@ -76,7 +77,7 @@ export default function RegisterPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Имя</FieldLabel>
+                                    <FieldLabel>{t("name")}</FieldLabel>
                                     <Input
                                         {...field}
                                         placeholder="Азат"
@@ -107,7 +108,7 @@ export default function RegisterPage() {
                             control={control}
                             render={({ field, fieldState }) => (
                                 <Field data-invalid={fieldState.invalid}>
-                                    <FieldLabel>Пароль</FieldLabel>
+                                    <FieldLabel>{t("password")}</FieldLabel>
                                     <Input
                                         {...field}
                                         type="password"
@@ -123,9 +124,7 @@ export default function RegisterPage() {
                             className="w-full h-11"
                             disabled={isPending}
                         >
-                            {isPending
-                                ? "Создаём аккаунт..."
-                                : "Зарегистрироваться"}
+                            {isPending ? t("registerPending") : t("registerAction")}
                         </Button>
                     </form>
                 </div>

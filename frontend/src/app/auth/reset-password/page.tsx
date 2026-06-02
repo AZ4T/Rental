@@ -7,8 +7,10 @@ import { useResetPassword } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 function ResetPasswordForm() {
+    const t = useTranslations("Auth");
     const searchParams = useSearchParams();
     const token = searchParams.get("token") ?? "";
     const [password, setPassword] = useState("");
@@ -19,9 +21,12 @@ function ResetPasswordForm() {
         return (
             <div className="h-[calc(100vh-64px)] flex items-center justify-center p-8">
                 <div className="text-center space-y-4">
-                    <p className="text-muted-foreground">Ссылка недействительна.</p>
-                    <Link href="/auth/forgot-password" className="text-blue-600 hover:underline text-sm">
-                        Запросить новую ссылку
+                    <p className="text-muted-foreground">{t("linkInvalid")}.</p>
+                    <Link
+                        href="/auth/forgot-password"
+                        className="text-blue-600 hover:underline text-sm"
+                    >
+                        {t("requestNewLink")}
                     </Link>
                 </div>
             </div>
@@ -39,17 +44,15 @@ function ResetPasswordForm() {
             <div className="w-full max-w-md space-y-6">
                 <div>
                     <h2 className="text-3xl font-bold text-foreground">
-                        Новый пароль
+                        {t("newPasswordTitle")}
                     </h2>
-                    <p className="text-muted-foreground mt-2">
-                        Минимум 8 символов.
-                    </p>
+                    <p className="text-muted-foreground mt-2">{t("passwordHint")}.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <Input
                         type="password"
-                        placeholder="Новый пароль"
+                        placeholder={t("password")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         minLength={8}
@@ -58,27 +61,36 @@ function ResetPasswordForm() {
                     />
                     <Input
                         type="password"
-                        placeholder="Повторите пароль"
+                        placeholder={t("passwordConfirm")}
                         value={confirm}
                         onChange={(e) => setConfirm(e.target.value)}
                         required
                         className="h-11"
                     />
                     {password && confirm && password !== confirm && (
-                        <p className="text-sm text-red-500">Пароли не совпадают</p>
+                        <p className="text-sm text-red-500">
+                            {t("passwordsDontMatch")}
+                        </p>
                     )}
                     <Button
                         type="submit"
                         className="w-full h-11"
-                        disabled={isPending || password !== confirm || password.length < 8}
+                        disabled={
+                            isPending ||
+                            password !== confirm ||
+                            password.length < 8
+                        }
                     >
-                        {isPending ? "Сохраняем..." : "Сохранить пароль"}
+                        {isPending ? t("setNewPending") : t("setNewPasswordButton")}
                     </Button>
                 </form>
 
                 <p className="text-sm text-center text-muted-foreground">
-                    <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">
-                        Запросить новую ссылку
+                    <Link
+                        href="/auth/forgot-password"
+                        className="text-blue-600 hover:underline"
+                    >
+                        {t("requestNewLink")}
                     </Link>
                 </p>
             </div>

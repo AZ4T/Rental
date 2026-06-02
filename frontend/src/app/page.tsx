@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
-import { Button } from "@/components/ui/button";
 import { RecentlyViewed } from "@/components/recently-viewed";
 import { Search, Package, ArrowRight, Shield, Star, Zap, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import api from "@/services/api";
 import { Category } from "@/types";
 import {
@@ -72,6 +72,7 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
 function HeroSection() {
+    const t = useTranslations("Home");
     const router = useRouter();
     const [q, setQ] = useState("");
     const { data: categories } = useQuery({
@@ -99,15 +100,15 @@ function HeroSection() {
             <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-24 text-center text-white">
                 <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur rounded-full px-4 py-1.5 text-sm font-medium mb-6 border border-white/20">
                     <Zap className="h-3.5 w-3.5 text-yellow-300" />
-                    Платформа аренды в Казахстане
+                    {t("platformBadge")}
                 </div>
                 <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold mb-5 leading-tight tracking-tight">
-                    Арендуй что угодно,
+                    {t("titleStart")}
                     <br />
-                    <span className="text-blue-200">когда угодно</span>
+                    <span className="text-blue-200">{t("titleHighlight")}</span>
                 </h1>
                 <p className="text-lg text-blue-100 mb-10 max-w-xl mx-auto">
-                    Тысячи объявлений от людей рядом с тобой. Безопасно, быстро и удобно.
+                    {t("heroSubtitle")}
                 </p>
 
                 <form onSubmit={submit} className="flex gap-2 max-w-xl mx-auto mb-10">
@@ -118,7 +119,7 @@ function HeroSection() {
                             type="text"
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
-                            placeholder="Что хочешь арендовать?"
+                            placeholder={t("searchPlaceholder")}
                             className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-white text-gray-900 text-base outline-none focus:ring-2 focus:ring-blue-300 placeholder-gray-400"
                         />
                     </div>
@@ -126,7 +127,7 @@ function HeroSection() {
                         type="submit"
                         className="px-6 py-3.5 bg-white text-blue-700 font-semibold rounded-xl hover:bg-blue-50 transition-colors whitespace-nowrap"
                     >
-                        Найти
+                        {t("searchAction")}
                     </button>
                 </form>
 
@@ -152,14 +153,15 @@ function HeroSection() {
 // ─── Stats ────────────────────────────────────────────────────────────────────
 
 function StatsSection() {
+    const t = useTranslations("Home");
     const { data } = useListings({ page: 1, limit: 1 });
     const total = data?.meta.total ?? 0;
 
     const stats = [
-        { label: "Объявлений", value: Math.max(total, 120), suffix: "+" },
-        { label: "Городов", value: 12, suffix: "" },
-        { label: "Довольных клиентов", value: 3400, suffix: "+" },
-        { label: "Категорий", value: 8, suffix: "" },
+        { label: t("statsListingsHome"), value: Math.max(total, 120), suffix: "+" },
+        { label: t("statsCities"), value: 12, suffix: "" },
+        { label: t("statsCustomers"), value: 3400, suffix: "+" },
+        { label: t("statsCategoriesHome"), value: 8, suffix: "" },
     ];
 
     return (
@@ -179,6 +181,7 @@ function StatsSection() {
 // ─── Featured listings ────────────────────────────────────────────────────────
 
 function FeaturedListings() {
+    const t = useTranslations("Home");
     const { data } = useListings({ page: 1, limit: 8 });
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -193,7 +196,7 @@ function FeaturedListings() {
     return (
         <section className="space-y-4">
             <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Свежие объявления</h2>
+                <h2 className="text-2xl font-bold">{t("freshListings")}</h2>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => scroll("left")}
@@ -211,7 +214,7 @@ function FeaturedListings() {
                         href="/listings"
                         className="text-sm text-blue-600 hover:underline flex items-center gap-1"
                     >
-                        Все объявления
+                        {t("allListings")}
                         <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                 </div>
@@ -235,6 +238,7 @@ function FeaturedListings() {
 // ─── Categories grid ──────────────────────────────────────────────────────────
 
 function CategoriesSection() {
+    const t = useTranslations("Home");
     const { data: categories } = useQuery({
         queryKey: ["categories"],
         queryFn: () => api.get<Category[]>("/categories").then((r) => r.data),
@@ -255,7 +259,7 @@ function CategoriesSection() {
 
     return (
         <section className="space-y-4">
-            <h2 className="text-2xl font-bold">Популярные категории</h2>
+            <h2 className="text-2xl font-bold">{t("popularCategories")}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {categories.map((cat, i) => (
                     <Link
@@ -277,38 +281,19 @@ function CategoriesSection() {
 // ─── How it works ─────────────────────────────────────────────────────────────
 
 function HowItWorksSection() {
+    const t = useTranslations("Home");
     const steps = [
-        {
-            step: "01",
-            title: "Найди нужное",
-            desc: "Ищи по категориям, городу и цене. Сотни объявлений от реальных людей рядом с тобой.",
-            emoji: "🔍",
-        },
-        {
-            step: "02",
-            title: "Отправь заявку",
-            desc: "Выбери удобные даты и отправь запрос. Владелец рассмотрит и ответит в ближайшее время.",
-            emoji: "📋",
-        },
-        {
-            step: "03",
-            title: "Договорись",
-            desc: "Общайся в чате, уточни детали. Оплата через безопасный кошелёк платформы.",
-            emoji: "🤝",
-        },
-        {
-            step: "04",
-            title: "Пользуйся",
-            desc: "Получи вещь, используй и верни. Оставь отзыв и помоги другим арендаторам.",
-            emoji: "✅",
-        },
+        { step: "01", title: t("step1Title"), desc: t("step1Desc"), emoji: "🔍" },
+        { step: "02", title: t("step2Title"), desc: t("step2Desc"), emoji: "📋" },
+        { step: "03", title: t("step3Title"), desc: t("step3Desc"), emoji: "🤝" },
+        { step: "04", title: t("step4Title"), desc: t("step4Desc"), emoji: "✅" },
     ];
 
     return (
         <section className="space-y-8">
             <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">Как это работает</h2>
-                <p className="text-muted-foreground">Аренда вещей за 4 простых шага</p>
+                <h2 className="text-2xl font-bold mb-2">{t("howItWorksTitle")}</h2>
+                <p className="text-muted-foreground">{t("howItWorksSub")}</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {steps.map((item, i) => (
@@ -334,34 +319,19 @@ function HowItWorksSection() {
 // ─── Trust section ────────────────────────────────────────────────────────────
 
 function TrustSection() {
+    const t = useTranslations("Home");
     const points = [
-        {
-            icon: <Shield className="h-6 w-6" />,
-            title: "Безопасные сделки",
-            desc: "Оплата через встроенный кошелёк. Деньги переходят владельцу только после подтверждения.",
-        },
-        {
-            icon: <Star className="h-6 w-6" />,
-            title: "Рейтинг и отзывы",
-            desc: "Честные оценки от реальных арендаторов. Выбирай проверенных владельцев с высоким рейтингом.",
-        },
-        {
-            icon: <Users className="h-6 w-6" />,
-            title: "Реальные люди",
-            desc: "Каждый аккаунт верифицирован. Общайся напрямую через встроенный мессенджер.",
-        },
-        {
-            icon: <TrendingUp className="h-6 w-6" />,
-            title: "Залог защищает",
-            desc: "Залог возвращается после успешного завершения аренды. Вещи в безопасности.",
-        },
+        { icon: <Shield className="h-6 w-6" />, title: t("trust1Title"), desc: t("trust1Desc") },
+        { icon: <Star className="h-6 w-6" />, title: t("trust2Title"), desc: t("trust2Desc") },
+        { icon: <Users className="h-6 w-6" />, title: t("trust3Title"), desc: t("trust3Desc") },
+        { icon: <TrendingUp className="h-6 w-6" />, title: t("trust4Title"), desc: t("trust4Desc") },
     ];
 
     return (
         <section className="bg-muted/30 rounded-3xl p-8 md:p-12 space-y-8">
             <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">Почему выбирают нас</h2>
-                <p className="text-muted-foreground">Мы заботимся о безопасности каждой сделки</p>
+                <h2 className="text-2xl font-bold mb-2">{t("whyTitle")}</h2>
+                <p className="text-muted-foreground">{t("whySub")}</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {points.map((p) => (
@@ -383,6 +353,7 @@ function TrustSection() {
 // ─── CTA ──────────────────────────────────────────────────────────────────────
 
 function CTASection() {
+    const t = useTranslations("Home");
     return (
         <section className="relative overflow-hidden rounded-3xl">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800" />
@@ -395,24 +366,20 @@ function CTASection() {
                 }}
             />
             <div className="relative z-10 p-10 md:p-16 text-center text-white">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                    Сдай своё — зарабатывай
-                </h2>
-                <p className="text-white/80 mb-8 text-lg max-w-lg mx-auto">
-                    Размести объявление бесплатно и начни получать доход от вещей, которые не используешь
-                </p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">{t("ctaTitle")}</h2>
+                <p className="text-white/80 mb-8 text-lg max-w-lg mx-auto">{t("ctaDesc")}</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link
                         href="/listings/create"
                         className="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-white text-blue-700 hover:bg-blue-50 font-semibold text-base transition-colors"
                     >
-                        Создать объявление
+                        {t("createListing")}
                     </Link>
                     <Link
                         href="/listings"
                         className="inline-flex items-center justify-center px-6 py-3 rounded-lg border-2 border-white/50 text-white hover:bg-white/10 font-semibold text-base transition-colors"
                     >
-                        Смотреть объявления
+                        {t("viewListings")}
                     </Link>
                 </div>
             </div>

@@ -5,8 +5,10 @@ import { useForgotPassword } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function ForgotPasswordPage() {
+    const t = useTranslations("Auth");
     const [email, setEmail] = useState("");
     const { mutate, isPending, isSuccess } = useForgotPassword();
 
@@ -15,31 +17,16 @@ export default function ForgotPasswordPage() {
             <div className="w-full max-w-md space-y-6">
                 <div>
                     <h2 className="text-3xl font-bold text-foreground">
-                        Забыли пароль?
+                        {t("forgotPassword")}
                     </h2>
-                    <p className="text-muted-foreground mt-2">
-                        Введите email — пришлём ссылку для сброса пароля.
-                    </p>
+                    <p className="text-muted-foreground mt-2">{t("resetHint")}</p>
                 </div>
 
                 {isSuccess ? (
                     <div className="space-y-3">
                         <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/20 p-4 text-sm text-green-800 dark:text-green-300">
-                            Если аккаунт с таким email существует, письмо уже отправлено.
-                            Проверьте папку «Входящие» и «Спам».
+                            {t("resetSuccess")}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Письмо не пришло? Проверьте, что email написан без опечаток, и подождите 1–2 минуты.
-                            Ссылка действует 1 час. Можно{" "}
-                            <button
-                                type="button"
-                                onClick={() => window.location.reload()}
-                                className="text-blue-600 hover:underline"
-                            >
-                                попробовать ещё раз
-                            </button>
-                            .
-                        </p>
                     </div>
                 ) : (
                     <form
@@ -62,14 +49,17 @@ export default function ForgotPasswordPage() {
                             className="w-full h-11"
                             disabled={isPending}
                         >
-                            {isPending ? "Отправляем..." : "Отправить ссылку"}
+                            {isPending ? t("resetPending") : t("resetSendButton")}
                         </Button>
                     </form>
                 )}
 
                 <p className="text-sm text-center text-muted-foreground">
-                    <Link href="/auth/login" className="text-blue-600 hover:underline">
-                        Вернуться ко входу
+                    <Link
+                        href="/auth/login"
+                        className="text-blue-600 hover:underline"
+                    >
+                        {t("rememberPassword")}
                     </Link>
                 </p>
             </div>
