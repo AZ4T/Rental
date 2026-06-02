@@ -26,6 +26,7 @@ import QRCode from "qrcode";
 import { useCompareStore } from "@/store/compare.store";
 import { toast } from "sonner";
 import { ReportModal } from "@/components/report-modal";
+import { useTranslations } from "next-intl";
 
 interface Props {
     params: Promise<{ id: string }>;
@@ -65,6 +66,8 @@ function QRModal({ url, onClose }: { url: string; onClose: () => void }) {
 }
 
 export default function ListingPage({ params }: Props) {
+    const t = useTranslations("Listing");
+    const tCommon = useTranslations("Common");
     const { id } = use(params);
     const { data: listing, isLoading, isError } = useListing(id);
     const { data: availability } = useListingAvailability(id);
@@ -142,7 +145,7 @@ export default function ListingPage({ params }: Props) {
     if (isError || !listing) {
         return (
             <div className="text-center py-20 text-red-500">
-                Объявление не найдено
+                {t("notFound")}
             </div>
         );
     }
@@ -205,7 +208,7 @@ export default function ListingPage({ params }: Props) {
                         <CardContent className="p-4 space-y-3">
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600 dark:text-gray-400">
-                                    Цена в день
+                                    {t("pricePerDay")}
                                 </span>
                                 <span className="text-2xl font-bold text-blue-600">
                                     {Number(listing.price).toLocaleString()} ₸
@@ -213,7 +216,7 @@ export default function ListingPage({ params }: Props) {
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-gray-600 dark:text-gray-400">
-                                    Залог
+                                    {t("depositLabel")}
                                 </span>
                                 <span className="font-semibold">
                                     {Number(listing.deposit).toLocaleString()} ₸
@@ -225,25 +228,25 @@ export default function ListingPage({ params }: Props) {
                                 <div className="border-t pt-3 space-y-2">
                                     {calcDays > 0 ? (
                                         <>
-                                            <p className="text-xs font-medium text-muted-foreground">Расчёт стоимости</p>
+                                            <p className="text-xs font-medium text-muted-foreground">{t("calc")}</p>
                                             <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
                                                 <div className="flex justify-between text-muted-foreground">
                                                     <span>{calcDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
                                                     <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
                                                 </div>
                                                 <div className="flex justify-between text-muted-foreground">
-                                                    <span>Залог</span>
+                                                    <span>{t("depositLabel")}</span>
                                                     <span>{Number(listing.deposit).toLocaleString()} ₸</span>
                                                 </div>
                                                 <div className="flex justify-between font-bold border-t pt-1">
-                                                    <span>Итого</span>
+                                                    <span>{t("totalLabel")}</span>
                                                     <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
                                                 </div>
                                             </div>
                                         </>
                                     ) : (
                                         <p className="text-xs text-muted-foreground">
-                                            Выберите даты на календаре ниже
+                                            {t("pickDatesHint")}
                                         </p>
                                     )}
                                 </div>
@@ -256,7 +259,7 @@ export default function ListingPage({ params }: Props) {
                                     variant="outline"
                                 >
                                     <Link href={`/listings/${listing.id}/edit`}>
-                                        Редактировать
+                                        {tCommon("edit")}
                                     </Link>
                                 </Button>
                             ) : isAuthenticated ? (
@@ -268,7 +271,7 @@ export default function ListingPage({ params }: Props) {
                                         }
                                     >
                                         <Calendar className="h-4 w-4 mr-2" />
-                                        Арендовать
+                                        {t("rent")}
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -282,15 +285,13 @@ export default function ListingPage({ params }: Props) {
                                                     : ""
                                             } ${heartAnimating ? "animate-heart" : ""}`}
                                         />
-                                        {isFavorited
-                                            ? "Убрать из избранного"
-                                            : "В избранное"}
+                                        {isFavorited ? t("favoriteRemove") : t("favoriteAdd")}
                                     </Button>
                                 </>
                             ) : (
                                 <Button asChild className="w-full">
                                     <Link href="/auth/login">
-                                        Войдите чтобы арендовать
+                                        {t("loginToRent")}
                                     </Link>
                                 </Button>
                             )}
@@ -345,28 +346,28 @@ export default function ListingPage({ params }: Props) {
                                     if (!listing) return;
                                     if (inCompare) {
                                         removeCompare(listing.id);
-                                        toast.success("Убрано из сравнения");
+                                        toast.success(t("compareToastRemoved"));
                                         return;
                                     }
                                     const error = validateCompare(listing);
                                     if (error) { toast.error(error); return; }
                                     addCompare(listing);
-                                    toast.success("Добавлено к сравнению");
+                                    toast.success(t("compareToast"));
                                 }}
-                                title={inCompare ? "Убрать из сравнения" : "Сравнить"}
+                                title={inCompare ? t("compareTooltipRemove") : t("compareTooltipAdd")}
                                 className={`flex items-center gap-1.5 text-sm transition-colors ${inCompare ? "text-blue-600" : "text-muted-foreground hover:text-foreground"}`}
                             >
                                 <GitCompareArrows className="h-4 w-4" />
-                                <span>Сравнить</span>
+                                <span>{t("compare")}</span>
                             </button>
                             {!isOwner && (
                                 <button
                                     onClick={() => setShowReport(true)}
                                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-red-500 transition-colors"
-                                    title="Пожаловаться"
+                                    title={t("reportTooltip")}
                                 >
                                     <Flag className="h-4 w-4" />
-                                    <span>Пожаловаться</span>
+                                    <span>{t("report")}</span>
                                 </button>
                             )}
                             <button
@@ -384,13 +385,13 @@ export default function ListingPage({ params }: Props) {
                                     <>
                                         <Check className="h-4 w-4 text-green-500" />
                                         <span className="text-green-500">
-                                            Скопировано
+                                            {t("shareCopied2")}
                                         </span>
                                     </>
                                 ) : (
                                     <>
                                         <Share2 className="h-4 w-4" />
-                                        <span>Поделиться</span>
+                                        <span>{t("shareLabel")}</span>
                                     </>
                                 )}
                             </button>
@@ -400,7 +401,7 @@ export default function ListingPage({ params }: Props) {
             </div>
 
             <div>
-                <h2 className="text-xl font-semibold mb-3">Описание</h2>
+                <h2 className="text-xl font-semibold mb-3">{t("descriptionHeader")}</h2>
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
                     {listing.description}
                 </p>
@@ -411,14 +412,14 @@ export default function ListingPage({ params }: Props) {
                 <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        {isOwner ? "Занятые даты" : "Выберите даты аренды"}
+                        {isOwner ? t("calendarOwnerTitle") : t("calendarRenterTitle")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {isOwner ? (
                         bookedRanges.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                Нет забронированных дат
+                                {t("noBookedDates")}
                             </p>
                         ) : (
                             <DayPicker
@@ -441,9 +442,9 @@ export default function ListingPage({ params }: Props) {
                             {bookedRanges.length > 0 && (
                                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <span className="inline-block w-3 h-3 rounded-sm bg-red-200 border border-red-400" />
-                                    Занято
+                                    {t("legendBooked")}
                                     <span className="inline-block w-3 h-3 rounded-sm bg-blue-200 border border-blue-400 ml-2" />
-                                    Выбранный период
+                                    {t("legendSelected")}
                                 </div>
                             )}
                             <DayPicker
@@ -470,11 +471,11 @@ export default function ListingPage({ params }: Props) {
                                         <span>{(calcDays * Number(listing.price)).toLocaleString()} ₸</span>
                                     </div>
                                     <div className="flex justify-between text-muted-foreground">
-                                        <span>Залог (возвратный)</span>
+                                        <span>{t("depositRefundable")}</span>
                                         <span>{Number(listing.deposit).toLocaleString()} ₸</span>
                                     </div>
                                     <div className="flex justify-between font-bold border-t pt-1">
-                                        <span>Итого</span>
+                                        <span>{t("totalLabel")}</span>
                                         <span className="text-blue-600">{calcTotal.toLocaleString()} ₸</span>
                                     </div>
                                 </div>
@@ -489,11 +490,10 @@ export default function ListingPage({ params }: Props) {
                     <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
                     <div>
                         <p className="font-medium text-blue-900">
-                            Безопасная аренда
+                            {t("safetyTitle")}
                         </p>
                         <p className="text-sm text-blue-700">
-                            Все сделки защищены платформой. Залог возвращается
-                            после завершения аренды.
+                            {t("safetyText")}
                         </p>
                     </div>
                 </CardContent>
@@ -502,7 +502,7 @@ export default function ListingPage({ params }: Props) {
             {similar && similar.length > 0 && (
                 <div>
                     <h2 className="text-xl font-semibold mb-4">
-                        Похожие объявления
+                        {t("similarHeader")}
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         {similar.map((item) => (
