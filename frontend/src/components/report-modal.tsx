@@ -21,17 +21,10 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type ReportType = "USER" | "LISTING" | "RENTAL";
 type ReportReason = "SPAM" | "FRAUD" | "INAPPROPRIATE" | "DAMAGE" | "OTHER";
-
-const REASON_LABELS: Record<ReportReason, string> = {
-    SPAM: "Спам",
-    FRAUD: "Мошенничество",
-    INAPPROPRIATE: "Неприемлемый контент",
-    DAMAGE: "Повреждение имущества",
-    OTHER: "Другое",
-};
 
 interface ReportModalProps {
     open: boolean;
@@ -41,6 +34,15 @@ interface ReportModalProps {
 }
 
 export function ReportModal({ open, onClose, type, targetId }: ReportModalProps) {
+    const t = useTranslations("Report");
+    const tCommon = useTranslations("Common");
+    const REASON_LABELS: Record<ReportReason, string> = {
+        SPAM: t("reasons.SPAM"),
+        FRAUD: t("reasons.FRAUD"),
+        INAPPROPRIATE: t("reasons.INAPPROPRIATE"),
+        DAMAGE: t("reasons.DAMAGE"),
+        OTHER: t("reasons.OTHER"),
+    };
     const [reason, setReason] = useState<ReportReason | "">("");
     const [description, setDescription] = useState("");
 
@@ -55,19 +57,19 @@ export function ReportModal({ open, onClose, type, targetId }: ReportModalProps)
                 })
                 .then((r) => r.data),
         onSuccess: () => {
-            toast.success("Жалоба отправлена");
+            toast.success(t("okSent"));
             setReason("");
             setDescription("");
             onClose();
         },
         onError: (e: Error) => {
-            toast.error(e.message ?? "Ошибка при отправке жалобы");
+            toast.error(e.message ?? t("errSend"));
         },
     });
 
     const handleSubmit = () => {
         if (!reason) {
-            toast.error("Выберите причину жалобы");
+            toast.error(t("errReason"));
             return;
         }
         submitReport();
@@ -77,17 +79,17 @@ export function ReportModal({ open, onClose, type, targetId }: ReportModalProps)
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <DialogTitle>Пожаловаться</DialogTitle>
+                    <DialogTitle>{t("title")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-2">
                     <div className="space-y-2">
-                        <Label>Причина</Label>
+                        <Label>{t("reason")}</Label>
                         <Select
                             value={reason}
                             onValueChange={(v) => setReason(v as ReportReason)}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Выберите причину" />
+                                <SelectValue placeholder={t("selectReason")} />
                             </SelectTrigger>
                             <SelectContent>
                                 {(Object.keys(REASON_LABELS) as ReportReason[]).map((r) => (
@@ -99,11 +101,11 @@ export function ReportModal({ open, onClose, type, targetId }: ReportModalProps)
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Описание (необязательно)</Label>
+                        <Label>{t("descriptionLabel")}</Label>
                         <textarea
                             value={description}
                             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
-                            placeholder="Опишите проблему подробнее..."
+                            placeholder={t("descriptionPlaceholder")}
                             rows={3}
                             className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                         />
@@ -111,7 +113,7 @@ export function ReportModal({ open, onClose, type, targetId }: ReportModalProps)
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose} disabled={isPending}>
-                        Отмена
+                        {tCommon("cancel")}
                     </Button>
                     <Button
                         variant="destructive"
@@ -119,7 +121,7 @@ export function ReportModal({ open, onClose, type, targetId }: ReportModalProps)
                         disabled={isPending || !reason}
                     >
                         {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        Отправить жалобу
+                        {t("submitFull")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

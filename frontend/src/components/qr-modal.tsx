@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import QRCode from "react-qr-code";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface QrModalProps {
     rentalId: string;
@@ -17,6 +18,7 @@ interface QrModalProps {
 }
 
 export function QrModal({ rentalId, open, onClose }: QrModalProps) {
+    const t = useTranslations("Rental");
     const { data: token, isLoading, isError } = useGetQrToken(open ? rentalId : "");
 
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -26,14 +28,14 @@ export function QrModal({ rentalId, open, onClose }: QrModalProps) {
         <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <DialogTitle>QR-код для оплаты</DialogTitle>
+                    <DialogTitle>{t("qrModalTitle")}</DialogTitle>
                 </DialogHeader>
                 <div className="flex flex-col items-center gap-4 py-4">
                     {isLoading && (
                         <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
                     )}
                     {isError && (
-                        <p className="text-sm text-red-500">Не удалось загрузить QR-код</p>
+                        <p className="text-sm text-red-500">{t("qrModalError")}</p>
                     )}
                     {token && (
                         <>
@@ -41,7 +43,7 @@ export function QrModal({ rentalId, open, onClose }: QrModalProps) {
                                 <QRCode value={url} size={220} />
                             </div>
                             <p className="text-sm text-center text-muted-foreground">
-                                Покажите этот QR-код арендатору. Он отсканирует и оплатит аренду.
+                                {t("qrModalDesc")}
                             </p>
                             <p className="text-xs text-center text-muted-foreground break-all font-mono bg-muted rounded px-2 py-1">
                                 {token}

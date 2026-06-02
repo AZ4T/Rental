@@ -20,7 +20,8 @@
         "currency": "₸",
         "perDay": "за день",
         "deposit": "Залог",
-        "total": "Итого"
+        "total": "Итого",
+        "reset": "Сбросить"
     },
     "Nav": {
         "listings": "Объявления",
@@ -39,7 +40,12 @@
         "disputes": "Мои споры",
         "blocked": "Заблокированные",
         "themeLight": "Светлая тема",
-        "themeDark": "Тёмная тема"
+        "themeDark": "Тёмная тема",
+        "home": "Главная",
+        "chats": "Чаты",
+        "create": "Создать",
+        "loginShort": "Войти",
+        "mainNav": "Главная навигация"
     },
     "Auth": {
         "login": "Войти",
@@ -87,6 +93,9 @@
         "categories": "Категории",
         "filters": "Фильтры",
         "filterCity": "Город",
+        "cityPickPlaceholder": "Выберите город",
+        "citySearch": "Поиск города...",
+        "cityNotFound": "Город не найден",
         "filterPrice": "Цена",
         "filterPriceMin": "От",
         "filterPriceMax": "До",
@@ -201,6 +210,11 @@
         "safetyTitle": "Безопасная аренда",
         "safetyText": "Все сделки защищены платформой. Залог возвращается после успешного завершения аренды.",
         "similarHeader": "Похожие объявления",
+        "noPhoto": "Нет фото",
+        "perDay": "/ день",
+        "noRatings": "нет оценок",
+        "compareRemove": "Убрать из сравнения",
+        "compareAdd": "Добавить к сравнению",
         "createNew": "Новое объявление",
         "titlePlaceholder": "Велосипед горный Trek",
         "descPlaceholder": "Опишите состояние и особенности вещи...",
@@ -302,7 +316,25 @@
         "scanLoginToPay": "Войдите, чтобы оплатить",
         "scanPayBtn": "Оплатить",
         "scanPayOk": "Оплата прошла успешно!",
-        "scanPayError": "Ошибка оплаты"
+        "scanPayError": "Ошибка оплаты",
+        "dialogTitle": "Оформить аренду",
+        "errPickDates": "Выберите даты",
+        "errEndBeforeStart": "Дата окончания не может быть раньше даты начала",
+        "errAcceptAgreement": "Необходимо принять условия аренды",
+        "okRequestSent": "Заявка на аренду отправлена!",
+        "errSendRequest": "Ошибка отправки заявки",
+        "hourPart": "ч",
+        "minutePart": "мин",
+        "hoursMultiply": "{hours} ч. × {rate} ₸",
+        "daysMultiply": "{days} дн. × {price} ₸",
+        "qrModalTitle": "QR-код для оплаты",
+        "qrModalError": "Не удалось загрузить QR-код",
+        "qrModalDesc": "Покажите этот QR-код арендатору. Он отсканирует и оплатит аренду.",
+        "statusPending": "Ожидает",
+        "statusApproved": "Одобрена",
+        "statusRejected": "Отклонена",
+        "statusCancelled": "Отменена",
+        "statusCompleted": "Завершена"
     },
     "Wallet": {
         "title": "Кошелёк",
@@ -474,7 +506,16 @@
         "adminStatusForRenter": "В пользу арендатора",
         "adminStatusForOwner": "В пользу владельца",
         "adminStatusSplit": "Разделён",
-        "adminStatusRejected": "Отклонён"
+        "adminStatusRejected": "Отклонён",
+        "preset1": "Товар сломан / повреждён",
+        "preset2": "Товар не соответствует описанию",
+        "preset3": "Владелец удерживает залог несправедливо",
+        "preset4": "Арендатор повредил товар",
+        "preset5": "Арендатор не вернул товар вовремя",
+        "errMaxPhotos": "Максимум 6 фото",
+        "errFileTooBig": "Файл слишком большой (макс 10 МБ)",
+        "errReason": "Опишите причину",
+        "deletePhoto": "Удалить фото"
     },
     "Chat": {
         "title": "Сообщения",
@@ -657,6 +698,13 @@
         "reason": "Причина",
         "description": "Описание",
         "submit": "Отправить",
+        "submitFull": "Отправить жалобу",
+        "selectReason": "Выберите причину",
+        "descriptionLabel": "Описание (необязательно)",
+        "descriptionPlaceholder": "Опишите проблему подробнее...",
+        "okSent": "Жалоба отправлена",
+        "errSend": "Ошибка при отправке жалобы",
+        "errReason": "Выберите причину жалобы",
         "reasons": {
             "SPAM": "Спам",
             "FRAUD": "Мошенничество",
@@ -669,5 +717,10 @@
         "ru": "Русский",
         "kk": "Қазақша",
         "en": "English"
+    },
+    "Confirm": {
+        "defaultTitle": "Вы уверены?",
+        "defaultDescription": "Это действие нельзя отменить.",
+        "defaultPending": "Удаляем..."
     }
 }

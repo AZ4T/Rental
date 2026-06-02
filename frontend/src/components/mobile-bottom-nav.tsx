@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useIncomingRentalsCount } from "@/hooks/use-rentals";
 import { useUnreadCount } from "@/hooks/use-chats";
 import { NavBadge } from "@/components/nav-badge";
+import { useTranslations } from "next-intl";
 
 interface Tab {
     href: string;
@@ -23,6 +24,7 @@ interface Tab {
  * UX patterns — primary destinations are one tap away.
  */
 export function MobileBottomNav() {
+    const t = useTranslations("Nav");
     const pathname = usePathname();
     const { isAuthenticated } = useAuthStore();
     const { data: incomingCount } = useIncomingRentalsCount();
@@ -33,15 +35,15 @@ export function MobileBottomNav() {
 
     const tabs: Tab[] = isAuthenticated
         ? [
-              { href: "/", label: "Главная", icon: Home, activePaths: ["/", "/listings"] },
-              { href: "/rentals/incoming", label: "Заявки", icon: Inbox, badge: incomingCount, badgeColor: "red" },
-              { href: "/listings/create", label: "Создать", icon: Plus, primary: true },
-              { href: "/chats", label: "Чаты", icon: MessageCircle, badge: unreadCount, badgeColor: "blue" },
-              { href: "/profile/me", label: "Профиль", icon: UserIcon },
+              { href: "/", label: t("home"), icon: Home, activePaths: ["/", "/listings"] },
+              { href: "/rentals/incoming", label: t("rentals"), icon: Inbox, badge: incomingCount, badgeColor: "red" },
+              { href: "/listings/create", label: t("create"), icon: Plus, primary: true },
+              { href: "/chats", label: t("chats"), icon: MessageCircle, badge: unreadCount, badgeColor: "blue" },
+              { href: "/profile/me", label: t("profile"), icon: UserIcon },
           ]
         : [
-              { href: "/", label: "Главная", icon: Home, activePaths: ["/", "/listings"] },
-              { href: "/auth/login", label: "Войти", icon: UserIcon },
+              { href: "/", label: t("home"), icon: Home, activePaths: ["/", "/listings"] },
+              { href: "/auth/login", label: t("loginShort"), icon: UserIcon },
           ];
 
     const isActive = (tab: Tab): boolean => {
@@ -53,7 +55,7 @@ export function MobileBottomNav() {
     return (
         <nav
             className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-950 border-t dark:border-gray-800 pb-[env(safe-area-inset-bottom)]"
-            aria-label="Главная навигация"
+            aria-label={t("mainNav")}
         >
             <ul className="flex items-center justify-around h-16">
                 {tabs.map((tab) => {

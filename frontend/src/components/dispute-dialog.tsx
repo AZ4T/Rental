@@ -16,6 +16,7 @@ import { useUploadImage } from "@/hooks/use-upload";
 import { RentalRequest } from "@/types";
 import { Upload, X, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface Props {
     rental: RentalRequest;
@@ -23,15 +24,16 @@ interface Props {
     onClose: () => void;
 }
 
-const PRESETS = [
-    "Товар сломан / повреждён",
-    "Товар не соответствует описанию",
-    "Владелец удерживает залог несправедливо",
-    "Арендатор повредил товар",
-    "Арендатор не вернул товар вовремя",
-];
-
 export function DisputeDialog({ rental, open, onClose }: Props) {
+    const t = useTranslations("Dispute");
+    const tCommon = useTranslations("Common");
+    const PRESETS = [
+        t("preset1"),
+        t("preset2"),
+        t("preset3"),
+        t("preset4"),
+        t("preset5"),
+    ];
     const [reason, setReason] = useState("");
     const [description, setDescription] = useState("");
     const [evidence, setEvidence] = useState<string[]>([]);
@@ -50,13 +52,13 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
         const files = Array.from(e.target.files ?? []);
         if (!files.length) return;
         if (evidence.length + files.length > 6) {
-            toast.error("Максимум 6 фото");
+            toast.error(t("errMaxPhotos"));
             if (fileRef.current) fileRef.current.value = "";
             return;
         }
         const oversized = files.find((f) => f.size > 10 * 1024 * 1024);
         if (oversized) {
-            toast.error("Файл слишком большой (макс 10 МБ)");
+            toast.error(t("errFileTooBig"));
             if (fileRef.current) fileRef.current.value = "";
             return;
         }
@@ -71,7 +73,7 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
 
     const handleSubmit = () => {
         if (reason.trim().length < 3) {
-            toast.error("Опишите причину");
+            toast.error(t("errReason"));
             return;
         }
         openDispute(
@@ -101,18 +103,16 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <AlertTriangle className="h-5 w-5 text-amber-500" />
-                        Открыть спор
+                        {t("openTitle")}
                     </DialogTitle>
                     <DialogDescription>
-                        «{rental.listing.title}». Опишите проблему и приложите
-                        фото — администратор рассмотрит спор и решит, как
-                        разделить залог.
+                        {t("openHint", { listing: rental.listing.title })}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4">
                     <div>
-                        <Label className="mb-2 block">Причина</Label>
+                        <Label className="mb-2 block">{t("reason")}</Label>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                             {PRESETS.map((p) => (
                                 <button
@@ -132,14 +132,14 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
                         <Input
                             value={reason}
                             maxLength={255}
-                            placeholder="Кратко опишите причину"
+                            placeholder={t("reasonPlaceholder")}
                             onChange={(e) => setReason(e.target.value)}
                         />
                     </div>
 
                     <div>
                         <Label htmlFor="dispute-desc" className="mb-2 block">
-                            Подробности (необязательно)
+                            {t("description")}
                         </Label>
                         <textarea
                             id="dispute-desc"
@@ -147,14 +147,14 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
                             onChange={(e) => setDescription(e.target.value)}
                             maxLength={2000}
                             rows={4}
-                            placeholder="Что произошло, когда и как"
+                            placeholder={t("descriptionPlaceholder")}
                             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                         />
                     </div>
 
                     <div>
                         <Label className="mb-2 block">
-                            Доказательства (фото, до 6 штук)
+                            {t("evidence")}
                         </Label>
                         {evidence.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-2">
@@ -173,7 +173,7 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
                                                 )
                                             }
                                             className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600"
-                                            aria-label="Удалить фото"
+                                            aria-label={t("deletePhoto")}
                                         >
                                             <X className="h-3 w-3" />
                                         </button>
@@ -202,18 +202,18 @@ export function DisputeDialog({ rental, open, onClose }: Props) {
                             ) : (
                                 <Upload className="h-4 w-4 mr-2" />
                             )}
-                            Загрузить
+                            {t("uploadButton")}
                         </Button>
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2">
                     <Button variant="outline" onClick={onClose} disabled={isPending}>
-                        Отмена
+                        {tCommon("cancel")}
                     </Button>
                     <Button onClick={handleSubmit} disabled={isPending || isUploading}>
                         {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        Открыть спор
+                        {t("submit")}
                     </Button>
                 </div>
             </DialogContent>

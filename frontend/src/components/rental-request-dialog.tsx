@@ -16,6 +16,7 @@ import api from "@/services/api";
 import { toast } from "sonner";
 import { Clock, X, Info } from "lucide-react";
 import { PLATFORM_FEE_RATE } from "@/lib/platform";
+import { useTranslations } from "next-intl";
 
 const AGREEMENT_TEXT = `ДОГОВОР АРЕНДЫ — УСЛОВИЯ ИСПОЛЬЗОВАНИЯ ПЛАТФОРМЫ
 
@@ -50,6 +51,8 @@ export function RentalRequestDialog({
     initialEndDate = "",
     onClose,
 }: Props) {
+    const t = useTranslations("Rental");
+    const tListing = useTranslations("Listing");
     const [startDate, setStartDate] = useState(initialStartDate);
     const [endDate, setEndDate] = useState(initialEndDate);
     const [returnTime, setReturnTime] = useState("");
@@ -94,18 +97,18 @@ export function RentalRequestDialog({
                 end_date: endDatetime,
             }),
         onSuccess: () => {
-            toast.success("Заявка на аренду отправлена!");
+            toast.success(t("okRequestSent"));
             onClose();
         },
         onError: (error: Error) => {
-            toast.error(error.message ?? "Ошибка отправки заявки");
+            toast.error(error.message ?? t("errSendRequest"));
         },
     });
 
     const handleSubmit = () => {
-        if (!startDate || !endDate) { toast.error("Выберите даты"); return; }
-        if (diffMs < 0) { toast.error("Дата окончания не может быть раньше даты начала"); return; }
-        if (!agreed) { toast.error("Необходимо принять условия аренды"); return; }
+        if (!startDate || !endDate) { toast.error(t("errPickDates")); return; }
+        if (diffMs < 0) { toast.error(t("errEndBeforeStart")); return; }
+        if (!agreed) { toast.error(t("errAcceptAgreement")); return; }
         createRequest();
     };
 
@@ -113,7 +116,7 @@ export function RentalRequestDialog({
         <Dialog open onOpenChange={onClose}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Оформить аренду</DialogTitle>
+                    <DialogTitle>{t("dialogTitle")}</DialogTitle>
                 </DialogHeader>
 
                 <div className="space-y-4">
@@ -124,7 +127,7 @@ export function RentalRequestDialog({
                     {/* Dates */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                            <Label>Дата начала</Label>
+                            <Label>{t("dateStart")}</Label>
                             <Input
                                 type="date"
                                 min={today}
@@ -133,7 +136,7 @@ export function RentalRequestDialog({
                             />
                         </div>
                         <div className="space-y-1">
-                            <Label>Дата окончания</Label>
+                            <Label>{t("dateEnd")}</Label>
                             <Input
                                 type="date"
                                 min={startDate || today}
@@ -151,8 +154,8 @@ export function RentalRequestDialog({
                     <div className="space-y-1">
                         <Label className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                            Время возврата
-                            <span className="text-xs text-muted-foreground font-normal">(необязательно — для почасового расчёта)</span>
+                            {t("returnTime")}
+                            <span className="text-xs text-muted-foreground font-normal">{t("returnTimeHint")}</span>
                         </Label>
                         {(() => {
                             const [h, m] = returnTime ? returnTime.split(":") : ["", ""];
@@ -170,7 +173,7 @@ export function RentalRequestDialog({
                                         <option value="">—</option>
                                         {Array.from({ length: 24 }, (_, i) => (
                                             <option key={i} value={String(i).padStart(2, "0")}>
-                                                {String(i).padStart(2, "0")} ч
+                                                {String(i).padStart(2, "0")} {t("hourPart")}
                                             </option>
                                         ))}
                                     </select>
@@ -183,7 +186,7 @@ export function RentalRequestDialog({
                                         <option value="">—</option>
                                         {["00", "15", "30", "45"].map((mm) => (
                                             <option key={mm} value={mm}>
-                                                {mm} мин
+                                                {mm} {t("minutePart")}
                                             </option>
                                         ))}
                                     </select>
@@ -194,7 +197,7 @@ export function RentalRequestDialog({
                                             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-red-500 transition-colors"
                                         >
                                             <X className="h-3.5 w-3.5" />
-                                            Сбросить
+                                            {t("returnTimeReset")}
                                         </button>
                                     )}
                                 </div>
@@ -202,7 +205,7 @@ export function RentalRequestDialog({
                         })()}
                         {returnTime && (
                             <p className="text-xs text-blue-600">
-                                Расчёт по часам: {hourlyRate.toFixed(0)} ₸/час
+                                {t("hourlyRate", { rate: hourlyRate.toFixed(0) })}
                             </p>
                         )}
                     </div>
@@ -213,28 +216,28 @@ export function RentalRequestDialog({
                             {useHourly ? (
                                 <>
                                     <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                        <span>{Math.ceil(totalHours)} ч. × {hourlyRate.toFixed(0)} ₸</span>
+                                        <span>{t("hoursMultiply", { hours: Math.ceil(totalHours), rate: hourlyRate.toFixed(0) })}</span>
                                         <span>{rentalCost.toFixed(0)} ₸</span>
                                     </div>
                                 </>
                             ) : (
                                 <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                    <span>{totalDays} дн. × {Number(listing.price).toLocaleString()} ₸</span>
+                                    <span>{t("daysMultiply", { days: totalDays, price: Number(listing.price).toLocaleString() })}</span>
                                     <span>{rentalCost.toLocaleString()} ₸</span>
                                 </div>
                             )}
                             <div className="flex justify-between text-gray-600 dark:text-gray-400">
-                                <span>Залог (возвратный)</span>
+                                <span>{tListing("depositRefundable")}</span>
                                 <span>{Number(listing.deposit).toLocaleString()} ₸</span>
                             </div>
                             <div className="border-t pt-1.5 flex justify-between font-bold">
-                                <span>Итого</span>
+                                <span>{tListing("totalLabel")}</span>
                                 <span className="text-blue-600">{totalPrice.toLocaleString()} ₸</span>
                             </div>
                             <div className="border-t pt-2 text-xs text-muted-foreground flex items-start gap-1.5">
                                 <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                                 <span>
-                                    Платформа удерживает {(PLATFORM_FEE_RATE * 100).toFixed(0)}% комиссии с владельца за обслуживание сделки. На вашу оплату это не влияет.
+                                    {tListing("feeShortNote", { percent: (PLATFORM_FEE_RATE * 100).toFixed(0) })}
                                 </span>
                             </div>
                         </div>
@@ -243,7 +246,7 @@ export function RentalRequestDialog({
                     {/* Rental agreement */}
                     <div className="border rounded-lg overflow-hidden">
                         <div className="px-4 py-3 bg-muted/30 border-b">
-                            <p className="text-sm font-semibold">Условия аренды</p>
+                            <p className="text-sm font-semibold">{t("agreementTitle")}</p>
                         </div>
                         <div className="px-4 py-3">
                             <div className="max-h-56 overflow-y-auto rounded bg-muted/40 p-4 text-sm text-foreground whitespace-pre-line leading-relaxed">
@@ -262,21 +265,21 @@ export function RentalRequestDialog({
                                 htmlFor="agreement"
                                 className="text-sm cursor-pointer leading-snug"
                             >
-                                Я ознакомился с условиями аренды и принимаю их
+                                {t("agreementAccept")}
                             </label>
                         </div>
                     </div>
 
                     <div className="flex gap-2 pt-1">
                         <Button variant="outline" className="flex-1" onClick={onClose}>
-                            Отмена
+                            {t("cancel")}
                         </Button>
                         <Button
                             className="flex-1"
                             onClick={handleSubmit}
                             disabled={isPending || !isValid}
                         >
-                            {isPending ? "Отправляем..." : "Отправить заявку"}
+                            {isPending ? t("submitting") : t("submit")}
                         </Button>
                     </div>
                 </div>

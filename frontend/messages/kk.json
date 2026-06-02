@@ -20,7 +20,8 @@
         "currency": "₸",
         "perDay": "тәулігіне",
         "deposit": "Кепілдік",
-        "total": "Барлығы"
+        "total": "Барлығы",
+        "reset": "Қалпына келтіру"
     },
     "Nav": {
         "listings": "Хабарландырулар",
@@ -39,7 +40,12 @@
         "disputes": "Менің даулар",
         "blocked": "Бұғатталғандар",
         "themeLight": "Жарық тақырып",
-        "themeDark": "Қараңғы тақырып"
+        "themeDark": "Қараңғы тақырып",
+        "home": "Басты",
+        "chats": "Чаттар",
+        "create": "Жасау",
+        "loginShort": "Кіру",
+        "mainNav": "Негізгі навигация"
     },
     "Auth": {
         "login": "Кіру",
@@ -87,6 +93,9 @@
         "categories": "Санаттар",
         "filters": "Сүзгілер",
         "filterCity": "Қала",
+        "cityPickPlaceholder": "Қаланы таңдаңыз",
+        "citySearch": "Қала іздеу...",
+        "cityNotFound": "Қала табылмады",
         "filterPrice": "Бағасы",
         "filterPriceMin": "Бастап",
         "filterPriceMax": "Дейін",
@@ -201,6 +210,11 @@
         "safetyTitle": "Қауіпсіз жалдау",
         "safetyText": "Барлық мәмілелер платформа арқылы қорғалған. Жалдау сәтті аяқталғаннан кейін кепілдік қайтарылады.",
         "similarHeader": "Ұқсас хабарландырулар",
+        "noPhoto": "Фото жоқ",
+        "perDay": "/ күн",
+        "noRatings": "бағалар жоқ",
+        "compareRemove": "Салыстырудан алып тастау",
+        "compareAdd": "Салыстыруға қосу",
         "createNew": "Жаңа хабарландыру",
         "titlePlaceholder": "Тау велосипеді Trek",
         "descPlaceholder": "Заттың күйі мен ерекшеліктерін сипаттаңыз...",
@@ -302,7 +316,25 @@
         "scanLoginToPay": "Төлеу үшін кіріңіз",
         "scanPayBtn": "Төлеу",
         "scanPayOk": "Төлем сәтті өтті!",
-        "scanPayError": "Төлем қатесі"
+        "scanPayError": "Төлем қатесі",
+        "dialogTitle": "Жалдауды ресімдеу",
+        "errPickDates": "Күндерді таңдаңыз",
+        "errEndBeforeStart": "Аяқталу күні басталу күнінен бұрын бола алмайды",
+        "errAcceptAgreement": "Жалдау шарттарын қабылдау қажет",
+        "okRequestSent": "Жалдауға өтінім жіберілді!",
+        "errSendRequest": "Өтінімді жіберу қатесі",
+        "hourPart": "сағ",
+        "minutePart": "мин",
+        "hoursMultiply": "{hours} сағ. × {rate} ₸",
+        "daysMultiply": "{days} күн × {price} ₸",
+        "qrModalTitle": "Төлемге арналған QR-код",
+        "qrModalError": "QR-код жүктелмеді",
+        "qrModalDesc": "Бұл QR-кодты жалдаушыға көрсетіңіз. Ол сканерлеп, жалдауды төлейді.",
+        "statusPending": "Күтуде",
+        "statusApproved": "Мақұлданды",
+        "statusRejected": "Қабылданбады",
+        "statusCancelled": "Болдырылмады",
+        "statusCompleted": "Аяқталды"
     },
     "Wallet": {
         "title": "Әмиян",
@@ -474,7 +506,16 @@
         "adminStatusForRenter": "Жалдаушының пайдасына",
         "adminStatusForOwner": "Иесінің пайдасына",
         "adminStatusSplit": "Бөлінген",
-        "adminStatusRejected": "Қабылданбаған"
+        "adminStatusRejected": "Қабылданбаған",
+        "preset1": "Тауар сынған / зақымдалған",
+        "preset2": "Тауар сипаттамаға сәйкес келмейді",
+        "preset3": "Иесі кепілдікті әділетсіз ұстап тұр",
+        "preset4": "Жалдаушы тауарды зақымдады",
+        "preset5": "Жалдаушы тауарды уақытында қайтармады",
+        "errMaxPhotos": "Максимум 6 фото",
+        "errFileTooBig": "Файл тым үлкен (макс 10 МБ)",
+        "errReason": "Себебін сипаттаңыз",
+        "deletePhoto": "Фотоны жою"
     },
     "Chat": {
         "title": "Хабарлар",
@@ -657,6 +698,13 @@
         "reason": "Себебі",
         "description": "Сипаттама",
         "submit": "Жіберу",
+        "submitFull": "Шағым жіберу",
+        "selectReason": "Себебін таңдаңыз",
+        "descriptionLabel": "Сипаттама (міндетті емес)",
+        "descriptionPlaceholder": "Мәселені толығырақ сипаттаңыз...",
+        "okSent": "Шағым жіберілді",
+        "errSend": "Шағым жіберу қатесі",
+        "errReason": "Шағым себебін таңдаңыз",
         "reasons": {
             "SPAM": "Спам",
             "FRAUD": "Алаяқтық",
@@ -669,5 +717,10 @@
         "ru": "Русский",
         "kk": "Қазақша",
         "en": "English"
+    },
+    "Confirm": {
+        "defaultTitle": "Сенімдісіз бе?",
+        "defaultDescription": "Бұл әрекетті қайтару мүмкін емес.",
+        "defaultPending": "Жойылуда..."
     }
 }

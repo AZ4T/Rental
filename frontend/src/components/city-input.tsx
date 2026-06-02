@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MapPin, ChevronDown, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export const KZ_CITIES = [
     "Алматы",
@@ -48,7 +49,9 @@ interface Props {
     placeholder?: string;
 }
 
-export function CityInput({ value, onChange, placeholder = "Выберите город" }: Props) {
+export function CityInput({ value, onChange, placeholder }: Props) {
+    const t = useTranslations("Home");
+    const effectivePlaceholder = placeholder ?? t("cityPickPlaceholder");
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
     const ref = useRef<HTMLDivElement>(null);
@@ -100,7 +103,7 @@ export function CityInput({ value, onChange, placeholder = "Выберите г�
             >
                 <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <span className={`flex-1 truncate ${value ? "text-foreground" : "text-muted-foreground"}`}>
-                    {value || placeholder}
+                    {value || effectivePlaceholder}
                 </span>
                 {value ? (
                     <X
@@ -122,14 +125,14 @@ export function CityInput({ value, onChange, placeholder = "Выберите г�
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Поиск города..."
+                            placeholder={t("citySearch")}
                             className="w-full text-sm px-2 py-1.5 rounded-md bg-muted outline-none placeholder-muted-foreground"
                         />
                     </div>
                     <div className="max-h-52 overflow-y-auto">
                         {filtered.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-4">
-                                Город не найден
+                                {t("cityNotFound")}
                             </p>
                         ) : (
                             filtered.map((city) => (

@@ -20,7 +20,8 @@
         "currency": "₸",
         "perDay": "/day",
         "deposit": "Deposit",
-        "total": "Total"
+        "total": "Total",
+        "reset": "Reset"
     },
     "Nav": {
         "listings": "Listings",
@@ -39,7 +40,12 @@
         "disputes": "My disputes",
         "blocked": "Blocked users",
         "themeLight": "Light theme",
-        "themeDark": "Dark theme"
+        "themeDark": "Dark theme",
+        "home": "Home",
+        "chats": "Chats",
+        "create": "Create",
+        "loginShort": "Sign in",
+        "mainNav": "Main navigation"
     },
     "Auth": {
         "login": "Log in",
@@ -87,6 +93,9 @@
         "categories": "Categories",
         "filters": "Filters",
         "filterCity": "City",
+        "cityPickPlaceholder": "Select city",
+        "citySearch": "Search city...",
+        "cityNotFound": "City not found",
         "filterPrice": "Price",
         "filterPriceMin": "Min",
         "filterPriceMax": "Max",
@@ -201,6 +210,11 @@
         "safetyTitle": "Safe rental",
         "safetyText": "Every transaction is protected by the platform. The deposit is returned after a successful rental.",
         "similarHeader": "Similar listings",
+        "noPhoto": "No photo",
+        "perDay": "/ day",
+        "noRatings": "no ratings",
+        "compareRemove": "Remove from comparison",
+        "compareAdd": "Add to comparison",
         "createNew": "New listing",
         "titlePlaceholder": "Trek mountain bike",
         "descPlaceholder": "Describe the item's condition and features...",
@@ -302,7 +316,25 @@
         "scanLoginToPay": "Sign in to pay",
         "scanPayBtn": "Pay",
         "scanPayOk": "Payment successful!",
-        "scanPayError": "Payment error"
+        "scanPayError": "Payment error",
+        "dialogTitle": "Request rental",
+        "errPickDates": "Pick dates",
+        "errEndBeforeStart": "End date cannot be earlier than start date",
+        "errAcceptAgreement": "You must accept the rental terms",
+        "okRequestSent": "Rental request sent!",
+        "errSendRequest": "Error sending request",
+        "hourPart": "h",
+        "minutePart": "min",
+        "hoursMultiply": "{hours} h × {rate} ₸",
+        "daysMultiply": "{days} days × {price} ₸",
+        "qrModalTitle": "QR code for payment",
+        "qrModalError": "Failed to load QR code",
+        "qrModalDesc": "Show this QR code to the renter. They will scan and pay for the rental.",
+        "statusPending": "Pending",
+        "statusApproved": "Approved",
+        "statusRejected": "Rejected",
+        "statusCancelled": "Cancelled",
+        "statusCompleted": "Completed"
     },
     "Wallet": {
         "title": "Wallet",
@@ -474,7 +506,16 @@
         "adminStatusForRenter": "For renter",
         "adminStatusForOwner": "For owner",
         "adminStatusSplit": "Split",
-        "adminStatusRejected": "Rejected"
+        "adminStatusRejected": "Rejected",
+        "preset1": "Item broken / damaged",
+        "preset2": "Item does not match description",
+        "preset3": "Owner unfairly withholds deposit",
+        "preset4": "Renter damaged the item",
+        "preset5": "Renter did not return on time",
+        "errMaxPhotos": "Max 6 photos",
+        "errFileTooBig": "File too large (max 10 MB)",
+        "errReason": "Describe the reason",
+        "deletePhoto": "Delete photo"
     },
     "Chat": {
         "title": "Messages",
@@ -657,6 +698,13 @@
         "reason": "Reason",
         "description": "Description",
         "submit": "Send",
+        "submitFull": "Send report",
+        "selectReason": "Select reason",
+        "descriptionLabel": "Description (optional)",
+        "descriptionPlaceholder": "Describe the issue in more detail...",
+        "okSent": "Report sent",
+        "errSend": "Error sending report",
+        "errReason": "Select a reason",
         "reasons": {
             "SPAM": "Spam",
             "FRAUD": "Fraud",
@@ -669,5 +717,10 @@
         "ru": "Русский",
         "kk": "Қазақша",
         "en": "English"
+    },
+    "Confirm": {
+        "defaultTitle": "Are you sure?",
+        "defaultDescription": "This action cannot be undone.",
+        "defaultPending": "Deleting..."
     }
 }

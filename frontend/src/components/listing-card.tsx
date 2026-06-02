@@ -12,12 +12,14 @@ import { Badge } from "./ui/badge";
 import { Listing } from "@/types";
 import { useCompareStore } from "@/store/compare.store";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface ListingCardProps {
     listing: Listing;
 }
 
 export function ListingCard({ listing }: ListingCardProps) {
+    const t = useTranslations("Listing");
     const { isAuthenticated } = useAuthStore();
     const { data: favorites } = useMyFavorites();
     const { mutate: addFavorite } = useAddFavorite();
@@ -68,7 +70,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                         hidden={!!image}
                         className="w-full h-full flex items-center justify-center text-gray-400"
                     >
-                        Нет фото
+                        {t("noPhoto")}
                     </div>
                     <div className="absolute top-2 left-2 flex flex-col gap-1 items-start">
                         <Badge className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
@@ -102,7 +104,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                         )}
                         <button
                             onClick={handleCompare}
-                            title={inCompare ? "Убрать из сравнения" : "Добавить к сравнению"}
+                            title={inCompare ? t("compareRemove") : t("compareAdd")}
                             className={`rounded-full p-2.5 shadow hover:scale-110 transition-all ${
                                 inCompare
                                     ? "bg-blue-600 text-white"
@@ -129,7 +131,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                             </span>
                             <span className="text-sm text-muted-foreground">
                                 {" "}
-                                / день
+                                {t("perDay")}
                             </span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -139,7 +141,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                                     <span>{Number(listing.rating_avg).toFixed(1)}</span>
                                 </div>
                             ) : listing.reviews_count === 0 ? (
-                                <span className="text-xs text-muted-foreground">нет оценок</span>
+                                <span className="text-xs text-muted-foreground">{t("noRatings")}</span>
                             ) : null}
                             <div className="flex items-center gap-1">
                                 <Eye className="h-3 w-3" />

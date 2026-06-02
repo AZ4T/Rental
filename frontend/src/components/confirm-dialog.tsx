@@ -1,3 +1,5 @@
+"use client";
+
 import {
     Dialog,
     DialogContent,
@@ -7,6 +9,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface Props {
     open: boolean;
@@ -22,32 +25,34 @@ interface Props {
 
 export function ConfirmDialog({
     open,
-    title = "Вы уверены?",
-    description = "Это действие нельзя отменить.",
-    confirmLabel = "Удалить",
-    pendingLabel = "Удаляем...",
+    title,
+    description,
+    confirmLabel,
+    pendingLabel,
     variant = "destructive",
     onConfirm,
     onCancel,
     isPending,
 }: Props) {
+    const t = useTranslations("Common");
+    const tConfirm = useTranslations("Confirm");
     return (
         <Dialog open={open} onOpenChange={onCancel}>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
+                    <DialogTitle>{title ?? tConfirm("defaultTitle")}</DialogTitle>
+                    <DialogDescription>{description ?? tConfirm("defaultDescription")}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
                     <Button variant="outline" onClick={onCancel}>
-                        Отмена
+                        {t("cancel")}
                     </Button>
                     <Button
                         variant={variant}
                         onClick={onConfirm}
                         disabled={isPending}
                     >
-                        {isPending ? pendingLabel : confirmLabel}
+                        {isPending ? (pendingLabel ?? tConfirm("defaultPending")) : (confirmLabel ?? t("delete"))}
                     </Button>
                 </DialogFooter>
             </DialogContent>

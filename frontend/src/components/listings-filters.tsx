@@ -10,6 +10,7 @@ import { Category } from "@/types";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { CityInput } from "@/components/city-input";
 import { Slider } from "@/components/ui/slider";
+import { useTranslations } from "next-intl";
 
 interface ListingsFiltersProps {
     filters: ListingFilters;
@@ -17,6 +18,8 @@ interface ListingsFiltersProps {
 }
 
 export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
+    const t = useTranslations("Home");
+    const tCommon = useTranslations("Common");
     const [search, setSearch] = useState(filters.search ?? "");
     const [city, setCity] = useState(filters.city ?? "");
     const [priceRange, setPriceRange] = useState([0, 100000]);
@@ -80,7 +83,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                 <div className="relative flex-1 min-w-[140px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Поиск объявлений..."
+                        placeholder={t("searchPlaceholder")}
                         className="pl-9 h-10" // ← добавь h-10
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -94,7 +97,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                             setCity(val);
                             onChange({ ...filters, city: val, page: 1 });
                         }}
-                        placeholder="Город"
+                        placeholder={t("filterCity")}
                     />
                 </div>
 
@@ -118,12 +121,12 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                             });
                         }}
                     >
-                        <option value="created_at|desc">Сначала новые</option>
-                        <option value="created_at|asc">Сначала старые</option>
-                        <option value="price|asc">Цена: по возрастанию</option>
-                        <option value="price|desc">Цена: по убыванию</option>
-                        <option value="rating_avg|desc">По рейтингу товара</option>
-                        <option value="views_count|desc">По просмотрам</option>
+                        <option value="created_at|desc">{t("sortNewest")}</option>
+                        <option value="created_at|asc">{t("sortOldest")}</option>
+                        <option value="price|asc">{t("sortPriceAsc")}</option>
+                        <option value="price|desc">{t("sortPriceDesc")}</option>
+                        <option value="rating_avg|desc">{t("sortRating")}</option>
+                        <option value="views_count|desc">{t("sortViews")}</option>
                     </select>
                 </div>
 
@@ -135,7 +138,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                         className="h-10"
                     >
                         <X className="h-4 w-4 mr-1" />
-                        Сбросить
+                        {tCommon("reset")}
                     </Button>
                 )}
             </div>
@@ -152,7 +155,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
                         onChange({ ...filters, category_ids: [], page: 1 })
                     }
                 >
-                    Все
+                    {tCommon("all")}
                 </Button>
                 {categories?.map((cat) => {
                     const isSelected = filters.category_ids?.includes(cat.id);
@@ -191,7 +194,7 @@ export function ListingsFilters({ filters, onChange }: ListingsFiltersProps) {
             <div className="w-full bg-muted rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-foreground">
-                        Цена за день
+                        {t("filterPrice")}
                     </span>
                     <span className="text-sm text-muted-foreground">
                         {priceRange[0].toLocaleString()} ₸ —{" "}

@@ -3,8 +3,10 @@
 import { useCompareStore } from "@/store/compare.store";
 import { X, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export function CompareBar() {
+    const t = useTranslations("Compare");
     const { items, remove, clear } = useCompareStore();
     if (items.length === 0) return null;
 
@@ -14,7 +16,7 @@ export function CompareBar() {
                 {/* Items */}
                 <div className="flex items-center gap-1.5 sm:gap-2 flex-1 overflow-x-auto min-w-0">
                     <span className="hidden sm:block text-sm font-medium text-muted-foreground flex-shrink-0">
-                        Сравнение:
+                        {t("title")}:
                     </span>
                     {items.map((item) => (
                         <div
@@ -54,12 +56,12 @@ export function CompareBar() {
                         onClick={clear}
                         className="hidden sm:block text-sm text-muted-foreground hover:text-foreground"
                     >
-                        Очистить
+                        {t("clear")}
                     </button>
                     <button
                         onClick={clear}
                         className="sm:hidden p-1.5 text-muted-foreground hover:text-red-500"
-                        title="Очистить"
+                        title={t("clear")}
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -72,7 +74,7 @@ export function CompareBar() {
                         }`}
                     >
                         <GitCompareArrows className="h-4 w-4" />
-                        <span className="hidden sm:inline">Сравнить</span>
+                        <span className="hidden sm:inline">{t("title")}</span>
                         <span>({items.length})</span>
                     </Link>
                 </div>

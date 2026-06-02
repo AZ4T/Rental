@@ -6,8 +6,11 @@ import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { getRecentlyViewed, type RecentItem } from "@/lib/recently-viewed";
+import { useTranslations } from "next-intl";
 
 export function RecentlyViewed() {
+    const t = useTranslations("Home");
+    const tListing = useTranslations("Listing");
     const [items, setItems] = useState<RecentItem[]>([]);
 
     useEffect(() => {
@@ -18,7 +21,7 @@ export function RecentlyViewed() {
 
     return (
         <section className="w-full">
-            <h2 className="mb-3 text-lg font-semibold">Недавно смотрели</h2>
+            <h2 className="mb-3 text-lg font-semibold">{t("recentlyViewed")}</h2>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                 {items.map((item) => (
                     <Link
@@ -38,7 +41,7 @@ export function RecentlyViewed() {
                                     />
                                 ) : (
                                     <div className="flex h-full items-center justify-center text-muted-foreground text-xs">
-                                        No image
+                                        {tListing("noPhoto")}
                                     </div>
                                 )}
                             </div>

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { RentalRequest } from "@/types";
 import { useCreateReview } from "@/hooks/use-reviews";
 import { Star, Package, User } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface Props {
     rental: RentalRequest;
@@ -67,6 +68,8 @@ export function ReviewDialog({
     showListingRating = false,
     onClose,
 }: Props) {
+    const t = useTranslations("Review");
+    const tCommon = useTranslations("Common");
     const [rating, setRating] = useState(0);
     const [listingRating, setListingRating] = useState(0);
     const [comment, setComment] = useState("");
@@ -96,7 +99,7 @@ export function ReviewDialog({
         <Dialog open onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle>{dialogTitle ?? "Оставить отзыв"}</DialogTitle>
+                    <DialogTitle>{dialogTitle ?? t("title")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
@@ -106,7 +109,7 @@ export function ReviewDialog({
                     <StarPicker
                         value={rating}
                         onChange={setRating}
-                        label="Оценка арендодателя"
+                        label={t("rateOwner")}
                         icon={<User className="h-4 w-4 text-muted-foreground" />}
                     />
 
@@ -114,20 +117,20 @@ export function ReviewDialog({
                         <StarPicker
                             value={listingRating}
                             onChange={setListingRating}
-                            label="Оценка товара"
+                            label={t("rateListing")}
                             icon={<Package className="h-4 w-4 text-muted-foreground" />}
                         />
                     )}
 
                     <div>
                         <p className="text-sm font-medium mb-2">
-                            Комментарий (необязательно)
+                            {t("comment")}
                         </p>
                         <textarea
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
                             rows={3}
-                            placeholder="Расскажите о вашем опыте аренды..."
+                            placeholder={t("commentPlaceholder")}
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
                     </div>
@@ -138,14 +141,14 @@ export function ReviewDialog({
                             className="flex-1"
                             onClick={onClose}
                         >
-                            Отмена
+                            {tCommon("cancel")}
                         </Button>
                         <Button
                             className="flex-1"
                             onClick={handleSubmit}
                             disabled={isPending || !isValid}
                         >
-                            Отправить
+                            {t("send")}
                         </Button>
                     </div>
                 </div>
