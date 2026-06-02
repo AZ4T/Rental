@@ -11,12 +11,14 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import api from "@/services/api";
 import { useCall } from "@/providers/call-provider";
+import { useTranslations } from "next-intl";
 
 function getOtherParticipant(chat: Chat, userId: string) {
     return chat.participant1_id === userId ? chat.participant2 : chat.participant1;
 }
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+    const t = useTranslations("Chat");
     const { id: chatId } = use(params);
     const { user } = useAuthStore();
     const { messages, isLoading, sendMessage } = useChatMessages(chatId);
@@ -78,7 +80,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             size="icon"
                             disabled={callState.status !== "idle"}
                             onClick={() => initiateCall(other.id, other.name, other.avatar_url ?? undefined)}
-                            title="Позвонить"
+                            title={t("call")}
                         >
                             <Phone className="h-4 w-4 text-green-600" />
                         </Button>
@@ -87,7 +89,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                             size="icon"
                             disabled={callState.status !== "idle"}
                             onClick={() => initiateVideoCall(other.id, other.name, other.avatar_url ?? undefined)}
-                            title="Видеозвонок"
+                            title={t("videoCall")}
                         >
                             <Video className="h-4 w-4 text-blue-600" />
                         </Button>
@@ -112,9 +114,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                         try { data = JSON.parse(msg.content); } catch {}
                         const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
                         const label =
-                            data.outcome === "completed" ? `Звонок ${fmt(data.duration ?? 0)}`
-                            : data.outcome === "rejected" ? "Звонок отклонён"
-                            : "Пропущенный звонок";
+                            data.outcome === "completed" ? t("callLabelCompleted", { duration: fmt(data.duration ?? 0) })
+                            : data.outcome === "rejected" ? t("callLabelRejected")
+                            : t("callLabelMissed");
                         const icon = data.outcome === "completed" ? "📞" : "📵";
                         return (
                             <div key={msg.id} className="flex justify-center">
@@ -155,7 +157,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Написать сообщение..."
+                    placeholder={t("typeMessage")}
                     className="flex-1"
                 />
                 <Button onClick={handleSend} disabled={!input.trim()} size="icon">

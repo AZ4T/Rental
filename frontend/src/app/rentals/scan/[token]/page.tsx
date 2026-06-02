@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, CheckCircle, CreditCard, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface ScanRentalData {
     id: string;
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export default function ScanRentalPage({ params }: Props) {
+    const t = useTranslations("Rental");
     const { token } = use(params);
     const router = useRouter();
     const { isAuthenticated } = useAuthStore();
@@ -56,10 +58,10 @@ export default function ScanRentalPage({ params }: Props) {
         pay(rental.id, {
             onSuccess: () => {
                 setPaid(true);
-                toast.success("Оплата прошла успешно!");
+                toast.success(t("scanPayOk"));
             },
             onError: (e: Error) => {
-                toast.error(e.message ?? "Ошибка оплаты");
+                toast.error(e.message ?? t("scanPayError"));
             },
         });
     };
@@ -75,9 +77,9 @@ export default function ScanRentalPage({ params }: Props) {
     if (isError || !rental) {
         return (
             <div className="flex flex-col items-center py-20 gap-4 text-center">
-                <p className="text-red-500 text-lg">QR-код недействителен или аренда не найдена</p>
+                <p className="text-red-500 text-lg">{t("scanInvalid")}</p>
                 <Button asChild variant="outline">
-                    <Link href="/">На главную</Link>
+                    <Link href="/">{t("scanHome")}</Link>
                 </Button>
             </div>
         );
@@ -89,27 +91,27 @@ export default function ScanRentalPage({ params }: Props) {
         <div className="max-w-md mx-auto py-12 px-4">
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-center">Оплата аренды</CardTitle>
+                    <CardTitle className="text-center">{t("scanTitle")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-3">
                         <div>
-                            <p className="text-xs text-muted-foreground">Объявление</p>
+                            <p className="text-xs text-muted-foreground">{t("scanListing")}</p>
                             <p className="font-semibold">{rental.listing.title}</p>
                         </div>
                         <div>
-                            <p className="text-xs text-muted-foreground">Арендатор</p>
+                            <p className="text-xs text-muted-foreground">{t("scanRenter")}</p>
                             <p className="font-medium">{rental.renter.name}</p>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
                             <span>
-                                {new Date(rental.start_date).toLocaleDateString("ru-RU")} —{" "}
-                                {new Date(rental.end_date).toLocaleDateString("ru-RU")}
+                                {new Date(rental.start_date).toLocaleDateString()} —{" "}
+                                {new Date(rental.end_date).toLocaleDateString()}
                             </span>
                         </div>
                         <div className="flex items-center justify-between border-t pt-3">
-                            <span className="text-muted-foreground">Итого</span>
+                            <span className="text-muted-foreground">{t("scanTotal")}</span>
                             <span className="text-xl font-bold text-blue-600">
                                 {Number(rental.total_price).toLocaleString()} ₸
                             </span>
@@ -120,17 +122,17 @@ export default function ScanRentalPage({ params }: Props) {
                         <div className="flex flex-col items-center gap-3 py-4">
                             <Badge className="bg-green-100 text-green-700 gap-1 text-sm px-3 py-1">
                                 <CheckCircle className="h-4 w-4" />
-                                Уже оплачено
+                                {t("scanAlreadyPaid")}
                             </Badge>
                             <Button asChild variant="outline" className="mt-2">
-                                <Link href="/rentals/my">Мои аренды</Link>
+                                <Link href="/rentals/my">{t("scanMyRentals")}</Link>
                             </Button>
                         </div>
                     ) : (
                         <div className="space-y-2">
                             {!isAuthenticated && (
                                 <p className="text-sm text-center text-muted-foreground">
-                                    Войдите, чтобы оплатить
+                                    {t("scanLoginToPay")}
                                 </p>
                             )}
                             <Button
@@ -143,7 +145,7 @@ export default function ScanRentalPage({ params }: Props) {
                                 ) : (
                                     <CreditCard className="h-4 w-4 mr-2" />
                                 )}
-                                Оплатить
+                                {t("scanPayBtn")}
                             </Button>
                         </div>
                     )}
