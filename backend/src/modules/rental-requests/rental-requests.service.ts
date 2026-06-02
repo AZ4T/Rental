@@ -107,6 +107,20 @@ export class RentalRequestsService {
             throw new I18nBadRequest('rental.datesOverlap');
         }
 
+        // Проверка пересечения с ручными блоками владельца (отпуск, ремонт)
+        const blocked = await this.prisma.blockedDate.findFirst({
+            where: {
+                listing_id: dto.listing_id,
+                AND: [
+                    { start_date: { lte: end } },
+                    { end_date: { gte: start } },
+                ],
+            },
+        });
+        if (blocked) {
+            throw new I18nBadRequest('rental.datesOverlap');
+        }
+
         const diffMs = end.getTime() - start.getTime();
         const endHasTime = end.getHours() !== 0 || end.getMinutes() !== 0;
         let total_price: number;

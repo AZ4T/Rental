@@ -81,6 +81,19 @@ model User {
   disputes_opened       Dispute[]    @relation("DisputeOpener")
   blocks_made           UserBlock[]  @relation("Blocker")
   blocked_by            UserBlock[]  @relation("Blocked")
+  chat_templates        ChatTemplate[]
+}
+
+model ChatTemplate {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  text       String   @db.VarChar(500)
+  position   Int      @default(0)
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
 }
 
 model RefreshToken {
@@ -166,11 +179,25 @@ model Listing {
   images         ListingImage[]
   favorites      Favorite[]
   rentalRequests RentalRequest[]
+  blockedDates   BlockedDate[]
 
   @@index([owner_id])
   @@index([category_id])
   @@index([is_hidden])
   @@index([promoted_until])
+}
+
+model BlockedDate {
+  id         String   @id @default(uuid()) @db.Uuid
+  listing_id String   @db.Uuid
+  start_date DateTime @db.Date
+  end_date   DateTime @db.Date
+  reason     String?  @db.VarChar(255)
+  created_at DateTime @default(now())
+
+  listing Listing @relation(fields: [listing_id], references: [id], onDelete: Cascade)
+
+  @@index([listing_id])
 }
 
 model ListingImage {

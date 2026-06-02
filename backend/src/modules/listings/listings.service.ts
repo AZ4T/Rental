@@ -178,14 +178,80 @@ export class ListingsService {
     }
 
     async getAvailability(id: string) {
-        const requests = await this.prisma.rentalRequest.findMany({
-            where: {
-                listing_id: id,
-                status: { in: ['PENDING', 'APPROVED'] },
-            },
-            select: { start_date: true, end_date: true },
+        const [requests, blocked] = await Promise.all([
+            this.prisma.rentalRequest.findMany({
+                where: {
+                    listing_id: id,
+                    status: { in: ['PENDING', 'APPROVED'] },
+                },
+                select: { start_date: true, end_date: true },
+            }),
+            this.prisma.blockedDate.findMany({
+                where: { listing_id: id },
+                select: { id: true, start_date: true, end_date: true, reason: true },
+                orderBy: { start_date: 'asc' },
+            }),
+        ]);
+        return { requests, blocked };
+    }
+
+    async blockDates(
+        listingId: string,
+        body: { start_date: string; end_date: string; reason?: string },
+        userId: string,
+    ) {
+        const listing = await this.prisma.listing.findUnique({
+            where: { id: listingId },
+            select: { owner_id: true },
         });
-        return requests;
+        if (!listing) throw new NotFoundException();
+        if (listing.owner_id !== userId) throw new ForbiddenException();
+
+        const start = new Date(body.start_date);
+        const end = new Date(body.end_date);
+        if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+            throw new BadRequestException('Invalid date');
+        }
+        if (end < start) {
+            throw new BadRequestException('End date is before start date');
+        }
+
+        // Reject overlap with active rentals — owner shouldn't block dates that
+        // are already booked.
+        const conflict = await this.prisma.rentalRequest.findFirst({
+            where: {
+                listing_id: listingId,
+                status: { in: ['PENDING', 'APPROVED'] },
+                AND: [
+                    { start_date: { lte: end } },
+                    { end_date: { gte: start } },
+                ],
+            },
+            select: { id: true },
+        });
+        if (conflict) {
+            throw new BadRequestException('Dates overlap with an active rental');
+        }
+
+        return this.prisma.blockedDate.create({
+            data: {
+                listing_id: listingId,
+                start_date: start,
+                end_date: end,
+                reason: body.reason?.trim() || null,
+            },
+        });
+    }
+
+    async unblockDates(listingId: string, blockId: string, userId: string) {
+        const block = await this.prisma.blockedDate.findUnique({
+            where: { id: blockId },
+            include: { listing: { select: { owner_id: true } } },
+        });
+        if (!block || block.listing_id !== listingId) throw new NotFoundException();
+        if (block.listing.owner_id !== userId) throw new ForbiddenException();
+        await this.prisma.blockedDate.delete({ where: { id: blockId } });
+        return { success: true };
     }
 
     async findMyListings(userId: string) {

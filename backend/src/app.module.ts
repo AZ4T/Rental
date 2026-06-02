@@ -13,6 +13,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { ChatTemplatesModule } from './modules/chat-templates/chat-templates.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CallsModule } from './modules/calls/calls.module';
@@ -38,6 +39,7 @@ import { I18nModule } from './i18n/i18n.module';
         FavoritesModule,
         ReviewsModule,
         ChatsModule,
+        ChatTemplatesModule,
         WalletModule,
         NotificationsModule,
         CallsModule,

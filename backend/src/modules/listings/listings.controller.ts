@@ -107,4 +107,24 @@ export class ListingsController {
     ) {
         return this.listingsService.setVisibility(id, !!body.hidden, req.user.userId);
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Post(':id/blocked-dates')
+    blockDates(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() body: { start_date: string; end_date: string; reason?: string },
+        @Req() req: Request & { user: { userId: string } },
+    ) {
+        return this.listingsService.blockDates(id, body, req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete(':id/blocked-dates/:blockId')
+    unblockDates(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Param('blockId', ParseUUIDPipe) blockId: string,
+        @Req() req: Request & { user: { userId: string } },
+    ) {
+        return this.listingsService.unblockDates(id, blockId, req.user.userId);
+    }
 }
