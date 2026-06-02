@@ -227,7 +227,19 @@
         "ownerNetHint": "(вам после комиссии: {net} ₸)",
         "noRentals": "У вас нет заявок на аренду",
         "noIncoming": "Заявок пока нет",
-        "browseListings": "Найти объявления"
+        "browseListings": "Найти объявления",
+        "myRentalsTitle": "Мои заявки на аренду",
+        "incomingTitle": "Входящие заявки",
+        "noPhoto": "Нет фото",
+        "returnPhotosUploaded": "Фото возврата загружены",
+        "uploadError": "Ошибка загрузки",
+        "returnPhotoMax": "Максимум 10 фото возврата",
+        "fileTooBig": "Файл слишком большой. Максимум 10 МБ",
+        "returnPhotoAlt": "Фото возврата {n}",
+        "payAtMeetingTitle": "Оплата при встрече",
+        "payAtMeetingDesc": "Владелец покажет QR-код при передаче — отсканируйте телефоном, чтобы оплатить.",
+        "paymentOk": "Оплата прошла успешно",
+        "paymentError": "Ошибка оплаты"
     },
     "Wallet": {
         "title": "Кошелёк",

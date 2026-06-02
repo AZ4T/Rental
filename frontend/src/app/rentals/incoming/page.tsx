@@ -17,8 +17,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { RentalRequest } from "@/types";
 import { PLATFORM_FEE_RATE } from "@/lib/platform";
+import { useTranslations } from "next-intl";
 
 export default function IncomingRentalsPage() {
+    const t = useTranslations("Rental");
     const { data: rentals, isLoading } = useIncomingRentals();
     const { mutate: updateStatus, isPending } = useUpdateRentalStatus();
     const { mutate: openChat, isPending: isChatPending } = useOrCreateChat();
@@ -43,12 +45,12 @@ export default function IncomingRentalsPage() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Входящие заявки</h1>
+            <h1 className="text-2xl font-bold">{t("incomingTitle")}</h1>
 
             {rentals?.length === 0 && (
                 <div className="text-center py-20 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Заявок пока нет</p>
+                    <p>{t("noIncoming")}</p>
                 </div>
             )}
 
@@ -70,7 +72,7 @@ export default function IncomingRentalsPage() {
                                         />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                            Нет фото
+                                            {t("noPhoto")}
                                         </div>
                                     )}
                                 </div>
@@ -149,7 +151,7 @@ export default function IncomingRentalsPage() {
                                         }
                                         disabled={isPending}
                                     >
-                                        Одобрить
+                                        {t("approve")}
                                     </Button>
                                     <Button
                                         variant="destructive"
@@ -163,7 +165,7 @@ export default function IncomingRentalsPage() {
                                         }
                                         disabled={isPending}
                                     >
-                                        Отклонить
+                                        {t("reject")}
                                     </Button>
                                 </div>
                             )}
@@ -172,11 +174,11 @@ export default function IncomingRentalsPage() {
                                     <div className="flex items-center gap-2">
                                         {rental.payment_status === "PAID" ? (
                                             <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 gap-1">
-                                                <CheckCircle className="h-3 w-3" /> Оплачено
+                                                <CheckCircle className="h-3 w-3" /> {t("paid")}
                                             </Badge>
                                         ) : (
                                             <Badge variant="outline" className="text-orange-500 border-orange-300 gap-1">
-                                                <Clock className="h-3 w-3" /> Ожидает оплаты
+                                                <Clock className="h-3 w-3" /> {t("waitingPayment")}
                                             </Badge>
                                         )}
                                     </div>
@@ -190,12 +192,12 @@ export default function IncomingRentalsPage() {
                                                 onClick={() =>
                                                     openChat(rental.renter!.id, {
                                                         onSuccess: (chat) => router.push(`/chats/${chat.id}`),
-                                                        onError: () => toast.error("Не удалось открыть чат"),
+                                                        onError: () => toast.error(t("uploadError")),
                                                     })
                                                 }
                                             >
                                                 <MessageCircle className="h-4 w-4 mr-2" />
-                                                Написать арендатору
+                                                {t("writeRenter")}
                                             </Button>
                                         )}
                                         {rental.payment_status === "UNPAID" && (
@@ -226,11 +228,11 @@ export default function IncomingRentalsPage() {
                                                     !!rental.dispute
                                                 }
                                             >
-                                                Завершить аренду
+                                                {t("completeFull")}
                                             </Button>
                                             {rental.payment_status === "PAID" && !rental.return_images?.length && (
                                                 <p className="text-xs text-muted-foreground text-center">
-                                                    Ожидается фото возврата от арендатора
+                                                    {t("waitingReturnPhoto")}
                                                 </p>
                                             )}
                                         </div>
@@ -244,7 +246,7 @@ export default function IncomingRentalsPage() {
                                                 onClick={() => setDisputeRental(rental)}
                                             >
                                                 <AlertTriangle className="h-4 w-4 mr-1" />
-                                                Открыть спор
+                                                {t("openDispute")}
                                             </Button>
                                         )}
                                     {rental.dispute && (
@@ -254,8 +256,8 @@ export default function IncomingRentalsPage() {
                                         >
                                             <ShieldAlert className="h-4 w-4" />
                                             {rental.dispute.status === "OPEN"
-                                                ? "Спор открыт — ожидает решения админа"
-                                                : "Спор закрыт"}
+                                                ? t("disputeOpen")
+                                                : t("disputeClosed")}
                                         </Link>
                                     )}
                                 </div>
@@ -267,7 +269,7 @@ export default function IncomingRentalsPage() {
                                         {myReview ? (
                                             <p className="text-sm text-muted-foreground flex items-center gap-1">
                                                 <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                                                Вы оставили отзыв об арендаторе
+                                                {t("youReviewedRenter")}
                                             </p>
                                         ) : (
                                             <Button
@@ -276,7 +278,7 @@ export default function IncomingRentalsPage() {
                                                 onClick={() => setReviewRental(rental)}
                                             >
                                                 <Star className="h-4 w-4 mr-2" />
-                                                Оценить арендатора
+                                                {t("rateRenter")}
                                             </Button>
                                         )}
                                     </div>
@@ -290,7 +292,7 @@ export default function IncomingRentalsPage() {
             {reviewRental && reviewRental.renter && (
                 <ReviewDialog
                     rental={reviewRental}
-                    dialogTitle="Оценить арендатора"
+                    dialogTitle={t("rateRenter")}
                     onClose={() => setReviewRental(null)}
                 />
             )}

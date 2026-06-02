@@ -227,7 +227,19 @@
         "ownerNetHint": "(комиссиядан кейін сізге: {net} ₸)",
         "noRentals": "Сізде жалдау өтінімдері жоқ",
         "noIncoming": "Әзірге өтінімдер жоқ",
-        "browseListings": "Хабарландыру табу"
+        "browseListings": "Хабарландыру табу",
+        "myRentalsTitle": "Менің жалдау өтінімдерім",
+        "incomingTitle": "Кіріс өтінімдер",
+        "noPhoto": "Фото жоқ",
+        "returnPhotosUploaded": "Қайтару фотосуреттері жүктелді",
+        "uploadError": "Жүктеу қатесі",
+        "returnPhotoMax": "Қайтару фотосы 10-нан көп болмайды",
+        "fileTooBig": "Файл өте үлкен. Максимум 10 МБ",
+        "returnPhotoAlt": "Қайтару фотосы {n}",
+        "payAtMeetingTitle": "Кездескенде төлеу",
+        "payAtMeetingDesc": "Иесі тапсырғанда QR-кодты көрсетеді — телефонмен сканерлеп төлеңіз.",
+        "paymentOk": "Төлем сәтті өтті",
+        "paymentError": "Төлем қатесі"
     },
     "Wallet": {
         "title": "Әмиян",

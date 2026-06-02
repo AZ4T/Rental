@@ -227,7 +227,19 @@
         "ownerNetHint": "(you get after fee: {net} ₸)",
         "noRentals": "You have no rental requests",
         "noIncoming": "No incoming requests yet",
-        "browseListings": "Browse listings"
+        "browseListings": "Browse listings",
+        "myRentalsTitle": "My rental requests",
+        "incomingTitle": "Incoming requests",
+        "noPhoto": "No photo",
+        "returnPhotosUploaded": "Return photos uploaded",
+        "uploadError": "Upload error",
+        "returnPhotoMax": "Maximum of 10 return photos",
+        "fileTooBig": "File too big. Maximum 10 MB",
+        "returnPhotoAlt": "Return photo {n}",
+        "payAtMeetingTitle": "Pay at the meeting",
+        "payAtMeetingDesc": "The owner will show a QR code at handover — scan with your phone to pay.",
+        "paymentOk": "Payment successful",
+        "paymentError": "Payment error"
     },
     "Wallet": {
         "title": "Wallet",

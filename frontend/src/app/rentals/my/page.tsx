@@ -32,6 +32,7 @@ import { useRouter } from "next/navigation";
 import { RentalRequest } from "@/types";
 import { useAuthStore } from "@/store/auth.store";
 import api from "@/services/api";
+import { useTranslations } from "next-intl";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ interface ProgressBarProps {
 }
 
 function RentalProgressBar({ startDate, endDate }: ProgressBarProps) {
+    const t = useTranslations("Rental");
     const progress = calcProgress(startDate, endDate);
     const elapsed = Math.min(daysElapsed(startDate), daysBetween(startDate, endDate));
     const total = daysBetween(startDate, endDate);
@@ -79,10 +81,8 @@ function RentalProgressBar({ startDate, endDate }: ProgressBarProps) {
     return (
         <div className="mt-3 mb-4">
             <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-                <span>Прогресс аренды</span>
-                <span>
-                    {elapsed} дн. из {total}
-                </span>
+                <span>{t("progress")}</span>
+                <span>{t("progressLabel", { elapsed, total })}</span>
             </div>
             <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
                 <div
@@ -102,39 +102,37 @@ interface TimelineStep {
     date?: string;
 }
 
-function buildTimeline(rental: RentalRequest): TimelineStep[] {
+function buildTimeline(rental: RentalRequest, labels: { created: string; approved: string; payment: string; completed: string }): TimelineStep[] {
     const approvedDone =
         rental.status === "APPROVED" || rental.status === "COMPLETED";
     const approvedFailed =
         rental.status === "REJECTED" || rental.status === "CANCELLED";
 
     return [
+        { label: labels.created, status: "done", date: rental.created_at },
         {
-            label: "Заявка создана",
-            status: "done",
-            date: rental.created_at,
+            label: labels.approved,
+            status: approvedDone ? "done" : approvedFailed ? "failed" : "pending",
         },
         {
-            label: "Одобрено",
-            status: approvedDone
-                ? "done"
-                : approvedFailed
-                  ? "failed"
-                  : "pending",
-        },
-        {
-            label: "Оплата",
+            label: labels.payment,
             status: rental.payment_status === "PAID" ? "done" : "pending",
         },
         {
-            label: "Завершено",
+            label: labels.completed,
             status: rental.status === "COMPLETED" ? "done" : "pending",
         },
     ];
 }
 
 function Timeline({ rental }: { rental: RentalRequest }) {
-    const steps = buildTimeline(rental);
+    const t = useTranslations("Rental");
+    const steps = buildTimeline(rental, {
+        created: t("stageCreated"),
+        approved: t("stageApproved"),
+        payment: t("stagePayment"),
+        completed: t("stageCompleted"),
+    });
 
     const circleClass: Record<TimelineStatus, string> = {
         done: "bg-green-500 border-green-500",
@@ -196,6 +194,7 @@ function Timeline({ rental }: { rental: RentalRequest }) {
 // ─── Return photos uploader ──────────────────────────────────────────────────
 
 function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
+    const t = useTranslations("Rental");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { mutateAsync: uploadImage, isPending: isUploading } = useUploadImage();
     const qc = useQueryClient();
@@ -204,11 +203,11 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
         mutationFn: (images: string[]) =>
             api.post(`/rental-requests/${rental.id}/return-images`, { images }).then((r) => r.data),
         onSuccess: () => {
-            toast.success("Фото возврата загружены");
+            toast.success(t("returnPhotosUploaded"));
             void qc.invalidateQueries({ queryKey: ["rentals"] });
         },
         onError: (e: Error) => {
-            toast.error(e.message ?? "Ошибка загрузки");
+            toast.error(e.message ?? t("uploadError"));
         },
     });
 
@@ -220,14 +219,14 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
 
         const existing = rental.return_images?.length ?? 0;
         if (existing + files.length > 10) {
-            toast.error("Максимум 10 фото возврата");
+            toast.error(t("returnPhotoMax"));
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
 
         const oversized = files.filter((f) => f.size > 10 * 1024 * 1024);
         if (oversized.length > 0) {
-            toast.error("Файл слишком большой. Максимум 10 МБ");
+            toast.error(t("fileTooBig"));
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
         }
@@ -249,7 +248,7 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
         <div className="mt-3 border-t pt-3 space-y-2">
             <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                 <ImageIcon className="h-4 w-4" />
-                Фото возврата
+                {t("returnPhotosLabel")}
             </p>
             {hasReturnImages && (
                 <div className="flex flex-wrap gap-2">
@@ -257,7 +256,7 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
                         <img
                             key={i}
                             src={url}
-                            alt={`Фото возврата ${i + 1}`}
+                            alt={t("returnPhotoAlt", { n: i + 1 })}
                             className="h-16 w-16 rounded object-cover border"
                         />
                     ))}
@@ -284,7 +283,7 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
                     ) : (
                         <Upload className="h-4 w-4 mr-2" />
                     )}
-                    Загрузить фото возврата
+                    {t("uploadReturnPhoto")}
                 </Button>
             </div>
         </div>
@@ -294,6 +293,7 @@ function ReturnPhotosUploader({ rental }: { rental: RentalRequest }) {
 // ─── page ────────────────────────────────────────────────────────────────────
 
 export default function MyRentalsPage() {
+    const t = useTranslations("Rental");
     const { data: rentals, isLoading } = useMyRentals();
     const { mutate: cancel, isPending: isCancelling } = useCancelRental();
     const { mutate: openChat } = useOrCreateChat();
@@ -327,14 +327,14 @@ export default function MyRentalsPage() {
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Мои заявки на аренду</h1>
+            <h1 className="text-2xl font-bold">{t("myRentalsTitle")}</h1>
 
             {rentals?.length === 0 && (
                 <div className="text-center py-20 text-gray-500">
                     <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>У вас нет заявок на аренду</p>
+                    <p>{t("noRentals")}</p>
                     <Button asChild className="mt-4">
-                        <Link href="/">Найти объявления</Link>
+                        <Link href="/">{t("browseListings")}</Link>
                     </Button>
                 </div>
             )}
@@ -357,7 +357,7 @@ export default function MyRentalsPage() {
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
-                                                Нет фото
+                                                {t("noPhoto")}
                                             </div>
                                         )}
                                     </div>
@@ -404,7 +404,7 @@ export default function MyRentalsPage() {
                                                         }
                                                     >
                                                         <MessageSquare className="h-4 w-4 mr-1" />
-                                                        Написать владельцу
+                                                        {t("writeOwner")}
                                                     </Button>
                                                 )}
                                                 {rental.status === "APPROVED" &&
@@ -417,7 +417,7 @@ export default function MyRentalsPage() {
                                                             onClick={() => setDisputeRental(rental)}
                                                         >
                                                             <AlertTriangle className="h-4 w-4 mr-1" />
-                                                            Открыть спор
+                                                            {t("openDispute")}
                                                         </Button>
                                                     )}
                                                 {rental.dispute && (
@@ -430,8 +430,8 @@ export default function MyRentalsPage() {
                                                         <Link href="/disputes">
                                                             <ShieldAlert className="h-4 w-4 mr-1" />
                                                             {rental.dispute.status === "OPEN"
-                                                                ? "Спор открыт"
-                                                                : "Спор закрыт"}
+                                                                ? t("disputeOpen")
+                                                                : t("disputeClosed")}
                                                         </Link>
                                                     </Button>
                                                 )}
@@ -442,7 +442,7 @@ export default function MyRentalsPage() {
                                                         onClick={() => cancel(rental.id)}
                                                         disabled={isCancelling}
                                                     >
-                                                        Отменить
+                                                        {t("cancel")}
                                                     </Button>
                                                 )}
 
@@ -465,12 +465,12 @@ export default function MyRentalsPage() {
                                                                 {myReview ? (
                                                                     <>
                                                                         <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                                                                        Отзыв оставлен
+                                                                        {t("reviewLeft")}
                                                                     </>
                                                                 ) : (
                                                                     <>
                                                                         <MessageSquare className="h-4 w-4 mr-2" />
-                                                                        Оставить отзыв
+                                                                        {t("reviewAction")}
                                                                     </>
                                                                 )}
                                                             </Button>
@@ -488,10 +488,10 @@ export default function MyRentalsPage() {
                                             <QrCode className="h-4 w-4 mt-0.5 shrink-0 text-blue-600" />
                                             <div className="flex-1">
                                                 <p className="font-medium text-blue-900 dark:text-blue-200">
-                                                    Оплата при встрече
+                                                    {t("payAtMeetingTitle")}
                                                 </p>
                                                 <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
-                                                    Владелец покажет QR-код при передаче — отсканируйте телефоном, чтобы оплатить.
+                                                    {t("payAtMeetingDesc")}
                                                 </p>
                                             </div>
                                         </div>
@@ -504,11 +504,11 @@ export default function MyRentalsPage() {
                                                 setPayingId(rental.id);
                                                 payRental(rental.id, {
                                                     onSuccess: () => {
-                                                        toast.success("Оплата прошла успешно");
+                                                        toast.success(t("paymentOk"));
                                                         setPayingId(null);
                                                     },
                                                     onError: (e: Error) => {
-                                                        toast.error(e.message ?? "Ошибка оплаты");
+                                                        toast.error(e.message ?? t("paymentError"));
                                                         setPayingId(null);
                                                     },
                                                 });
@@ -519,7 +519,7 @@ export default function MyRentalsPage() {
                                             ) : (
                                                 <CreditCard className="h-4 w-4 mr-2" />
                                             )}
-                                            Оплатить сейчас
+                                            {t("payNow")}
                                         </Button>
                                     </div>
                                 )}
@@ -541,7 +541,7 @@ export default function MyRentalsPage() {
                                         ) : (
                                             <ChevronDown className="h-4 w-4" />
                                         )}
-                                        История
+                                        {t("history")}
                                     </button>
 
                                     {isTimelineOpen && <Timeline rental={rental} />}
