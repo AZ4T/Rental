@@ -131,7 +131,17 @@
         "statsListingsHome": "Хабарландыру",
         "statsCities": "Қала",
         "statsCustomers": "Риза клиент",
-        "statsCategoriesHome": "Санат"
+        "statsCategoriesHome": "Санат",
+        "viewGrid": "Тор",
+        "viewMap": "Карта",
+        "savedShort": "Сақталғандар:",
+        "saveSearchAction": "Іздеуді сақтау",
+        "saveSearchOk": "Іздеу сақталды",
+        "saveSearchDup": "Мұндай іздеу сақталған",
+        "loadError": "Хабарландыруларды жүктеу қатесі",
+        "pagePrev": "Артқа",
+        "pageNext": "Алға",
+        "catalogTitle": "Хабарландырулар"
     },
     "Listing": {
         "post": "Орналастыру",
@@ -243,7 +253,21 @@
         "premiumConfirmDesc": "30 күндік Premium үшін балансыңыздан 2 000 ₸ алынады. Егер жазылым әлі белсенді болса, мерзім 30 күнге ұзартылады.",
         "premiumConfirmActivate": "Белсендіру",
         "premiumConfirmExtend": "Ұзарту",
-        "premiumPending": "Белсендірілуде..."
+        "premiumPending": "Белсендірілуде...",
+        "amountRangeError": "Сома 1-ден 1 000 000 ₸ дейін",
+        "topUpOk": "Әмиян {amount} ₸ толтырылды",
+        "rentalPay": "Rental Pay",
+        "customAmount": "Басқа сома (₸)",
+        "getQr": "QR алу",
+        "scanWithKaspi": "Kaspi Pay арқылы сканерлеңіз",
+        "kaspiInstruction": "Kaspi қолданбасын ашыңыз → Kaspi Pay → QR сканерлеу. Төлемнен кейін төмендегі түймені басыңыз.",
+        "iPaid": "Мен төледім",
+        "kaspiSafe": "Тек Kaspi мобильді қолданбасы арқылы · Қауіпсіз",
+        "statementTitle": "Әмиян бойынша үзінді көшірме",
+        "statementDate": "Жасалу күні",
+        "statementColDate": "Күні",
+        "statementColDesc": "Сипаттамасы",
+        "statementColAmount": "Сома"
     },
     "Profile": {
         "title": "Профиль",

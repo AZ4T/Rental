@@ -131,7 +131,17 @@
         "statsListingsHome": "Listings",
         "statsCities": "Cities",
         "statsCustomers": "Happy customers",
-        "statsCategoriesHome": "Categories"
+        "statsCategoriesHome": "Categories",
+        "viewGrid": "Grid",
+        "viewMap": "Map",
+        "savedShort": "Saved:",
+        "saveSearchAction": "Save search",
+        "saveSearchOk": "Search saved",
+        "saveSearchDup": "This search is already saved",
+        "loadError": "Failed to load listings",
+        "pagePrev": "Prev",
+        "pageNext": "Next",
+        "catalogTitle": "Listings"
     },
     "Listing": {
         "post": "Post",
@@ -243,7 +253,21 @@
         "premiumConfirmDesc": "2,000 ₸ will be deducted for 30 days of Premium. If active, the term will be extended by 30 days.",
         "premiumConfirmActivate": "Activate",
         "premiumConfirmExtend": "Extend",
-        "premiumPending": "Activating..."
+        "premiumPending": "Activating...",
+        "amountRangeError": "Amount must be between 1 and 1,000,000 ₸",
+        "topUpOk": "Wallet topped up by {amount} ₸",
+        "rentalPay": "Rental Pay",
+        "customAmount": "Other amount (₸)",
+        "getQr": "Get QR",
+        "scanWithKaspi": "Scan with Kaspi Pay",
+        "kaspiInstruction": "Open Kaspi → Kaspi Pay → Scan QR. After paying, tap the button below.",
+        "iPaid": "I paid",
+        "kaspiSafe": "Payment only via Kaspi mobile app · Secure",
+        "statementTitle": "Wallet statement",
+        "statementDate": "Generated",
+        "statementColDate": "Date",
+        "statementColDesc": "Description",
+        "statementColAmount": "Amount"
     },
     "Profile": {
         "title": "Profile",

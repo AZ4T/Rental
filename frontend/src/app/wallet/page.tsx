@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Wallet, ArrowDownLeft, ArrowUpRight, Smartphone, Loader2, Download, Lock, QrCode, CheckCircle2, Sparkles, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 import { formatDistanceToNow } from "date-fns";
 import { ru } from "date-fns/locale";
 import QRCode from "react-qr-code";
@@ -88,6 +89,8 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 }
 
 export default function WalletPage() {
+    const t = useTranslations("Wallet");
+    const tCommon = useTranslations("Common");
     const { data, isLoading, refetch } = useWallet();
     const { mutate: topUp, isPending: isTopUpPending } = useTopUp();
     const { mutate: subscribePremium, isPending: isSubscribing } =
@@ -98,7 +101,7 @@ export default function WalletPage() {
 
     const openQr = (amount: number) => {
         if (amount <= 0 || amount > 1_000_000) {
-            toast.error("Сумма от 1 до 1 000 000 ₸");
+            toast.error(t("amountRangeError"));
             return;
         }
         setQrAmount(amount);
@@ -108,12 +111,12 @@ export default function WalletPage() {
         if (!qrAmount) return;
         topUp(qrAmount, {
             onSuccess: () => {
-                toast.success(`Кошелёк пополнен на ${qrAmount.toLocaleString()} ₸`);
+                toast.success(t("topUpOk", { amount: qrAmount.toLocaleString() }));
                 setQrAmount(null);
                 setCustomAmt("");
                 refetch();
             },
-            onError: (e: Error) => toast.error(e.message ?? "Ошибка"),
+            onError: (e: Error) => toast.error(e.message ?? tCommon("error")),
         });
     };
 
@@ -127,7 +130,7 @@ export default function WalletPage() {
 
     return (
         <div className="max-w-2xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Кошелёк</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
 
             {/* Balance cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -136,14 +139,14 @@ export default function WalletPage() {
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <Wallet className="h-5 w-5 opacity-80" />
-                                <span className="text-sm opacity-80">Баланс</span>
+                                <span className="text-sm opacity-80">{t("balance")}</span>
                             </div>
-                            <div className="text-right opacity-60 text-xs">Rental Pay</div>
+                            <div className="text-right opacity-60 text-xs">{t("rentalPay")}</div>
                         </div>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tight">
                             {Number(data?.balance ?? 0).toLocaleString()} ₸
                         </p>
-                        <p className="text-xs opacity-60 mt-2">Доступно для оплаты аренды</p>
+                        <p className="text-xs opacity-60 mt-2">{t("balanceHint")}</p>
                     </CardContent>
                 </Card>
 
@@ -152,14 +155,14 @@ export default function WalletPage() {
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <Lock className="h-5 w-5 opacity-80" />
-                                <span className="text-sm opacity-80">Залоговый счёт</span>
+                                <span className="text-sm opacity-80">{t("depositAccount")}</span>
                             </div>
-                            <div className="text-right opacity-60 text-xs">Заморожен</div>
+                            <div className="text-right opacity-60 text-xs">{t("depositFrozen")}</div>
                         </div>
                         <p className="text-3xl sm:text-4xl font-bold tracking-tight">
                             {Number(data?.deposit_balance ?? 0).toLocaleString()} ₸
                         </p>
-                        <p className="text-xs opacity-60 mt-2">Залоги арендаторов — возвращаются после завершения аренды</p>
+                        <p className="text-xs opacity-60 mt-2">{t("depositHint")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -179,15 +182,15 @@ export default function WalletPage() {
                         </div>
                         <div className="min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold">Premium</h3>
+                                <h3 className="font-semibold">{t("premium")}</h3>
                                 {data?.is_premium && data.premium_until && (
                                     <span className="text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
-                                        До {new Date(data.premium_until).toLocaleDateString("ru-RU")}
+                                        {t("premiumUntil", { date: new Date(data.premium_until).toLocaleDateString() })}
                                     </span>
                                 )}
                             </div>
                             <p className="text-sm text-muted-foreground mt-0.5">
-                                Без комиссии платформы, расширенная статистика, бейдж и неограниченные объявления.
+                                {t("premiumDesc")}
                             </p>
                         </div>
                     </div>
@@ -196,7 +199,7 @@ export default function WalletPage() {
                         onClick={() => setPremiumOpen(true)}
                     >
                         <Sparkles className="h-4 w-4 mr-2" />
-                        {data?.is_premium ? "Продлить (2 000 ₸)" : "Активировать (2 000 ₸)"}
+                        {data?.is_premium ? t("premiumExtend") : t("premiumActivate")}
                     </Button>
                 </CardContent>
             </Card>
@@ -205,13 +208,13 @@ export default function WalletPage() {
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
-                        <Smartphone className="h-4 w-4" /> Пополнить через Kaspi QR
+                        <Smartphone className="h-4 w-4" /> {t("topUpVia")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {!qrAmount ? (
                         <>
-                            <p className="text-sm text-muted-foreground">Выберите сумму пополнения — откроется QR-код для оплаты через Kaspi Pay.</p>
+                            <p className="text-sm text-muted-foreground">{t("topUpHint")}</p>
                             {/* Quick amounts */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {QUICK_AMOUNTS.map((amt) => (
@@ -227,7 +230,7 @@ export default function WalletPage() {
                             <div className="flex gap-2">
                                 <input
                                     type="number"
-                                    placeholder="Другая сумма (₸)"
+                                    placeholder={t("customAmount")}
                                     value={customAmt}
                                     onChange={(e) => setCustomAmt(e.target.value)}
                                     min={1}
@@ -240,7 +243,7 @@ export default function WalletPage() {
                                     className="bg-red-600 hover:bg-red-700 px-5 rounded-xl shrink-0"
                                 >
                                     <QrCode className="h-4 w-4 mr-1.5" />
-                                    Получить QR
+                                    {t("getQr")}
                                 </Button>
                             </div>
                         </>
@@ -248,7 +251,7 @@ export default function WalletPage() {
                         <div className="flex flex-col items-center gap-4">
                             <div className="text-center">
                                 <p className="font-semibold text-lg">{qrAmount.toLocaleString()} ₸</p>
-                                <p className="text-sm text-muted-foreground">Отсканируйте через Kaspi Pay</p>
+                                <p className="text-sm text-muted-foreground">{t("scanWithKaspi")}</p>
                             </div>
                             <div className="p-4 bg-white rounded-2xl border shadow-sm">
                                 <QRCode
@@ -258,11 +261,11 @@ export default function WalletPage() {
                                 />
                             </div>
                             <div className="text-xs text-muted-foreground text-center max-w-xs">
-                                Откройте Kaspi приложение → Kaspi Pay → Отсканировать QR. После оплаты нажмите кнопку ниже.
+                                {t("kaspiInstruction")}
                             </div>
                             <div className="flex gap-3 w-full max-w-xs">
                                 <Button variant="outline" className="flex-1" onClick={() => setQrAmount(null)}>
-                                    Отмена
+                                    {tCommon("cancel")}
                                 </Button>
                                 <Button
                                     className="flex-1 bg-green-600 hover:bg-green-700"
@@ -274,14 +277,14 @@ export default function WalletPage() {
                                     ) : (
                                         <CheckCircle2 className="h-4 w-4 mr-1.5" />
                                     )}
-                                    Я оплатил
+                                    {t("iPaid")}
                                 </Button>
                             </div>
                         </div>
                     )}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-3">
                         <Smartphone className="h-3.5 w-3.5 opacity-60" />
-                        <span>Оплата только через мобильное приложение Kaspi · Безопасно</span>
+                        <span>{t("kaspiSafe")}</span>
                     </div>
                 </CardContent>
             </Card>
@@ -289,7 +292,7 @@ export default function WalletPage() {
             {/* Transactions */}
             <Card>
                 <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                    <CardTitle className="text-base">История операций</CardTitle>
+                    <CardTitle className="text-base">{t("transactions")}</CardTitle>
                     {data?.transactions && data.transactions.length > 0 && (
                         <Button
                             variant="outline"
@@ -304,7 +307,7 @@ export default function WalletPage() {
                 <CardContent>
                     {!data?.transactions.length ? (
                         <p className="text-center text-muted-foreground py-6 text-sm">
-                            Операций пока нет
+                            {t("noTransactions")}
                         </p>
                     ) : (
                         data.transactions.map((tx) => (
@@ -316,10 +319,10 @@ export default function WalletPage() {
 
             <ConfirmDialog
                 open={premiumOpen}
-                title={data?.is_premium ? "Продлить Premium?" : "Активировать Premium?"}
-                description="С баланса спишется 2 000 ₸ за 30 дней Premium. Если подписка ещё активна — срок продлится на 30 дней."
-                confirmLabel={data?.is_premium ? "Продлить" : "Активировать"}
-                pendingLabel="Активация..."
+                title={data?.is_premium ? t("premiumConfirmExtendTitle") : t("premiumConfirmTitle")}
+                description={t("premiumConfirmDesc")}
+                confirmLabel={data?.is_premium ? t("premiumConfirmExtend") : t("premiumConfirmActivate")}
+                pendingLabel={t("premiumPending")}
                 variant="default"
                 isPending={isSubscribing}
                 onConfirm={() =>

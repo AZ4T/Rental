@@ -11,6 +11,7 @@ import { ListingsGridSkeleton } from "@/components/listing-card-skeleton";
 import { MapView } from "@/components/map-view";
 import { Bookmark, X, LayoutGrid, Map } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 const SAVED_SEARCHES_KEY = "saved_searches";
 
@@ -104,6 +105,7 @@ function paramsFromFilters(filters: ListingFilters): string {
 }
 
 function ListingsCatalog() {
+    const t = useTranslations("Home");
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -144,10 +146,10 @@ function ListingsCatalog() {
         <div className="space-y-6">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold">Объявления</h1>
+                    <h1 className="text-2xl font-bold">{t("catalogTitle")}</h1>
                     {data && (
                         <p className="text-sm text-muted-foreground mt-0.5">
-                            {data.meta.total.toLocaleString()} объявлений
+                            {t("totalListings", { count: data.meta.total.toLocaleString() })}
                         </p>
                     )}
                 </div>
@@ -162,7 +164,7 @@ function ListingsCatalog() {
                         }`}
                     >
                         <LayoutGrid className="h-4 w-4" />
-                        Сетка
+                        {t("viewGrid")}
                     </button>
                     <button
                         onClick={() => setViewMode("map")}
@@ -173,7 +175,7 @@ function ListingsCatalog() {
                         }`}
                     >
                         <Map className="h-4 w-4" />
-                        Карта
+                        {t("viewMap")}
                     </button>
                 </div>
             </div>
@@ -184,7 +186,7 @@ function ListingsCatalog() {
                 <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-sm text-muted-foreground flex items-center gap-1">
                         <Bookmark className="h-3.5 w-3.5" />
-                        Сохранённые:
+                        {t("savedShort")}
                     </span>
                     {savedSearches.map((s) => (
                         <div
@@ -220,14 +222,14 @@ function ListingsCatalog() {
                             const saved = saveSearch(filters);
                             setSavedSearches(getSavedSearches());
                             if (saved) {
-                                toast.success("Поиск сохранён");
+                                toast.success(t("saveSearchOk"));
                             } else {
-                                toast.info("Такой поиск уже сохранён");
+                                toast.info(t("saveSearchDup"));
                             }
                         }}
                     >
                         <Bookmark className="h-4 w-4 mr-2" />
-                        Сохранить поиск
+                        {t("saveSearchAction")}
                     </Button>
                 </div>
             )}
@@ -236,7 +238,7 @@ function ListingsCatalog() {
 
             {isError && (
                 <div className="text-center py-20 text-red-500">
-                    Ошибка загрузки объявлений
+                    {t("loadError")}
                 </div>
             )}
 
@@ -244,7 +246,7 @@ function ListingsCatalog() {
                 <>
                     {data.data.length === 0 ? (
                         <div className="text-center py-20 text-gray-500">
-                            Объявлений не найдено
+                            {t("emptyState")}
                         </div>
                     ) : viewMode === "map" ? (
                         <MapView listings={data.data} />
@@ -271,7 +273,7 @@ function ListingsCatalog() {
                                             }))
                                         }
                                     >
-                                        Назад
+                                        {t("pagePrev")}
                                     </Button>
                                     <span className="flex items-center px-4 text-sm text-gray-600 dark:text-gray-400">
                                         {filters.page} / {data.meta.total_pages}
@@ -289,7 +291,7 @@ function ListingsCatalog() {
                                             }))
                                         }
                                     >
-                                        Вперёд
+                                        {t("pageNext")}
                                     </Button>
                                 </div>
                             )}

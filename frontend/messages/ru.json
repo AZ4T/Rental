@@ -131,7 +131,17 @@
         "statsListingsHome": "Объявлений",
         "statsCities": "Городов",
         "statsCustomers": "Довольных клиентов",
-        "statsCategoriesHome": "Категорий"
+        "statsCategoriesHome": "Категорий",
+        "viewGrid": "Сетка",
+        "viewMap": "Карта",
+        "savedShort": "Сохранённые:",
+        "saveSearchAction": "Сохранить поиск",
+        "saveSearchOk": "Поиск сохранён",
+        "saveSearchDup": "Такой поиск уже сохранён",
+        "loadError": "Ошибка загрузки объявлений",
+        "pagePrev": "Назад",
+        "pageNext": "Вперёд",
+        "catalogTitle": "Объявления"
     },
     "Listing": {
         "post": "Разместить",
@@ -243,7 +253,21 @@
         "premiumConfirmDesc": "С баланса спишется 2 000 ₸ за 30 дней Premium. Если подписка ещё активна — срок продлится на 30 дней.",
         "premiumConfirmActivate": "Активировать",
         "premiumConfirmExtend": "Продлить",
-        "premiumPending": "Активация..."
+        "premiumPending": "Активация...",
+        "amountRangeError": "Сумма от 1 до 1 000 000 ₸",
+        "topUpOk": "Кошелёк пополнен на {amount} ₸",
+        "rentalPay": "Rental Pay",
+        "customAmount": "Другая сумма (₸)",
+        "getQr": "Получить QR",
+        "scanWithKaspi": "Отсканируйте через Kaspi Pay",
+        "kaspiInstruction": "Откройте Kaspi приложение → Kaspi Pay → Отсканировать QR. После оплаты нажмите кнопку ниже.",
+        "iPaid": "Я оплатил",
+        "kaspiSafe": "Оплата только через мобильное приложение Kaspi · Безопасно",
+        "statementTitle": "Выписка по кошельку",
+        "statementDate": "Дата формирования",
+        "statementColDate": "Дата",
+        "statementColDesc": "Описание",
+        "statementColAmount": "Сумма"
     },
     "Profile": {
         "title": "Профиль",
