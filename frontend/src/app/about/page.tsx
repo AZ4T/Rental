@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +35,8 @@ const categoryIcons: Record<string, React.ReactNode> = {
 };
 
 export default function AboutPage() {
+    const t = useTranslations("About");
+    const tAuth = useTranslations("Auth");
     const { isAuthenticated } = useAuthStore();
 
     const { data: stats } = useQuery({
@@ -66,13 +69,10 @@ export default function AboutPage() {
                 <div className="absolute inset-0 bg-black/50" />
                 <div className="relative z-10 max-w-7xl mx-auto px-8 text-white">
                     <h1 className="text-5xl font-bold mb-4 leading-tight">
-                        Арендуй что угодно,
-                        <br />
-                        когда угодно
+                        {t("heroTitle")}
                     </h1>
                     <p className="text-xl text-white/80 mb-8 max-w-xl">
-                        Платформа для аренды вещей между людьми. Найди нужное
-                        рядом или сдай своё и зарабатывай.
+                        {t("heroSubtitle")}
                     </p>
                     <div className="flex gap-4">
                         <Button
@@ -80,7 +80,7 @@ export default function AboutPage() {
                             size="lg"
                             className="bg-blue-600 hover:bg-blue-700"
                         >
-                            <Link href="/">Смотреть объявления</Link>
+                            <Link href="/">{t("viewListings")}</Link>
                         </Button>
                         {!isAuthenticated && (
                             <Button
@@ -90,7 +90,7 @@ export default function AboutPage() {
                                 className="text-white bg-white dark:bg-gray-900 hover:bg-white/10"
                             >
                                 <Link href="/auth/register">
-                                    Зарегистрироваться
+                                    {tAuth("registerLong")}
                                 </Link>
                             </Button>
                         )}
@@ -105,22 +105,22 @@ export default function AboutPage() {
                         {
                             icon: <Package className="h-8 w-8 text-blue-600" />,
                             value: stats?.listings ?? "...",
-                            label: "Объявлений",
+                            label: t("statsListings"),
                         },
                         {
                             icon: <Users className="h-8 w-8 text-blue-600" />,
                             value: stats?.users ?? "...",
-                            label: "Пользователей",
+                            label: t("statsUsers"),
                         },
                         {
                             icon: <Star className="h-8 w-8 text-blue-600" />,
                             value: "4.8",
-                            label: "Средний рейтинг",
+                            label: t("statsRating"),
                         },
                         {
                             icon: <Clock className="h-8 w-8 text-blue-600" />,
                             value: "24/7",
-                            label: "Поддержка",
+                            label: t("statsSupport"),
                         },
                     ].map((stat, i) => (
                         <Card key={i}>
@@ -140,7 +140,7 @@ export default function AboutPage() {
                 {/* Как это работает */}
                 <section className="py-16">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Как это работает
+                        {t("howItWorksTitle")}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {[
@@ -149,24 +149,24 @@ export default function AboutPage() {
                                     <Search className="h-10 w-10 text-blue-600" />
                                 ),
                                 step: "01",
-                                title: "Найди нужное",
-                                desc: "Ищи по категориям, городу и цене. Сотни объявлений от реальных людей рядом с тобой.",
+                                title: t("howStep1Title"),
+                                desc: t("howStep1Desc"),
                             },
                             {
                                 icon: (
                                     <HandshakeIcon className="h-10 w-10 text-blue-600" />
                                 ),
                                 step: "02",
-                                title: "Договорись",
-                                desc: "Отправь заявку на аренду. Владелец одобрит и вы договоритесь об условиях.",
+                                title: t("howStep2Title"),
+                                desc: t("howStep2Desc"),
                             },
                             {
                                 icon: (
                                     <CheckCircle className="h-10 w-10 text-blue-600" />
                                 ),
                                 step: "03",
-                                title: "Пользуйся",
-                                desc: "Забери вещь, используй и верни. Оставь отзыв и помоги другим пользователям.",
+                                title: t("howStep3Title"),
+                                desc: t("howStep3Desc"),
                             },
                         ].map((item, i) => (
                             <div
@@ -193,7 +193,7 @@ export default function AboutPage() {
                 {/* Преимущества */}
                 <section className="py-16">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Почему Rental?
+                        {t("whyTitle")}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
@@ -201,43 +201,43 @@ export default function AboutPage() {
                                 icon: (
                                     <Shield className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Безопасность",
-                                desc: "Все сделки защищены платформой. Залог гарантирует возврат вещи в целости.",
+                                title: t("whySafety"),
+                                desc: t("whySafetyDesc"),
                             },
                             {
                                 icon: (
                                     <Star className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Рейтинги",
-                                desc: "Система отзывов помогает выбрать надёжного арендодателя или арендатора.",
+                                title: t("whyRating"),
+                                desc: t("whyRatingDesc"),
                             },
                             {
                                 icon: (
                                     <Search className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Удобный поиск",
-                                desc: "Фильтры по городу, категории, цене и рейтингу. Найди нужное за секунды.",
+                                title: t("whySearch"),
+                                desc: t("whySearchDesc"),
                             },
                             {
                                 icon: (
                                     <Clock className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Быстро",
-                                desc: "Создай объявление за 2 минуты и начни зарабатывать на вещах которые не используешь.",
+                                title: t("whyFast"),
+                                desc: t("whyFastDesc"),
                             },
                             {
                                 icon: (
                                     <Users className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Сообщество",
-                                desc: "Тысячи пользователей по всему Казахстану доверяют нашей платформе.",
+                                title: t("whyCommunity"),
+                                desc: t("whyCommunityDesc"),
                             },
                             {
                                 icon: (
                                     <CheckCircle className="h-6 w-6 text-blue-600" />
                                 ),
-                                title: "Просто",
-                                desc: "Интуитивный интерфейс. Зарегистрируйся и сразу начни пользоваться.",
+                                title: t("whySimple"),
+                                desc: t("whySimpleDesc"),
                             },
                         ].map((item, i) => (
                             <Card key={i}>
@@ -260,7 +260,7 @@ export default function AboutPage() {
                 {/* Популярные категории */}
                 <section className="py-16">
                     <h2 className="text-3xl font-bold text-center mb-12">
-                        Популярные категории
+                        {t("popularCategories")}
                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         {popularCategories.map((cat) => (
@@ -285,7 +285,7 @@ export default function AboutPage() {
                     </div>
                     <div className="text-center mt-6">
                         <Button asChild variant="outline">
-                            <Link href="/">Все категории →</Link>
+                            <Link href="/">{t("allCategories")}</Link>
                         </Button>
                     </div>
                 </section>
@@ -294,13 +294,8 @@ export default function AboutPage() {
                 {!isAuthenticated && (
                     <section className="py-16 mb-8">
                         <div className="bg-blue-600 rounded-3xl p-12 text-center text-white">
-                            <h2 className="text-3xl font-bold mb-4">
-                                Готов начать?
-                            </h2>
-                            <p className="text-white/80 mb-8 text-lg">
-                                Зарегистрируйся бесплатно и начни арендовать или
-                                сдавать вещи уже сегодня
-                            </p>
+                            <h2 className="text-3xl font-bold mb-4">{t("ctaTitle")}</h2>
+                            <p className="text-white/80 mb-8 text-lg">{t("ctaDesc")}</p>
                             <div className="flex gap-4 justify-center">
                                 <Button
                                     asChild
@@ -308,7 +303,7 @@ export default function AboutPage() {
                                     className="bg-white dark:bg-gray-900 text-blue-600 hover:bg-white/90"
                                 >
                                     <Link href="/auth/register">
-                                        Зарегистрироваться
+                                        {tAuth("registerLong")}
                                     </Link>
                                 </Button>
                                 <Button
@@ -317,7 +312,7 @@ export default function AboutPage() {
                                     variant="outline"
                                     className="text-white border-white hover:bg-white/10"
                                 >
-                                    <Link href="/">Смотреть объявления</Link>
+                                    <Link href="/">{t("viewListings")}</Link>
                                 </Button>
                             </div>
                         </div>

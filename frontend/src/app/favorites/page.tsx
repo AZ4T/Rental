@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Heart, MapPin, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function FavoritesPage() {
+    const t = useTranslations("Favorites");
     const { data: favorites, isLoading } = useMyFavorites();
     const { mutate: remove, isPending } = useRemoveFavorite();
 
@@ -22,14 +24,14 @@ export default function FavoritesPage() {
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            <h1 className="text-2xl font-bold">Избранное</h1>
+            <h1 className="text-2xl font-bold">{t("title")}</h1>
 
             {favorites?.length === 0 && (
                 <div className="text-center py-20 text-gray-500">
                     <Heart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                    <p>Нет избранных объявлений</p>
+                    <p>{t("empty")}</p>
                     <Button asChild className="mt-4">
-                        <Link href="/">Найти объявления</Link>
+                        <Link href="/">{t("browse")}</Link>
                     </Button>
                 </div>
             )}

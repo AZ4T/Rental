@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Eye, X, GitCompareArrows, ArrowLeft } from "lucide-react";
 import { Listing } from "@/types";
+import { useTranslations } from "next-intl";
 
 // ─── Row helpers ─────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ function RowCell({ children, highlight }: { children: React.ReactNode; highlight
 // ─── Compare grid ─────────────────────────────────────────────────────────────
 
 function CompareGrid({ items }: { items: Listing[] }) {
+    const t = useTranslations("Compare");
     const { remove } = useCompareStore();
 
     const lowestPrice = Math.min(...items.map((i) => Number(i.price)));
@@ -55,7 +57,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                                 <button
                                     onClick={() => remove(item.id)}
                                     className="absolute -top-1 -right-1 z-10 rounded-full bg-white dark:bg-gray-800 border shadow-sm p-1 text-muted-foreground hover:text-red-500 transition-colors"
-                                    aria-label="Убрать из сравнения"
+                                    aria-label={t("removeFromCompare")}
                                 >
                                     <X className="h-3.5 w-3.5" />
                                 </button>
@@ -70,7 +72,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                                         />
                                     ) : (
                                         <div className="h-full w-full flex items-center justify-center text-muted-foreground text-xs">
-                                            Нет фото
+                                            {t("noPhoto")}
                                         </div>
                                     )}
                                 </div>
@@ -86,14 +88,14 @@ function CompareGrid({ items }: { items: Listing[] }) {
                                 href={`/listings/${item.id}`}
                                 className="mt-2 inline-flex items-center justify-center w-full px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium hover:bg-blue-700 transition-colors"
                             >
-                                Перейти к объявлению
+                                {t("openListing")}
                             </Link>
                         </CardHeader>
                     </Card>
                 ))}
 
                 {/* ── Category ── */}
-                <RowLabel>Категория</RowLabel>
+                <RowLabel>{t("rowCategory")}</RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
                         <Badge variant="secondary">{item.category.name}</Badge>
@@ -103,14 +105,14 @@ function CompareGrid({ items }: { items: Listing[] }) {
                 {/* ── City ── */}
                 <RowLabel>
                     <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                    Город
+                    {t("rowCity")}
                 </RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>{item.city}</RowCell>
                 ))}
 
                 {/* ── Price ── */}
-                <RowLabel>Цена / сутки</RowLabel>
+                <RowLabel>{t("rowPrice")}</RowLabel>
                 {items.map((item) => {
                     const itemPrice = Number(item.price);
                     const isBest = itemPrice === lowestPrice;
@@ -128,7 +130,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                                     variant="secondary"
                                     className="ml-1.5 text-[10px] bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
                                 >
-                                    Лучшая цена
+                                    {t("bestPrice")}
                                 </Badge>
                             )}
                         </RowCell>
@@ -136,7 +138,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                 })}
 
                 {/* ── Deposit ── */}
-                <RowLabel>Залог</RowLabel>
+                <RowLabel>{t("rowDeposit")}</RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
                         {item.deposit > 0
@@ -148,7 +150,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                 {/* ── Owner rating ── */}
                 <RowLabel>
                     <Star className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                    Рейтинг владельца
+                    {t("rowRating")}
                 </RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
@@ -158,13 +160,13 @@ function CompareGrid({ items }: { items: Listing[] }) {
                                 {parseFloat(item.owner.rating_avg).toFixed(1)}
                             </span>
                         ) : (
-                            <span className="text-muted-foreground">Нет оценок</span>
+                            <span className="text-muted-foreground">{t("noRatings")}</span>
                         )}
                     </RowCell>
                 ))}
 
                 {/* ── Owner name ── */}
-                <RowLabel>Владелец</RowLabel>
+                <RowLabel>{t("rowOwner")}</RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
                         <div className="flex flex-col items-center gap-1">
@@ -187,7 +189,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                 {/* ── Views ── */}
                 <RowLabel>
                     <Eye className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                    Просмотры
+                    {t("rowViews")}
                 </RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
@@ -199,7 +201,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
                 ))}
 
                 {/* ── Description ── */}
-                <RowLabel>Описание</RowLabel>
+                <RowLabel>{t("rowDescription")}</RowLabel>
                 {items.map((item) => (
                     <RowCell key={item.id}>
                         <p className="text-xs text-muted-foreground line-clamp-4 text-left">
@@ -215,6 +217,7 @@ function CompareGrid({ items }: { items: Listing[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function ComparePage() {
+    const t = useTranslations("Compare");
     const { items, clear } = useCompareStore();
 
     return (
@@ -228,12 +231,12 @@ export default function ComparePage() {
                             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" />
-                            Назад
+                            {t("back")}
                         </Link>
                         <div className="h-5 border-l" />
                         <h1 className="flex items-center gap-2 text-xl font-bold">
                             <GitCompareArrows className="h-5 w-5 text-blue-600" />
-                            Сравнение объявлений
+                            {t("titleFull")}
                         </h1>
                     </div>
 
@@ -242,7 +245,7 @@ export default function ComparePage() {
                             onClick={clear}
                             className="text-sm text-muted-foreground hover:text-red-500 transition-colors"
                         >
-                            Очистить всё
+                            {t("clearAll")}
                         </button>
                     )}
                 </div>
@@ -255,16 +258,16 @@ export default function ComparePage() {
                                 <GitCompareArrows className="h-8 w-8 text-muted-foreground" />
                             </div>
                             <div>
-                                <p className="font-semibold text-lg">Недостаточно объявлений</p>
+                                <p className="font-semibold text-lg">{t("notEnoughTitle")}</p>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    Добавьте минимум 2 объявления для сравнения. Вы можете выбрать до 3 объявлений.
+                                    {t("notEnoughDesc")}
                                 </p>
                             </div>
                             <Link
                                 href="/"
                                 className="px-5 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
                             >
-                                Перейти к объявлениям
+                                {t("goToListings")}
                             </Link>
                         </CardContent>
                     </Card>
