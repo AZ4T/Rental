@@ -64,6 +64,7 @@
         "loginPending": "Входим...",
         "registerAction": "Зарегистрироваться",
         "registerPending": "Создаём аккаунт...",
+        "or": "или",
         "newPasswordTitle": "Новый пароль",
         "resetTitle": "Восстановление пароля",
         "resetHint": "Введите email — пришлём ссылку для сброса пароля.",

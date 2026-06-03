@@ -50,7 +50,13 @@ enum PlatformIncomeSource {
 model User {
   id            String   @id @default(uuid()) @db.Uuid
   email         String   @unique @db.VarChar(255)
-  password_hash String   @db.VarChar(255)
+  // Nullable: OAuth-only users (e.g. signed in via Google) never set a
+  // local password. They can later add one via "change password" if desired.
+  password_hash String?  @db.VarChar(255)
+  // OAuth provider linkage. "local" for password users, "google" for users
+  // who signed in via Google Identity. google_id is Google's `sub` claim.
+  provider      String   @default("local") @db.VarChar(32)
+  google_id     String?  @unique @db.VarChar(255)
   name          String   @db.VarChar(255)
   avatar_url    String?  @db.VarChar(255)
   role          Role     @default(USER)

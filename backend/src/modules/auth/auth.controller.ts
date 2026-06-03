@@ -47,6 +47,23 @@ export class AuthController {
     }
 
     @Throttle({ default: { ttl: 60_000, limit: 10 } })
+    @Post('google')
+    google(
+        @Body() body: { id_token: string; device_id?: string },
+        @Res({ passthrough: true }) res: Response,
+        @Req() req: Request,
+    ) {
+        return this.authService.googleSignIn(
+            body.id_token,
+            res,
+            extractIp(req),
+            req.headers['user-agent'] ?? '',
+            isMobile(req),
+            body.device_id,
+        );
+    }
+
+    @Throttle({ default: { ttl: 60_000, limit: 10 } })
     @UseGuards(CsrfGuard)
     @Post('refresh')
     refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

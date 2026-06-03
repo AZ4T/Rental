@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { useTranslations } from "next-intl";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 
 const loginSchema = z.object({
     email: z.string().email("Введите корректный email"),
@@ -133,6 +134,19 @@ function LoginForm() {
                             {isPending ? t("loginPending") : t("loginAction")}
                         </Button>
                     </form>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-background px-2 text-muted-foreground">
+                                {t("or") || "или"}
+                            </span>
+                        </div>
+                    </div>
+
+                    <GoogleSignInButton redirectTo={redirectTo} />
                 </div>
             </div>
         </div>

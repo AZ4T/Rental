@@ -63,6 +63,35 @@ export function useLogin(redirectTo?: string | null) {
     });
 }
 
+export function useGoogleSignIn(redirectTo?: string | null) {
+    const { setAuth } = useAuthStore();
+    const router = useRouter();
+
+    return useMutation({
+        mutationFn: (idToken: string) =>
+            api
+                .post<AuthResponse>("/auth/google", {
+                    id_token: idToken,
+                    device_id: getDeviceId(),
+                })
+                .then((r) => r.data),
+
+        onSuccess: (data) => {
+            setAuth(data.user, data.access_token);
+            toast.success("Вы вошли через Google");
+            if (data.user.role === "ADMIN") {
+                router.push("/admin");
+            } else {
+                router.push(safeRedirectPath(redirectTo ?? null));
+            }
+        },
+
+        onError: (error: Error) => {
+            toast.error(error.message ?? "Ошибка входа через Google");
+        },
+    });
+}
+
 export function useRegister() {
     const { setAuth } = useAuthStore();
     const router = useRouter();

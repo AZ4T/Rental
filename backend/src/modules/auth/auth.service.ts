@@ -13,6 +13,7 @@ import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { randomBytes, createHash, randomUUID } from 'crypto';
+import { OAuth2Client as GoogleAuthClient, TokenPayload } from 'google-auth-library';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -79,6 +80,11 @@ export class AuthService {
             throw new I18nUnauthorized('auth.invalidCredentials');
         }
 
+        if (!user.password_hash) {
+            // User signed up via OAuth and never set a local password.
+            this.logger.warn(`login failed (oauth-only) | email=${maskEmail(email)} ip=${ip}`);
+            throw new I18nUnauthorized('auth.invalidCredentials');
+        }
         const isValid = await bcrypt.compare(dto.password, user.password_hash);
         if (!isValid) {
             this.logger.warn(`login failed (wrong password) | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
@@ -87,6 +93,92 @@ export class AuthService {
 
         this.logger.log(`login success | email=${maskEmail(email)} ip=${ip} ua=${ua}`);
         return this.issueTokens(user.id, user.email, user.role, user.token_version, dto.device_id ?? randomUUID(), res, mobile);
+    }
+
+    /**
+     * Sign-in (or sign-up) via Google. The client gets an id_token from
+     * Google Identity Services and posts it here. We verify the token with
+     * Google's public keys, then link the user by `sub` (preferred) or
+     * email (for upgrade from an existing local account).
+     */
+    async googleSignIn(
+        idToken: string,
+        res: Response,
+        ip: string,
+        ua: string,
+        mobile = false,
+        deviceId?: string,
+    ) {
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        if (!clientId) {
+            this.logger.error('GOOGLE_CLIENT_ID not configured');
+            throw new I18nUnauthorized('auth.invalidCredentials');
+        }
+
+        const client = new GoogleAuthClient();
+        let payload: TokenPayload | undefined;
+        try {
+            const ticket = await client.verifyIdToken({ idToken, audience: clientId });
+            payload = ticket.getPayload();
+        } catch (e) {
+            this.logger.warn(`google verify failed | ip=${ip} reason=${(e as Error).message}`);
+            throw new I18nUnauthorized('auth.invalidCredentials');
+        }
+        if (!payload?.email || !payload.sub || payload.email_verified !== true) {
+            throw new I18nUnauthorized('auth.invalidCredentials');
+        }
+
+        const email = payload.email.toLowerCase();
+        const googleId = payload.sub;
+        const name = payload.name?.trim() || email.split('@')[0];
+        const avatarUrl = payload.picture ?? null;
+
+        // 1. Existing user linked by google_id — fast path
+        let user = await this.prisma.user.findUnique({ where: { google_id: googleId } });
+
+        // 2. No google_id link but maybe a local account with same email — link it
+        if (!user) {
+            const byEmail = await this.usersService.findByEmail(email);
+            if (byEmail) {
+                user = await this.prisma.user.update({
+                    where: { id: byEmail.id },
+                    data: {
+                        google_id: googleId,
+                        // Don't switch provider away from "local" — they
+                        // still have a password and can use either method.
+                        ...(byEmail.avatar_url ? {} : { avatar_url: avatarUrl }),
+                    },
+                });
+                this.logger.log(`google link existing | email=${maskEmail(email)} ip=${ip}`);
+            }
+        }
+
+        // 3. Brand new user — create as oauth-only
+        if (!user) {
+            user = await this.prisma.user.create({
+                data: {
+                    email,
+                    name,
+                    avatar_url: avatarUrl,
+                    google_id: googleId,
+                    provider: 'google',
+                    password_hash: null,
+                },
+            });
+            this.logger.log(`google signup | email=${maskEmail(email)} ip=${ip}`);
+        } else {
+            this.logger.log(`google login | email=${maskEmail(email)} ip=${ip}`);
+        }
+
+        return this.issueTokens(
+            user.id,
+            user.email,
+            user.role,
+            user.token_version,
+            deviceId ?? randomUUID(),
+            res,
+            mobile,
+        );
     }
 
     async refresh(req: Request, res: Response, ip: string, ua: string, mobile = false) {
@@ -314,6 +406,13 @@ export class AuthService {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new UnauthorizedException();
 
+        if (!user.password_hash) {
+            // OAuth-only user — setting a first password instead of changing.
+            // For now we require they verify with current_password, which they
+            // don't have. Block until we add a dedicated "set initial password"
+            // flow.
+            throw new I18nBadRequest('auth.passwordMismatch');
+        }
         const isValid = await bcrypt.compare(dto.current_password, user.password_hash);
         if (!isValid) {
             this.logger.warn(`change-password failed (wrong current password) | userId=${userId} ip=${ip}`);

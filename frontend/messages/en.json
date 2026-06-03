@@ -64,6 +64,7 @@
         "loginPending": "Logging in...",
         "registerAction": "Create account",
         "registerPending": "Creating account...",
+        "or": "or",
         "newPasswordTitle": "New password",
         "resetTitle": "Reset password",
         "resetHint": "Enter your email — we'll send a reset link.",
