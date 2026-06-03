@@ -18,6 +18,7 @@ const ru = {
     'wallet.insufficient':
         'Недостаточно средств. Требуется {amount} ₸ (аренда {rental} ₸ + депозит {deposit} ₸)',
     'wallet.insufficientSimple': 'Недостаточно средств. Требуется {amount} ₸',
+    'wallet.promoteCooldown': 'Это объявление недавно было продвинуто — подождите немного',
     'wallet.amountInvalid': 'Сумма должна быть от 1 до 50 000 ₸',
     'wallet.dailyLimit':
         'Превышен дневной лимит пополнения 100 000 ₸ (использовано {used} ₸)',
@@ -87,6 +88,7 @@ const kk: Partial<Record<Key, string>> = {
     'wallet.insufficient':
         'Қаражат жеткіліксіз. {amount} ₸ қажет (жалдау {rental} ₸ + кепілдік {deposit} ₸)',
     'wallet.insufficientSimple': 'Қаражат жеткіліксіз. {amount} ₸ қажет',
+    'wallet.promoteCooldown': 'Бұл хабарландыру жақында көтерілді — біраз күтіңіз',
     'wallet.amountInvalid': 'Сома 1-ден 50 000 ₸ дейін болуы керек',
     'wallet.dailyLimit':
         '100 000 ₸ күндік лимиттен асып кеттіңіз ({used} ₸ пайдаланылды)',
@@ -153,6 +155,7 @@ const en: Partial<Record<Key, string>> = {
     'wallet.insufficient':
         'Insufficient funds. Required {amount} ₸ (rental {rental} ₸ + deposit {deposit} ₸)',
     'wallet.insufficientSimple': 'Insufficient funds. Required {amount} ₸',
+    'wallet.promoteCooldown': 'This listing was just promoted — wait a moment',
     'wallet.amountInvalid': 'Amount must be between 1 and 50,000 ₸',
     'wallet.dailyLimit':
         'Daily top-up limit of 100,000 ₸ exceeded ({used} ₸ already used)',

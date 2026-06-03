@@ -279,6 +279,22 @@ export class WalletService {
             throw new I18nForbidden('common.forbidden');
         }
 
+        // Idempotency: reject if the SAME listing was promoted within the
+        // last 10 seconds. Catches double-clicks / lost-network retries
+        // before they cost the user two charges.
+        const recent = await this.prisma.transaction.findFirst({
+            where: {
+                user_id: userId,
+                type: 'PROMOTION',
+                description: { contains: listing.title },
+                created_at: { gte: new Date(Date.now() - 10_000) },
+            },
+            select: { id: true },
+        });
+        if (recent) {
+            throw new I18nBadRequest('wallet.promoteCooldown');
+        }
+
         // Extend from current promoted_until if still active, else start today
         const newUntil = await this.prisma.$transaction(async (tx) => {
             const decremented = await tx.$executeRaw`
