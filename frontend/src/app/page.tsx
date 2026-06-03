@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useListings } from "@/hooks/use-listings";
 import { ListingCard } from "@/components/listing-card";
-import { RecentlyViewed } from "@/components/recently-viewed";
 import { Search, Package, ArrowRight, Shield, Star, Zap, Users, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -398,7 +397,6 @@ export default function HomePage() {
             <CategoriesSection />
             <HowItWorksSection />
             <TrustSection />
-            <RecentlyViewed />
             <CTASection />
         </div>
     );

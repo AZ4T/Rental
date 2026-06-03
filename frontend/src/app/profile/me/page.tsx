@@ -16,6 +16,7 @@ import api from "@/services/api";
 import { Review } from "@/types";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { RecentlyViewed } from "@/components/recently-viewed";
 
 export default function MyProfilePage() {
     const t = useTranslations("Profile");
@@ -201,6 +202,8 @@ export default function MyProfilePage() {
                     </Button>
                 </CardContent>
             </Card>
+
+            <RecentlyViewed />
 
             {/* Отзывы */}
             <div>
