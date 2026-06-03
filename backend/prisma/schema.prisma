@@ -177,6 +177,8 @@ model Listing {
   is_hidden     Boolean  @default(false)
   hidden_at     DateTime?
   promoted_until DateTime?
+  // One of: "basic" | "pro" | "premium" — null when not promoted.
+  promotion_tier String?   @db.VarChar(16)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

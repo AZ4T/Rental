@@ -42,12 +42,18 @@ export class WalletController {
     promote(
         @Param('listingId', ParseUUIDPipe) listingId: string,
         @Request() req: { user: { userId: string } },
+        @Body() body: { tier?: 'basic' | 'pro' | 'premium' } = {},
     ) {
-        return this.walletService.promoteListing(listingId, req.user.userId);
+        return this.walletService.promoteListing(listingId, req.user.userId, body.tier ?? 'basic');
     }
 
     @Post('premium')
     subscribePremium(@Request() req: { user: { userId: string } }) {
         return this.walletService.subscribePremium(req.user.userId);
+    }
+
+    @Get('promotion-tiers')
+    getPromotionTiers() {
+        return this.walletService.getPromotionTiers();
     }
 }

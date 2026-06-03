@@ -13,8 +13,15 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 
-const PROMOTION_PRICE = 500;
-const PROMOTION_DAYS = 7;
+// Promotion tiers. The Pro and Premium tiers add visual prominence on top
+// of the boosted-in-search default — handled on the frontend by reading
+// `promotion_tier` from the listing.
+export const PROMOTION_TIERS = {
+    basic: { price: 500, days: 7 },
+    pro: { price: 1000, days: 14 },
+    premium: { price: 2000, days: 30 },
+} as const;
+export type PromotionTier = keyof typeof PROMOTION_TIERS;
 const PREMIUM_PRICE = 2000;
 const PREMIUM_DAYS = 30;
 
@@ -250,7 +257,19 @@ export class WalletService {
         return { success: true, ownerEarnings, platformFee };
     }
 
-    async promoteListing(listingId: string, userId: string) {
+    getPromotionTiers() {
+        return Object.entries(PROMOTION_TIERS).map(([key, p]) => ({
+            key,
+            price: p.price,
+            days: p.days,
+        }));
+    }
+
+    async promoteListing(listingId: string, userId: string, tier: PromotionTier = 'basic') {
+        const plan = PROMOTION_TIERS[tier];
+        if (!plan) {
+            throw new I18nBadRequest('common.forbidden');
+        }
         const listing = await this.prisma.listing.findUnique({
             where: { id: listingId },
             select: { id: true, owner_id: true, title: true },
@@ -264,53 +283,59 @@ export class WalletService {
         const newUntil = await this.prisma.$transaction(async (tx) => {
             const decremented = await tx.$executeRaw`
                 UPDATE "User"
-                SET balance = balance - ${PROMOTION_PRICE}
+                SET balance = balance - ${plan.price}
                 WHERE id = ${userId}::uuid
-                  AND balance >= ${PROMOTION_PRICE}
+                  AND balance >= ${plan.price}
             `;
             if (decremented === 0) {
                 throw new I18nBadRequest('wallet.insufficientSimple', {
-                    amount: PROMOTION_PRICE.toLocaleString(),
+                    amount: plan.price.toLocaleString(),
                 });
             }
 
             const fresh = await tx.listing.findUnique({
                 where: { id: listingId },
-                select: { promoted_until: true },
+                select: { promoted_until: true, promotion_tier: true },
             });
             const base =
                 fresh?.promoted_until && fresh.promoted_until.getTime() > Date.now()
                     ? fresh.promoted_until.getTime()
                     : Date.now();
-            const until = new Date(base + PROMOTION_DAYS * 24 * 60 * 60 * 1000);
+            const until = new Date(base + plan.days * 24 * 60 * 60 * 1000);
+
+            // If user is upgrading mid-promotion, keep the higher tier.
+            const RANK: Record<PromotionTier, number> = { basic: 1, pro: 2, premium: 3 };
+            const currentTier = (fresh?.promotion_tier as PromotionTier | null) ?? null;
+            const nextTier =
+                currentTier && RANK[currentTier] > RANK[tier] ? currentTier : tier;
 
             await tx.listing.update({
                 where: { id: listingId },
-                data: { promoted_until: until },
+                data: { promoted_until: until, promotion_tier: nextTier },
             });
 
             await tx.transaction.create({
                 data: {
                     user_id: userId,
-                    amount: PROMOTION_PRICE,
+                    amount: plan.price,
                     type: 'PROMOTION',
-                    description: `Продвижение объявления: ${listing.title} (${PROMOTION_DAYS} дн.)`,
+                    description: `Продвижение объявления: ${listing.title} (${plan.days} дн., ${tier})`,
                 },
             });
             await tx.platformIncome.create({
                 data: {
-                    amount: PROMOTION_PRICE,
+                    amount: plan.price,
                     source: 'PROMOTION',
                     user_id: userId,
                     listing_id: listingId,
-                    description: `Продвижение: ${listing.title}`,
+                    description: `Продвижение (${tier}): ${listing.title}`,
                 },
             });
 
             return until;
         });
 
-        return { promoted_until: newUntil, price: PROMOTION_PRICE };
+        return { promoted_until: newUntil, price: plan.price, tier };
     }
 
     async subscribePremium(userId: string) {

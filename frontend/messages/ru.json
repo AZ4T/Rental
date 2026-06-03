@@ -178,7 +178,7 @@
         "owner": "Владелец",
         "publishedAt": "Размещено {date}",
         "hidden": "Скрыто",
-        "featured": "Featured",
+        "featured": "Топ",
         "promote": "Поднять",
         "showInCatalog": "Показать в каталоге",
         "hideFromCatalog": "Скрыть из каталога",
@@ -249,7 +249,18 @@
         "blockBtn": "Заблокировать",
         "blockOk": "Даты заблокированы",
         "blockError": "Не удалось заблокировать даты",
-        "blockedListTitle": "Заблокированные периоды"
+        "blockedListTitle": "Заблокированные периоды",
+        "promoteTitle": "Продвинуть объявление",
+        "promoteCancel": "Отмена",
+        "promoteConfirm": "Продвинуть",
+        "promoteDays": "На {days} дней",
+        "promoteTier_basic": "Базовый",
+        "promoteTier_pro": "Профи",
+        "promoteTier_premium": "Премиум",
+        "promoteBasic1": "Бейдж «Топ» на карточке",
+        "promoteBasic2": "Выше в каталоге",
+        "promotePro1": "В подборке на главной",
+        "promotePremium1": "Выделение цветом в результатах"
     },
     "Rental": {
         "title": "Мои заявки",

@@ -178,7 +178,7 @@
         "owner": "Иесі",
         "publishedAt": "{date} орналастырылды",
         "hidden": "Жасырын",
-        "featured": "Featured",
+        "featured": "Үздік",
         "promote": "Көтеру",
         "showInCatalog": "Каталогта көрсету",
         "hideFromCatalog": "Каталогтан жасыру",
@@ -249,7 +249,18 @@
         "blockBtn": "Бұғаттау",
         "blockOk": "Күндер бұғатталды",
         "blockError": "Күндерді бұғаттау мүмкін болмады",
-        "blockedListTitle": "Бұғатталған кезеңдер"
+        "blockedListTitle": "Бұғатталған кезеңдер",
+        "promoteTitle": "Хабарландыруды көтеру",
+        "promoteCancel": "Бас тарту",
+        "promoteConfirm": "Көтеру",
+        "promoteDays": "{days} күнге",
+        "promoteTier_basic": "Базалық",
+        "promoteTier_pro": "Профи",
+        "promoteTier_premium": "Премиум",
+        "promoteBasic1": "Карточкада «Үздік» белгісі",
+        "promoteBasic2": "Каталогта жоғарырақ",
+        "promotePro1": "Басты беттегі іріктеуде",
+        "promotePremium1": "Нәтижелерде түспен ерекшелену"
     },
     "Rental": {
         "title": "Менің өтінімдерім",

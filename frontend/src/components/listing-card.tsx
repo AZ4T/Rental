@@ -86,7 +86,7 @@ export function ListingCard({ listing }: ListingCardProps) {
                                 Date.now() && (
                                 <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-md gap-1">
                                     <Sparkles className="h-3 w-3" />
-                                    Featured
+                                    {t("featured")}
                                 </Badge>
                             )}
                     </div>

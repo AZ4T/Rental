@@ -12,7 +12,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useListingAnalytics, useSetListingVisibility } from "@/hooks/use-listings";
-import { usePromoteListing } from "@/hooks/use-wallet";
+import { PromoteDialog } from "@/components/promote-dialog";
 import { useTranslations } from "next-intl";
 
 function AnalyticsPanel({ listingId }: { listingId: string }) {
@@ -79,7 +79,6 @@ export default function MyListingsPage() {
     const { mutate: setVisibility, isPending: isToggling } =
         useSetListingVisibility();
     const [togglingId, setTogglingId] = useState<string | null>(null);
-    const { mutate: promoteListing, isPending: isPromoting } = usePromoteListing();
     const [promoteId, setPromoteId] = useState<string | null>(null);
 
     if (isLoading) {
@@ -303,22 +302,17 @@ export default function MyListingsPage() {
                 onCancel={() => setDeleteId(null)}
             />
 
-            <ConfirmDialog
-                open={!!promoteId}
-                title={t("promoteTitle")}
-                description={t("promoteDesc")}
-                confirmLabel={t("promoteConfirm")}
-                pendingLabel={t("promotePending")}
-                variant="default"
-                isPending={isPromoting}
-                onConfirm={() => {
-                    if (promoteId)
-                        promoteListing(promoteId, {
-                            onSuccess: () => setPromoteId(null),
-                        });
-                }}
-                onCancel={() => setPromoteId(null)}
-            />
+            {promoteId && (() => {
+                const target = data?.data.find((l) => l.id === promoteId);
+                if (!target) return null;
+                return (
+                    <PromoteDialog
+                        listingId={promoteId}
+                        listingTitle={target.title}
+                        onClose={() => setPromoteId(null)}
+                    />
+                );
+            })()}
         </div>
     );
 }

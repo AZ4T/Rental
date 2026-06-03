@@ -249,7 +249,18 @@
         "blockBtn": "Block",
         "blockOk": "Dates blocked",
         "blockError": "Failed to block dates",
-        "blockedListTitle": "Blocked periods"
+        "blockedListTitle": "Blocked periods",
+        "promoteTitle": "Promote listing",
+        "promoteCancel": "Cancel",
+        "promoteConfirm": "Promote",
+        "promoteDays": "For {days} days",
+        "promoteTier_basic": "Basic",
+        "promoteTier_pro": "Pro",
+        "promoteTier_premium": "Premium",
+        "promoteBasic1": "«Featured» badge on the card",
+        "promoteBasic2": "Higher in catalog",
+        "promotePro1": "Featured on the home page",
+        "promotePremium1": "Colored highlight in results"
     },
     "Rental": {
         "title": "My requests",
