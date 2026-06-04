@@ -58,6 +58,7 @@ services:
             APP_URL: https://rental.bolatbekov.com
             FRONTEND_URL: https://rental.bolatbekov.com
             # TURN/STUN — coturn lives on the host (not in compose)
+            GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
             TURN_HOST: turn.rental.bolatbekov.com
             TURN_PORT: "3478"
             TURN_TLS_PORT: "5349"
