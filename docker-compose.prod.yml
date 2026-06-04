@@ -66,7 +66,10 @@ services:
             PLATFORM_FEE_RATE: ${PLATFORM_FEE_RATE:-0.05}
 
     frontend:
-        build: ./frontend
+        build:
+            context: ./frontend
+            args:
+                NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
         container_name: rental_frontend
         restart: always
         depends_on:
