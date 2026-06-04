@@ -152,6 +152,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
                     remoteStreamRef.current = stream;
                     if (remoteVideoRef.current) {
                         remoteVideoRef.current.srcObject = stream;
+                        remoteVideoRef.current.play().catch(() => {});
                     }
                 } else {
                     if (!remoteAudioRef.current) {
@@ -159,6 +160,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
                         remoteAudioRef.current.autoplay = true;
                     }
                     remoteAudioRef.current.srcObject = stream;
+                    remoteAudioRef.current.play().catch(() => {});
                 }
             };
 
