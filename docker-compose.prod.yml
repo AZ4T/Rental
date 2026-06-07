@@ -84,6 +84,7 @@ services:
             context: ../diplom-rental-mobile
             args:
                 EXPO_PUBLIC_API_HOST: rental.bolatbekov.com
+                EXPO_PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
         container_name: rental_mobile
         restart: always
         depends_on:
